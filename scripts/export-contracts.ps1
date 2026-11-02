@@ -1,5 +1,7 @@
 $ErrorActionPreference = 'Stop'
 $flowdeskRoot = Split-Path $PSScriptRoot
+python (Join-Path $PSScriptRoot 'generate-runtime.py')
+if ($LASTEXITCODE -ne 0) { throw 'Runtime contract generation failed' }
 Push-Location (Join-Path $flowdeskRoot 'flow-desk-serv/flowdesk')
 try {
     goctl api validate --api flowdesk.api

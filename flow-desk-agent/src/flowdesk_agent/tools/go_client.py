@@ -1,0 +1,130 @@
+"""Narrow Go client. Credentials and trusted context never become model arguments."""
+
+import asyncio
+import json
+import time
+from collections.abc import Awaitable, Callable
+from pathlib import Path
+from uuid import uuid5
+
+import httpx
+from jsonschema import Draft202012Validator
+
+from flowdesk_agent.api.schemas import ExecutionCommand, TrustedContext
+from flowdesk_agent.storage.callbacks import CallbackStore
+from flowdesk_agent.storage.tool_cache import ToolCache
+
+directory = Path(__file__).resolve().parent
+argument_validator = Draft202012Validator(json.loads((directory / "read.schema.json").read_text()))
+go_contract = json.loads((directory / "go.openapi.json").read_text())
+result_validator = Draft202012Validator(
+    go_contract["paths"]["/internal/v1/tools/{tool_name}"]["post"]["responses"]["200"]["content"][
+        "application/json"
+    ]["schema"]
+)
+
+
+class ToolError(Exception):
+    def __init__(self, code: str):
+        self.code = code
+        super().__init__(code)
+
+
+class OwnershipLost(Exception):
+    pass
+
+
+class GoTools:
+    def __init__(
+        self,
+        http: httpx.AsyncClient,
+        command: ExecutionCommand,
+        callbacks: CallbackStore,
+        cache: ToolCache,
+        guard: Callable[[], Awaitable[None]],
+    ):
+        self.http = http
+        self.command = command
+        self.callbacks = callbacks
+        self.cache = cache
+        self.guard = guard
+        self.context: TrustedContext | None = None
+
+    async def authorize(self) -> TrustedContext:
+        await self.guard()
+        response = await self.http.post(
+            f"/internal/v1/runs/{self.command.run_id}/lease",
+            json={
+                "dispatch_id": str(self.command.dispatch_id),
+                "lease_generation": self.command.lease_generation,
+            },
+        )
+        if response.status_code != 200:
+            raise ToolError("CAPABILITY_REVOKED")
+        self.context = TrustedContext.model_validate(response.json()["data"])
+        if (
+            self.context.run_id != self.command.run_id
+            or self.context.lease_generation != self.command.lease_generation
+        ):
+            raise ToolError("LEASE_STALE")
+        return self.context
+
+    async def call(self, tool: str, arguments: dict):
+        argument_validator.validate({"tool_name": tool, "arguments": arguments})
+        context = await self.authorize()
+        if tool not in context.tools:
+            raise ToolError("PERMISSION_DENIED")
+        call_id = uuid5(
+            self.command.dispatch_id, tool + ":" + json.dumps(arguments, sort_keys=True)
+        )
+        started = await self.callbacks.emit(
+            self.command,
+            "tool.started",
+            {
+                "tool_call_id": str(call_id),
+                "tool_name": tool,
+                "summary": "查询订单" if tool == "order.lookup" else "查询物流",
+            },
+            str(call_id),
+        )
+        await self.callbacks.wait(started)
+        result = await self.cache.find(call_id)
+        begin = time.monotonic()
+        if result is None:
+            for attempt in range(3):
+                await self.guard()
+                try:
+                    response = await self.http.post(
+                        f"/internal/v1/tools/{tool}",
+                        json={"arguments": arguments},
+                        headers={"X-Run-Capability": context.capability},
+                    )
+                    if response.status_code >= 500:
+                        raise httpx.TransportError("upstream unavailable")
+                    if response.status_code != 200:
+                        raise ToolError(response.json().get("code", "TOOL_FAILED"))
+                    body = response.json()
+                    result_validator.validate(body)
+                    result = body["data"]
+                    await self.cache.insert(
+                        call_id, self.command.dispatch_id, tool, arguments, result
+                    )
+                    break
+                except httpx.TransportError:
+                    if attempt == 2:
+                        raise ToolError("UPSTREAM_UNAVAILABLE") from None
+                    await asyncio.sleep(0.25 * (2**attempt))
+        assert result is not None
+        completed = await self.callbacks.emit(
+            self.command,
+            "tool.completed",
+            {
+                "tool_call_id": str(call_id),
+                "tool_name": tool,
+                "summary": "查询完成",
+                "duration_ms": min(120000, round((time.monotonic() - begin) * 1000)),
+            },
+            str(call_id),
+        )
+        await self.callbacks.wait(completed)
+        return result

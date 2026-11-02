@@ -207,6 +207,992 @@
         }
       }
     },
+    "/api/v1/conversations": {
+      "get": {
+        "summary": "List own conversations | permission=conversation:use | auth=required",
+        "operationId": "listConversations",
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "allowEmptyValue": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "example": 20,
+            "name": "limit",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "items",
+                        "next_cursor",
+                        "has_more"
+                      ],
+                      "properties": {
+                        "has_more": {
+                          "type": "boolean"
+                        },
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "id",
+                              "title",
+                              "status",
+                              "version",
+                              "active_run_id",
+                              "updated_at"
+                            ],
+                            "properties": {
+                              "active_run_id": {
+                                "type": "string"
+                              },
+                              "id": {
+                                "type": "string"
+                              },
+                              "status": {
+                                "type": "string"
+                              },
+                              "title": {
+                                "type": "string"
+                              },
+                              "updated_at": {
+                                "type": "string"
+                              },
+                              "version": {
+                                "type": "integer"
+                              }
+                            }
+                          }
+                        },
+                        "next_cursor": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "request_id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create conversation | permission=conversation:use | auth=required",
+        "operationId": "createConversation",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "title"
+                ],
+                "properties": {
+                  "title": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "id",
+                        "title",
+                        "status",
+                        "version",
+                        "active_run_id",
+                        "updated_at"
+                      ],
+                      "properties": {
+                        "active_run_id": {
+                          "type": "string"
+                        },
+                        "id": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string"
+                        },
+                        "title": {
+                          "type": "string"
+                        },
+                        "updated_at": {
+                          "type": "string"
+                        },
+                        "version": {
+                          "type": "integer"
+                        }
+                      }
+                    },
+                    "request_id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/conversations/{conversation_id}": {
+      "get": {
+        "summary": "Get own conversation | permission=conversation:use | auth=required",
+        "operationId": "getConversation",
+        "parameters": [
+          {
+            "name": "conversation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "id",
+                        "title",
+                        "status",
+                        "version",
+                        "active_run_id",
+                        "updated_at"
+                      ],
+                      "properties": {
+                        "active_run_id": {
+                          "type": "string"
+                        },
+                        "id": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string"
+                        },
+                        "title": {
+                          "type": "string"
+                        },
+                        "updated_at": {
+                          "type": "string"
+                        },
+                        "version": {
+                          "type": "integer"
+                        }
+                      }
+                    },
+                    "request_id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/conversations/{conversation_id}/messages": {
+      "get": {
+        "summary": "List messages | permission=conversation:use | auth=required",
+        "operationId": "listMessages",
+        "parameters": [
+          {
+            "name": "conversation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "allowEmptyValue": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "example": 20,
+            "name": "limit",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "items",
+                        "next_cursor",
+                        "has_more"
+                      ],
+                      "properties": {
+                        "has_more": {
+                          "type": "boolean"
+                        },
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "id",
+                              "run_id",
+                              "role",
+                              "content",
+                              "status",
+                              "generation",
+                              "position",
+                              "citations",
+                              "action_receipts",
+                              "created_at"
+                            ],
+                            "properties": {
+                              "action_receipts": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "additionalProperties": {}
+                                }
+                              },
+                              "citations": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "additionalProperties": {}
+                                }
+                              },
+                              "content": {
+                                "type": "string"
+                              },
+                              "created_at": {
+                                "type": "string"
+                              },
+                              "generation": {
+                                "type": "integer"
+                              },
+                              "id": {
+                                "type": "string"
+                              },
+                              "position": {
+                                "type": "integer"
+                              },
+                              "role": {
+                                "type": "string"
+                              },
+                              "run_id": {
+                                "type": "string"
+                              },
+                              "status": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        },
+                        "next_cursor": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "request_id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Send message | permission=conversation:use | auth=required",
+        "operationId": "sendMessage",
+        "parameters": [
+          {
+            "name": "conversation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "client_message_id",
+                  "content"
+                ],
+                "properties": {
+                  "attachments": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "client_message_id": {
+                    "type": "string"
+                  },
+                  "content": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "id",
+                        "conversation_id",
+                        "status",
+                        "version",
+                        "last_event_seq",
+                        "error_code",
+                        "tool_call_count",
+                        "current_message"
+                      ],
+                      "properties": {
+                        "conversation_id": {
+                          "type": "string"
+                        },
+                        "current_message": {
+                          "type": "object",
+                          "required": [
+                            "id",
+                            "run_id",
+                            "role",
+                            "content",
+                            "status",
+                            "generation",
+                            "position",
+                            "citations",
+                            "action_receipts",
+                            "created_at"
+                          ],
+                          "properties": {
+                            "action_receipts": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "additionalProperties": {}
+                              }
+                            },
+                            "citations": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "additionalProperties": {}
+                              }
+                            },
+                            "content": {
+                              "type": "string"
+                            },
+                            "created_at": {
+                              "type": "string"
+                            },
+                            "generation": {
+                              "type": "integer"
+                            },
+                            "id": {
+                              "type": "string"
+                            },
+                            "position": {
+                              "type": "integer"
+                            },
+                            "role": {
+                              "type": "string"
+                            },
+                            "run_id": {
+                              "type": "string"
+                            },
+                            "status": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "error_code": {
+                          "type": "string"
+                        },
+                        "id": {
+                          "type": "string"
+                        },
+                        "last_event_seq": {
+                          "type": "integer"
+                        },
+                        "status": {
+                          "type": "string"
+                        },
+                        "tool_call_count": {
+                          "type": "integer"
+                        },
+                        "version": {
+                          "type": "integer"
+                        }
+                      }
+                    },
+                    "request_id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/orders": {
+      "get": {
+        "summary": "List orders | permission=order:read | auth=required",
+        "operationId": "listOrders",
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "allowEmptyValue": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "example": 20,
+            "name": "limit",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "order_no",
+            "in": "query",
+            "allowEmptyValue": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "items",
+                        "next_cursor",
+                        "has_more"
+                      ],
+                      "properties": {
+                        "has_more": {
+                          "type": "boolean"
+                        },
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "id",
+                              "order_no",
+                              "masked_customer_name",
+                              "status",
+                              "total_amount",
+                              "currency",
+                              "version",
+                              "placed_at"
+                            ],
+                            "properties": {
+                              "currency": {
+                                "type": "string"
+                              },
+                              "id": {
+                                "type": "string"
+                              },
+                              "masked_customer_name": {
+                                "type": "string"
+                              },
+                              "order_no": {
+                                "type": "string"
+                              },
+                              "placed_at": {
+                                "type": "string"
+                              },
+                              "status": {
+                                "type": "string"
+                              },
+                              "total_amount": {
+                                "type": "string"
+                              },
+                              "version": {
+                                "type": "integer"
+                              }
+                            }
+                          }
+                        },
+                        "next_cursor": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "request_id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/orders/{order_id}": {
+      "get": {
+        "summary": "Get order | permission=order:read | auth=required",
+        "operationId": "getOrder",
+        "parameters": [
+          {
+            "name": "order_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "id",
+                        "order_no",
+                        "masked_customer_name",
+                        "status",
+                        "total_amount",
+                        "currency",
+                        "version",
+                        "placed_at"
+                      ],
+                      "properties": {
+                        "currency": {
+                          "type": "string"
+                        },
+                        "id": {
+                          "type": "string"
+                        },
+                        "masked_customer_name": {
+                          "type": "string"
+                        },
+                        "order_no": {
+                          "type": "string"
+                        },
+                        "placed_at": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string"
+                        },
+                        "total_amount": {
+                          "type": "string"
+                        },
+                        "version": {
+                          "type": "integer"
+                        }
+                      }
+                    },
+                    "request_id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/orders/{order_id}/logistics": {
+      "get": {
+        "summary": "Get logistics | permission=order:read | auth=required",
+        "operationId": "getLogistics",
+        "parameters": [
+          {
+            "name": "order_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "items"
+                      ],
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "id",
+                              "status",
+                              "description",
+                              "occurred_at",
+                              "source_updated_at"
+                            ],
+                            "properties": {
+                              "description": {
+                                "type": "string"
+                              },
+                              "id": {
+                                "type": "string"
+                              },
+                              "occurred_at": {
+                                "type": "string"
+                              },
+                              "source_updated_at": {
+                                "type": "string"
+                              },
+                              "status": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "request_id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/runs/{run_id}": {
+      "get": {
+        "summary": "Run snapshot | permission=conversation:use | auth=required",
+        "operationId": "getRun",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "id",
+                        "conversation_id",
+                        "status",
+                        "version",
+                        "last_event_seq",
+                        "error_code",
+                        "tool_call_count",
+                        "current_message"
+                      ],
+                      "properties": {
+                        "conversation_id": {
+                          "type": "string"
+                        },
+                        "current_message": {
+                          "type": "object",
+                          "required": [
+                            "id",
+                            "run_id",
+                            "role",
+                            "content",
+                            "status",
+                            "generation",
+                            "position",
+                            "citations",
+                            "action_receipts",
+                            "created_at"
+                          ],
+                          "properties": {
+                            "action_receipts": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "additionalProperties": {}
+                              }
+                            },
+                            "citations": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "additionalProperties": {}
+                              }
+                            },
+                            "content": {
+                              "type": "string"
+                            },
+                            "created_at": {
+                              "type": "string"
+                            },
+                            "generation": {
+                              "type": "integer"
+                            },
+                            "id": {
+                              "type": "string"
+                            },
+                            "position": {
+                              "type": "integer"
+                            },
+                            "role": {
+                              "type": "string"
+                            },
+                            "run_id": {
+                              "type": "string"
+                            },
+                            "status": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "error_code": {
+                          "type": "string"
+                        },
+                        "id": {
+                          "type": "string"
+                        },
+                        "last_event_seq": {
+                          "type": "integer"
+                        },
+                        "status": {
+                          "type": "string"
+                        },
+                        "tool_call_count": {
+                          "type": "integer"
+                        },
+                        "version": {
+                          "type": "integer"
+                        }
+                      }
+                    },
+                    "request_id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/runs/{run_id}/events": {
+      "get": {
+        "summary": "Persisted event stream | permission=conversation:use | auth=required",
+        "operationId": "streamEvents",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "example": 0,
+            "name": "after_seq",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "occurred_at": {
+                      "type": "string"
+                    },
+                    "payload": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    },
+                    "run_id": {
+                      "type": "string"
+                    },
+                    "schema_version": {
+                      "type": "string"
+                    },
+                    "seq": {
+                      "type": "integer"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health/live": {
       "get": {
         "summary": "Liveness | permission=- | auth=public",
@@ -249,6 +1235,321 @@
                       "type": "string"
                     },
                     "status": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/v1/runs/{run_id}/events": {
+      "post": {
+        "summary": "Persist agent event | permission=- | auth=run_capability",
+        "operationId": "ingestEvent",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "source_event_id",
+                  "lease_generation",
+                  "type",
+                  "occurred_at",
+                  "payload"
+                ],
+                "properties": {
+                  "lease_generation": {
+                    "type": "integer"
+                  },
+                  "occurred_at": {
+                    "type": "string"
+                  },
+                  "payload": {
+                    "type": "object",
+                    "additionalProperties": {}
+                  },
+                  "source_event_id": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "seq"
+                      ],
+                      "properties": {
+                        "seq": {
+                          "type": "integer"
+                        }
+                      }
+                    },
+                    "request_id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/v1/runs/{run_id}/lease": {
+      "post": {
+        "summary": "Renew run capability | permission=- | auth=service",
+        "operationId": "renewLease",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "dispatch_id",
+                  "lease_generation"
+                ],
+                "properties": {
+                  "dispatch_id": {
+                    "type": "string"
+                  },
+                  "lease_generation": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "run_id",
+                        "tenant_id",
+                        "actor_user_id",
+                        "lease_generation",
+                        "capability",
+                        "content",
+                        "message_id",
+                        "deadline_at",
+                        "tools"
+                      ],
+                      "properties": {
+                        "actor_user_id": {
+                          "type": "string"
+                        },
+                        "capability": {
+                          "type": "string"
+                        },
+                        "content": {
+                          "type": "string"
+                        },
+                        "deadline_at": {
+                          "type": "string"
+                        },
+                        "lease_generation": {
+                          "type": "integer"
+                        },
+                        "message_id": {
+                          "type": "string"
+                        },
+                        "run_id": {
+                          "type": "string"
+                        },
+                        "tenant_id": {
+                          "type": "string"
+                        },
+                        "tools": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "request_id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/v1/tools/{tool_name}": {
+      "post": {
+        "summary": "Read business tool | permission=order:read | auth=run_capability",
+        "operationId": "callTool",
+        "parameters": [
+          {
+            "name": "tool_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "arguments"
+                ],
+                "properties": {
+                  "arguments": {
+                    "type": "object",
+                    "additionalProperties": {}
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "logistics": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "id",
+                              "status",
+                              "description",
+                              "occurred_at",
+                              "source_updated_at"
+                            ],
+                            "properties": {
+                              "description": {
+                                "type": "string"
+                              },
+                              "id": {
+                                "type": "string"
+                              },
+                              "occurred_at": {
+                                "type": "string"
+                              },
+                              "source_updated_at": {
+                                "type": "string"
+                              },
+                              "status": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        },
+                        "order": {
+                          "type": "object",
+                          "required": [
+                            "id",
+                            "order_no",
+                            "masked_customer_name",
+                            "status",
+                            "total_amount",
+                            "currency",
+                            "version",
+                            "placed_at"
+                          ],
+                          "properties": {
+                            "currency": {
+                              "type": "string"
+                            },
+                            "id": {
+                              "type": "string"
+                            },
+                            "masked_customer_name": {
+                              "type": "string"
+                            },
+                            "order_no": {
+                              "type": "string"
+                            },
+                            "placed_at": {
+                              "type": "string"
+                            },
+                            "status": {
+                              "type": "string"
+                            },
+                            "total_amount": {
+                              "type": "string"
+                            },
+                            "version": {
+                              "type": "integer"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "request_id": {
                       "type": "string"
                     }
                   }

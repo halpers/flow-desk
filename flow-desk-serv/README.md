@@ -4,6 +4,8 @@ Go 业务服务，使用 **go-zero**。参考 RWA 服务的布局，将 Go modul
 
 最初通过 `goctl api new flowdesk` 生成工程，M1 已接入健康检查、登录/刷新/退出/身份接口、三个固定角色、租户隔离约束、goose 迁移和 goctl PostgreSQL 模型生成。业务设计见 [Go 详细设计](flowdesk/docs/design.md)。
 
+M2 已提供会话/消息/任务、订单/物流、幂等 outbox、短期工具能力和持久化 SSE。实现边界和验收见 [M2 交付说明](../docs/m2-read-tasks.md)。
+
 - 规划 HTTP 端口：`8080`。
 - 对外入口：`/api/v1`；Agent 工具与回调：`/internal/v1`。
 - Go 拥有用户、业务、审批、任务状态和对外事件；Python 通过内部 API 使用这些数据。

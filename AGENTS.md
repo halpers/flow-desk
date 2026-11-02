@@ -2,13 +2,13 @@
 
 ## Project overview
 
-FlowDesk is an enterprise ticket-processing Agent application with React, go-zero and FastAPI services. M1 implements authentication, health, migrations, model/contract generation and Compose; see docs/progress.md for subsequent delivery status. PostgreSQL is the user-selected database. Design documents describe the full intended system, not a claim that every feature exists.
+FlowDesk is an enterprise ticket-processing Agent application with React, go-zero and FastAPI services. M1 provides engineering/identity; M2 provides read-only tasks, durable graph execution and SSE. See docs/progress.md for delivery evidence. PostgreSQL is the user-selected database. Design documents describe the full intended system, not a claim that every feature exists.
 
 - `flow-desk-web/`: React and TypeScript frontend. The browser calls the Go service only.
 - `flow-desk-serv/flowdesk/`: Go module location for the go-zero business API and scheduler.
 - `flow-desk-agent/`: Python Agent API, graph executor, retrieval, checkpoints and evaluation.
 - `docs/`: authoritative cross-service design, API behavior, data ownership and delivery criteria.
-- `shared/contracts/`: future generated protocol artifacts; source ownership is defined in its README.
+- `shared/contracts/`: generated API artifacts and authoritative event/tool schemas; source ownership is defined in its README.
 - `deploy/`: deployment documentation and future runtime configuration.
 
 Read the narrower service's AGENTS.md before changing that service. This file adapts conventions from `C:/work/go/src/rwa/rwa-tokenization-serv/AGENTS.md`; that reference is read-only unless the user's task explicitly includes it.

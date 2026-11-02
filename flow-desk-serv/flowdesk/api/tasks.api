@@ -1,0 +1,249 @@
+syntax = "v1"
+
+type PageReq {
+    Cursor string `form:"cursor,optional"`
+    Limit int64 `form:"limit,default=20,range=[1:100]"`
+}
+type CreateConversationReq {
+    Title string `json:"title"`
+    IdempotencyKey string `header:"Idempotency-Key"`
+}
+type ConversationData {
+    Id string `json:"id"`
+    Title string `json:"title"`
+    Status string `json:"status"`
+    Version int64 `json:"version"`
+    ActiveRunId string `json:"active_run_id"`
+    UpdatedAt string `json:"updated_at"`
+}
+type ConversationResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data ConversationData `json:"data"`
+}
+type ConversationPage {
+    Items []ConversationData `json:"items"`
+    NextCursor string `json:"next_cursor"`
+    HasMore bool `json:"has_more"`
+}
+type ConversationsResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data ConversationPage `json:"data"`
+}
+type ConversationReq {
+    ConversationId string `path:"conversation_id"`
+}
+type MessagesReq {
+    ConversationId string `path:"conversation_id"`
+    Cursor string `form:"cursor,optional"`
+    Limit int64 `form:"limit,default=20,range=[1:100]"`
+}
+type MessageData {
+    Id string `json:"id"`
+    RunId string `json:"run_id"`
+    Role string `json:"role"`
+    Content string `json:"content"`
+    Status string `json:"status"`
+    Generation int64 `json:"generation"`
+    Position int64 `json:"position"`
+    Citations []map[string]interface{} `json:"citations"`
+    ActionReceipts []map[string]interface{} `json:"action_receipts"`
+    CreatedAt string `json:"created_at"`
+}
+type MessagePage {
+    Items []MessageData `json:"items"`
+    NextCursor string `json:"next_cursor"`
+    HasMore bool `json:"has_more"`
+}
+type MessagesResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data MessagePage `json:"data"`
+}
+type SendMessageReq {
+    ConversationId string `path:"conversation_id"`
+    IdempotencyKey string `header:"Idempotency-Key"`
+    ClientMessageId string `json:"client_message_id"`
+    Content string `json:"content"`
+    Attachments []string `json:"attachments,optional"`
+}
+type RunReq {
+    RunId string `path:"run_id"`
+}
+type RunData {
+    Id string `json:"id"`
+    ConversationId string `json:"conversation_id"`
+    Status string `json:"status"`
+    Version int64 `json:"version"`
+    LastEventSeq int64 `json:"last_event_seq"`
+    ErrorCode string `json:"error_code"`
+    ToolCallCount int64 `json:"tool_call_count"`
+    CurrentMessage MessageData `json:"current_message"`
+}
+type RunResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data RunData `json:"data"`
+}
+type EventsReq {
+    RunId string `path:"run_id"`
+    AfterSeq int64 `form:"after_seq,default=0"`
+}
+type EventData {
+    SchemaVersion string `json:"schema_version"`
+    RunId string `json:"run_id"`
+    Seq int64 `json:"seq"`
+    Type string `json:"type"`
+    OccurredAt string `json:"occurred_at"`
+    Payload map[string]interface{} `json:"payload"`
+}
+type OrderData {
+    Id string `json:"id"`
+    OrderNo string `json:"order_no"`
+    MaskedCustomerName string `json:"masked_customer_name"`
+    Status string `json:"status"`
+    TotalAmount string `json:"total_amount"`
+    Currency string `json:"currency"`
+    Version int64 `json:"version"`
+    PlacedAt string `json:"placed_at"`
+}
+type OrdersReq {
+    Cursor string `form:"cursor,optional"`
+    Limit int64 `form:"limit,default=20,range=[1:100]"`
+    OrderNo string `form:"order_no,optional"`
+}
+type OrderReq {
+    OrderId string `path:"order_id"`
+}
+type OrderPage {
+    Items []OrderData `json:"items"`
+    NextCursor string `json:"next_cursor"`
+    HasMore bool `json:"has_more"`
+}
+type OrdersResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data OrderPage `json:"data"`
+}
+type OrderResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data OrderData `json:"data"`
+}
+type LogisticsData {
+    Id string `json:"id"`
+    Status string `json:"status"`
+    Description string `json:"description"`
+    OccurredAt string `json:"occurred_at"`
+    SourceUpdatedAt string `json:"source_updated_at"`
+}
+type LogisticsPage {
+    Items []LogisticsData `json:"items"`
+}
+type LogisticsResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data LogisticsPage `json:"data"`
+}
+type LeaseReq {
+    RunId string `path:"run_id"`
+    DispatchId string `json:"dispatch_id"`
+    LeaseGeneration int64 `json:"lease_generation"`
+}
+type ExecutionContext {
+    RunId string `json:"run_id"`
+    TenantId string `json:"tenant_id"`
+    ActorUserId string `json:"actor_user_id"`
+    LeaseGeneration int64 `json:"lease_generation"`
+    Capability string `json:"capability"`
+    Content string `json:"content"`
+    MessageId string `json:"message_id"`
+    DeadlineAt string `json:"deadline_at"`
+    Tools []string `json:"tools"`
+}
+type LeaseResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data ExecutionContext `json:"data"`
+}
+type AgentEventReq {
+    RunId string `path:"run_id"`
+    SourceEventId string `json:"source_event_id"`
+    LeaseGeneration int64 `json:"lease_generation"`
+    Type string `json:"type"`
+    OccurredAt string `json:"occurred_at"`
+    Payload map[string]interface{} `json:"payload"`
+}
+type EventAck {
+    Seq int64 `json:"seq"`
+}
+type EventAckResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data EventAck `json:"data"`
+}
+type ToolReq {
+    ToolName string `path:"tool_name"`
+    Arguments map[string]interface{} `json:"arguments"`
+}
+type ToolResult {
+    Order OrderData `json:"order,optional"`
+    Logistics []LogisticsData `json:"logistics,optional"`
+}
+type ToolResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data ToolResult `json:"data"`
+}
+
+@server(prefix: /api/v1 middleware: SessionAuth)
+service flowdesk-api {
+    @doc "Create conversation | permission=conversation:use | auth=required"
+    @handler CreateConversation
+    post /conversations (CreateConversationReq) returns (ConversationResp)
+    @doc "List own conversations | permission=conversation:use | auth=required"
+    @handler ListConversations
+    get /conversations (PageReq) returns (ConversationsResp)
+    @doc "Get own conversation | permission=conversation:use | auth=required"
+    @handler GetConversation
+    get /conversations/:conversation_id (ConversationReq) returns (ConversationResp)
+    @doc "List messages | permission=conversation:use | auth=required"
+    @handler ListMessages
+    get /conversations/:conversation_id/messages (MessagesReq) returns (MessagesResp)
+    @doc "Send message | permission=conversation:use | auth=required"
+    @handler SendMessage
+    post /conversations/:conversation_id/messages (SendMessageReq) returns (RunResp)
+    @doc "Run snapshot | permission=conversation:use | auth=required"
+    @handler GetRun
+    get /runs/:run_id (RunReq) returns (RunResp)
+    @doc "List orders | permission=order:read | auth=required"
+    @handler ListOrders
+    get /orders (OrdersReq) returns (OrdersResp)
+    @doc "Get order | permission=order:read | auth=required"
+    @handler GetOrder
+    get /orders/:order_id (OrderReq) returns (OrderResp)
+    @doc "Get logistics | permission=order:read | auth=required"
+    @handler GetLogistics
+    get /orders/:order_id/logistics (OrderReq) returns (LogisticsResp)
+}
+
+@server(prefix: /api/v1 middleware: SessionAuth sse: true timeout: 0s)
+service flowdesk-api {
+    @doc "Persisted event stream | permission=conversation:use | auth=required"
+    @handler StreamEvents
+    get /runs/:run_id/events (EventsReq) returns (EventData)
+}
+
+@server(prefix: /internal/v1 middleware: ServiceAuth)
+service flowdesk-api {
+    @doc "Renew run capability | permission=- | auth=service"
+    @handler RenewLease
+    post /runs/:run_id/lease (LeaseReq) returns (LeaseResp)
+    @doc "Persist agent event | permission=- | auth=run_capability"
+    @handler IngestEvent
+    post /runs/:run_id/events (AgentEventReq) returns (EventAckResp)
+    @doc "Read business tool | permission=order:read | auth=run_capability"
+    @handler CallTool
+    post /tools/:tool_name (ToolReq) returns (ToolResp)
+}

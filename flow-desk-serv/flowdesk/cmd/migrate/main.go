@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"flowdesk/db/model"
 	"flowdesk/internal/config"
+	"flowdesk/internal/seed"
 	"flowdesk/internal/svc"
 	"github.com/google/uuid"
 	_ "github.com/lib/pq"
@@ -53,6 +54,9 @@ func main() {
 			if err != nil {
 				log.Fatal(err)
 			}
+		}
+		if err = seed.Orders(ctx, s, tenantID); err != nil {
+			log.Fatal("synthetic order seed failed")
 		}
 	}
 	log.Print("migrations and synthetic tenant/user seeds ready; existing credentials preserved")

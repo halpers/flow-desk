@@ -2,7 +2,7 @@
 
 Python Agent 服务。规划使用 FastAPI + Pydantic 提供内网接口，LangGraph 组织任务，PostgreSQL 持久化检查点，pgvector 保存检索向量。
 
-M1 已实现 FastAPI 入口、PostgreSQL 连接池、存活/就绪接口、锁文件及容器。LangGraph 和 PostgreSQL checkpointer 依赖已锁定，执行图在 M2 后接入。完整目标见 [Python 详细设计](docs/design.md)。
+M1 提供工程基础；M2 已接入持久化命令队列、回调 outbox、LangGraph 只读图、PostgreSQL checkpointer 和工具结果缓存。完整目标见 [Python 详细设计](docs/design.md)，当前范围见 [M2 交付说明](../docs/m2-read-tasks.md)。
 
 - 规划内网端口：`8000`。
 - 只接受 Go 服务授权的执行、恢复、取消和索引任务。

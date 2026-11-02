@@ -5,9 +5,9 @@
 *.pem
 *.key
 *.log
-runtime/
-storage/
-uploads/
+/runtime/
+/storage/
+/uploads/
 .gocache/
 .gomodcache/
 .cache/

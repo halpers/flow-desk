@@ -3,10 +3,91 @@
 
 package types
 
+type AgentEventReq struct {
+	RunId           string                 `path:"run_id"`
+	SourceEventId   string                 `json:"source_event_id"`
+	LeaseGeneration int64                  `json:"lease_generation"`
+	Type            string                 `json:"type"`
+	OccurredAt      string                 `json:"occurred_at"`
+	Payload         map[string]interface{} `json:"payload"`
+}
+
+type ConversationData struct {
+	Id          string `json:"id"`
+	Title       string `json:"title"`
+	Status      string `json:"status"`
+	Version     int64  `json:"version"`
+	ActiveRunId string `json:"active_run_id"`
+	UpdatedAt   string `json:"updated_at"`
+}
+
+type ConversationPage struct {
+	Items      []ConversationData `json:"items"`
+	NextCursor string             `json:"next_cursor"`
+	HasMore    bool               `json:"has_more"`
+}
+
+type ConversationReq struct {
+	ConversationId string `path:"conversation_id"`
+}
+
+type ConversationResp struct {
+	Code      string           `json:"code"`
+	RequestId string           `json:"request_id"`
+	Data      ConversationData `json:"data"`
+}
+
+type ConversationsResp struct {
+	Code      string           `json:"code"`
+	RequestId string           `json:"request_id"`
+	Data      ConversationPage `json:"data"`
+}
+
+type CreateConversationReq struct {
+	Title          string `json:"title"`
+	IdempotencyKey string `header:"Idempotency-Key"`
+}
+
 type EmptyResp struct {
 	Code      string `json:"code"`
 	Message   string `json:"message"`
 	RequestId string `json:"request_id"`
+}
+
+type EventAck struct {
+	Seq int64 `json:"seq"`
+}
+
+type EventAckResp struct {
+	Code      string   `json:"code"`
+	RequestId string   `json:"request_id"`
+	Data      EventAck `json:"data"`
+}
+
+type EventData struct {
+	SchemaVersion string                 `json:"schema_version"`
+	RunId         string                 `json:"run_id"`
+	Seq           int64                  `json:"seq"`
+	Type          string                 `json:"type"`
+	OccurredAt    string                 `json:"occurred_at"`
+	Payload       map[string]interface{} `json:"payload"`
+}
+
+type EventsReq struct {
+	RunId    string `path:"run_id"`
+	AfterSeq int64  `form:"after_seq,default=0"`
+}
+
+type ExecutionContext struct {
+	RunId           string   `json:"run_id"`
+	TenantId        string   `json:"tenant_id"`
+	ActorUserId     string   `json:"actor_user_id"`
+	LeaseGeneration int64    `json:"lease_generation"`
+	Capability      string   `json:"capability"`
+	Content         string   `json:"content"`
+	MessageId       string   `json:"message_id"`
+	DeadlineAt      string   `json:"deadline_at"`
+	Tools           []string `json:"tools"`
 }
 
 type HealthResp struct {
@@ -14,9 +95,143 @@ type HealthResp struct {
 	Service string `json:"service"`
 }
 
+type LeaseReq struct {
+	RunId           string `path:"run_id"`
+	DispatchId      string `json:"dispatch_id"`
+	LeaseGeneration int64  `json:"lease_generation"`
+}
+
+type LeaseResp struct {
+	Code      string           `json:"code"`
+	RequestId string           `json:"request_id"`
+	Data      ExecutionContext `json:"data"`
+}
+
 type LoginReq struct {
 	Account  string `json:"account"`
 	Password string `json:"password"`
+}
+
+type LogisticsData struct {
+	Id              string `json:"id"`
+	Status          string `json:"status"`
+	Description     string `json:"description"`
+	OccurredAt      string `json:"occurred_at"`
+	SourceUpdatedAt string `json:"source_updated_at"`
+}
+
+type LogisticsPage struct {
+	Items []LogisticsData `json:"items"`
+}
+
+type LogisticsResp struct {
+	Code      string        `json:"code"`
+	RequestId string        `json:"request_id"`
+	Data      LogisticsPage `json:"data"`
+}
+
+type MessageData struct {
+	Id             string                   `json:"id"`
+	RunId          string                   `json:"run_id"`
+	Role           string                   `json:"role"`
+	Content        string                   `json:"content"`
+	Status         string                   `json:"status"`
+	Generation     int64                    `json:"generation"`
+	Position       int64                    `json:"position"`
+	Citations      []map[string]interface{} `json:"citations"`
+	ActionReceipts []map[string]interface{} `json:"action_receipts"`
+	CreatedAt      string                   `json:"created_at"`
+}
+
+type MessagePage struct {
+	Items      []MessageData `json:"items"`
+	NextCursor string        `json:"next_cursor"`
+	HasMore    bool          `json:"has_more"`
+}
+
+type MessagesReq struct {
+	ConversationId string `path:"conversation_id"`
+	Cursor         string `form:"cursor,optional"`
+	Limit          int64  `form:"limit,default=20,range=[1:100]"`
+}
+
+type MessagesResp struct {
+	Code      string      `json:"code"`
+	RequestId string      `json:"request_id"`
+	Data      MessagePage `json:"data"`
+}
+
+type OrderData struct {
+	Id                 string `json:"id"`
+	OrderNo            string `json:"order_no"`
+	MaskedCustomerName string `json:"masked_customer_name"`
+	Status             string `json:"status"`
+	TotalAmount        string `json:"total_amount"`
+	Currency           string `json:"currency"`
+	Version            int64  `json:"version"`
+	PlacedAt           string `json:"placed_at"`
+}
+
+type OrderPage struct {
+	Items      []OrderData `json:"items"`
+	NextCursor string      `json:"next_cursor"`
+	HasMore    bool        `json:"has_more"`
+}
+
+type OrderReq struct {
+	OrderId string `path:"order_id"`
+}
+
+type OrderResp struct {
+	Code      string    `json:"code"`
+	RequestId string    `json:"request_id"`
+	Data      OrderData `json:"data"`
+}
+
+type OrdersReq struct {
+	Cursor  string `form:"cursor,optional"`
+	Limit   int64  `form:"limit,default=20,range=[1:100]"`
+	OrderNo string `form:"order_no,optional"`
+}
+
+type OrdersResp struct {
+	Code      string    `json:"code"`
+	RequestId string    `json:"request_id"`
+	Data      OrderPage `json:"data"`
+}
+
+type PageReq struct {
+	Cursor string `form:"cursor,optional"`
+	Limit  int64  `form:"limit,default=20,range=[1:100]"`
+}
+
+type RunData struct {
+	Id             string      `json:"id"`
+	ConversationId string      `json:"conversation_id"`
+	Status         string      `json:"status"`
+	Version        int64       `json:"version"`
+	LastEventSeq   int64       `json:"last_event_seq"`
+	ErrorCode      string      `json:"error_code"`
+	ToolCallCount  int64       `json:"tool_call_count"`
+	CurrentMessage MessageData `json:"current_message"`
+}
+
+type RunReq struct {
+	RunId string `path:"run_id"`
+}
+
+type RunResp struct {
+	Code      string  `json:"code"`
+	RequestId string  `json:"request_id"`
+	Data      RunData `json:"data"`
+}
+
+type SendMessageReq struct {
+	ConversationId  string   `path:"conversation_id"`
+	IdempotencyKey  string   `header:"Idempotency-Key"`
+	ClientMessageId string   `json:"client_message_id"`
+	Content         string   `json:"content"`
+	Attachments     []string `json:"attachments,optional"`
 }
 
 type TokenData struct {
@@ -29,6 +244,22 @@ type TokenResp struct {
 	Message   string    `json:"message"`
 	RequestId string    `json:"request_id"`
 	Data      TokenData `json:"data"`
+}
+
+type ToolReq struct {
+	ToolName  string                 `path:"tool_name"`
+	Arguments map[string]interface{} `json:"arguments"`
+}
+
+type ToolResp struct {
+	Code      string     `json:"code"`
+	RequestId string     `json:"request_id"`
+	Data      ToolResult `json:"data"`
+}
+
+type ToolResult struct {
+	Order     OrderData       `json:"order,optional"`
+	Logistics []LogisticsData `json:"logistics,optional"`
 }
 
 type UserData struct {

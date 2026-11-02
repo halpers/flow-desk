@@ -1,0 +1,8 @@
+model:
+  types_map:
+    numeric:
+      type: string
+      null_type: sql.NullString
+    decimal:
+      type: string
+      null_type: sql.NullString

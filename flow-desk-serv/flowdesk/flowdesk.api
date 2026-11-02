@@ -1,7 +1,9 @@
 syntax = "v1"
+
 info (
-    title: "FlowDesk API"
-    version: "0.1.0"
+	title:   "FlowDesk API"
+	version: "0.1.0"
 )
 
 import "api/common.api"
+import "api/tasks.api"

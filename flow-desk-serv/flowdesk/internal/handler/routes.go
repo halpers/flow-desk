@@ -5,6 +5,7 @@ package handler
 
 import (
 	"net/http"
+	"time"
 
 	"flowdesk/internal/svc"
 
@@ -66,5 +67,112 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 			}...,
 		),
 		rest.WithPrefix("/api/v1/auth"),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.SessionAuth},
+			[]rest.Route{
+				{
+					// Create conversation | permission=conversation:use | auth=required
+					Method:  http.MethodPost,
+					Path:    "/conversations",
+					Handler: CreateConversationHandler(serverCtx),
+				},
+				{
+					// List own conversations | permission=conversation:use | auth=required
+					Method:  http.MethodGet,
+					Path:    "/conversations",
+					Handler: ListConversationsHandler(serverCtx),
+				},
+				{
+					// Get own conversation | permission=conversation:use | auth=required
+					Method:  http.MethodGet,
+					Path:    "/conversations/:conversation_id",
+					Handler: GetConversationHandler(serverCtx),
+				},
+				{
+					// List messages | permission=conversation:use | auth=required
+					Method:  http.MethodGet,
+					Path:    "/conversations/:conversation_id/messages",
+					Handler: ListMessagesHandler(serverCtx),
+				},
+				{
+					// Send message | permission=conversation:use | auth=required
+					Method:  http.MethodPost,
+					Path:    "/conversations/:conversation_id/messages",
+					Handler: SendMessageHandler(serverCtx),
+				},
+				{
+					// List orders | permission=order:read | auth=required
+					Method:  http.MethodGet,
+					Path:    "/orders",
+					Handler: ListOrdersHandler(serverCtx),
+				},
+				{
+					// Get order | permission=order:read | auth=required
+					Method:  http.MethodGet,
+					Path:    "/orders/:order_id",
+					Handler: GetOrderHandler(serverCtx),
+				},
+				{
+					// Get logistics | permission=order:read | auth=required
+					Method:  http.MethodGet,
+					Path:    "/orders/:order_id/logistics",
+					Handler: GetLogisticsHandler(serverCtx),
+				},
+				{
+					// Run snapshot | permission=conversation:use | auth=required
+					Method:  http.MethodGet,
+					Path:    "/runs/:run_id",
+					Handler: GetRunHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithPrefix("/api/v1"),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.SessionAuth},
+			[]rest.Route{
+				{
+					// Persisted event stream | permission=conversation:use | auth=required
+					Method:  http.MethodGet,
+					Path:    "/runs/:run_id/events",
+					Handler: StreamEventsHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithPrefix("/api/v1"),
+		rest.WithTimeout(0*time.Nanosecond),
+		rest.WithSSE(),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.ServiceAuth},
+			[]rest.Route{
+				{
+					// Persist agent event | permission=- | auth=run_capability
+					Method:  http.MethodPost,
+					Path:    "/runs/:run_id/events",
+					Handler: IngestEventHandler(serverCtx),
+				},
+				{
+					// Renew run capability | permission=- | auth=service
+					Method:  http.MethodPost,
+					Path:    "/runs/:run_id/lease",
+					Handler: RenewLeaseHandler(serverCtx),
+				},
+				{
+					// Read business tool | permission=order:read | auth=run_capability
+					Method:  http.MethodPost,
+					Path:    "/tools/:tool_name",
+					Handler: CallToolHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithPrefix("/internal/v1"),
 	)
 }

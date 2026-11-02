@@ -28,6 +28,7 @@ type (
 		Insert(ctx context.Context, data *Sessions) (sql.Result, error)
 		FindOne(ctx context.Context, id string) (*Sessions, error)
 		FindOneByRefreshHash(ctx context.Context, refreshHash string) (*Sessions, error)
+		FindOneByTenantIdId(ctx context.Context, tenantId string, id string) (*Sessions, error)
 		Update(ctx context.Context, data *Sessions) error
 		Delete(ctx context.Context, id string) error
 	}
@@ -80,6 +81,20 @@ func (m *defaultSessionsModel) FindOneByRefreshHash(ctx context.Context, refresh
 	var resp Sessions
 	query := fmt.Sprintf("select %s from %s where refresh_hash = $1 limit 1", sessionsRows, m.table)
 	err := m.conn.QueryRowCtx(ctx, &resp, query, refreshHash)
+	switch err {
+	case nil:
+		return &resp, nil
+	case sqlx.ErrNotFound:
+		return nil, ErrNotFound
+	default:
+		return nil, err
+	}
+}
+
+func (m *defaultSessionsModel) FindOneByTenantIdId(ctx context.Context, tenantId string, id string) (*Sessions, error) {
+	var resp Sessions
+	query := fmt.Sprintf("select %s from %s where tenant_id = $1 and id = $2 limit 1", sessionsRows, m.table)
+	err := m.conn.QueryRowCtx(ctx, &resp, query, tenantId, id)
 	switch err {
 	case nil:
 		return &resp, nil

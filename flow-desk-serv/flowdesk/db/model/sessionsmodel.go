@@ -20,6 +20,7 @@ type (
 		InsertTx(context.Context, sqlx.Session, *Sessions) error
 		UpdateRevokedTx(context.Context, sqlx.Session, string) error
 		UpdateRevokedFamilyTx(context.Context, sqlx.Session, string) error
+		ExistsLiveFamilyBySessionTx(context.Context, sqlx.Session, string, string, string) (bool, error)
 	}
 
 	customSessionsModel struct {
@@ -32,6 +33,12 @@ func NewSessionsModel(conn sqlx.SqlConn) SessionsModel {
 	return &customSessionsModel{
 		defaultSessionsModel: newSessionsModel(conn),
 	}
+}
+
+func (m *customSessionsModel) ExistsLiveFamilyBySessionTx(ctx context.Context, tx sqlx.Session, tenant, actor, session string) (bool, error) {
+	var active bool
+	err := tx.QueryRowCtx(ctx, &active, fmt.Sprintf("select exists(select 1 from %s anchor join %s live on live.family_id=anchor.family_id where anchor.tenant_id=$1 and anchor.user_id=$2 and anchor.id=$3 and live.revoked_at is null and live.expires_at>now())", m.table, m.table), tenant, actor, session)
+	return active, err
 }
 
 // Serialize rotation, reuse detection and logout across every token in a family.

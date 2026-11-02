@@ -22,7 +22,7 @@
 ## 本机开发
 
 - Go：1.27.1，go-zero 1.10.3，goctl 1.10.2。模块在 `flow-desk-serv/flowdesk`，依赖由 `go.mod/go.sum` 固定。
-- Python：3.12，推荐本地独立 `.venv`，`pip install -r requirements.lock`。固定安装结果包含 LangGraph 和 PostgreSQL checkpointer；后续阶段才接入执行图。
+- Python：3.12，推荐本地独立 `.venv`，`pip install -r requirements.lock`。M2 已接入 LangGraph 和 PostgreSQL checkpointer；运行需设置 `AGENT_DATABASE_URL`、`GO_BASE_URL`、`INTERNAL_TOKEN`。
 - Node：22.12+ 或 24，pnpm 11.25.0，使用 `pnpm install --frozen-lockfile`。
 - PostgreSQL：18 + pgvector，Compose 镜像提供扩展。
 
@@ -38,9 +38,13 @@
 pnpm.cmd --dir flow-desk-web build
 flow-desk-agent\.venv\Scripts\python.exe -m ruff check flow-desk-agent/src flow-desk-agent/scripts
 flow-desk-agent\.venv\Scripts\python.exe scripts/smoke.py
+flow-desk-agent\.venv\Scripts\python.exe scripts/check-agent.py
+flow-desk-agent\.venv\Scripts\python.exe scripts/smoke-tasks.py
+pnpm.cmd --dir flow-desk-web test
+pnpm.cmd --dir flow-desk-web test:e2e
 ```
 
-`check-go.ps1` 创建并删除唯一命名的测试数据库，不重置业务 schema。覆盖 refresh 轮换/复用撤销、退出、跨租户外键以及后续写失败的事务回滚。HTTP smoke 通过实际前端代理检查登录、Cookie、Origin、轮换和退出。
+`check-go.ps1` 创建并删除唯一命名的测试数据库，不重置业务 schema。覆盖认证、事务回滚及 M2 任务、事件、授权和并发配额。`check-agent.py` 使用独立临时 schema。HTTP smoke 通过实际前端代理检查认证及三服务查询，E2E 使用本机 Chrome 验证页面和重连。详见 [M2 交付说明](m2-read-tasks.md)。
 
 契约从 `.api` 导出 Swagger，再转换 OpenAPI 3、生成 TypeScript；Python 从 FastAPI 导出 OpenAPI。第二次导出应无 diff。新增接口必须先扩展来源，禁止手改生成文件。
 
@@ -48,6 +52,6 @@ flow-desk-agent\.venv\Scripts\python.exe scripts/smoke.py
 
 ## 当前边界
 
-阶段状态以 [实施记录](progress.md) 为准。M1 只提供工程、登录身份、数据库迁移和契约，页面中的任务/知识入口在后续阶段接入。M1 使用代码定义的三个固定角色，`users.role` 保存单一角色；多角色关联表属于后续团队权限扩展。
+阶段状态以 [实施记录](progress.md) 为准。M1 提供工程与身份；M2 已能查询订单/物流并恢复任务进度，当前图使用假模型。知识、真实模型和办理按后续阶段接入。当前使用三个固定角色，`users.role` 保存单一角色；多角色关联表属于后续团队权限扩展。
 
 本地 HTTP Cookie 为 HttpOnly、SameSite=Strict。生产接入 TLS 反向代理时设置 `COOKIE_SECURE=true`、调整可信 Origin 并使用非 dev 模式；非 dev 模式会拒绝关闭 Secure Cookie 的配置。模型配置默认为 mock，不会在 M1 启动时调用外部模型。

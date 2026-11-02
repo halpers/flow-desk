@@ -10,6 +10,7 @@ await fs.writeFile(new URL('../../shared/contracts/go.swagger.json',import.meta.
 const {openapi}=await converter.convertObj(swagger,{});
 openapi['x-generated-by']='goctl 1.10.2 + swagger2openapi 7.0.8; edit .api sources';
 await fs.writeFile(input,JSON.stringify(openapi,null,2)+'\n');
+await fs.writeFile(new URL('../../flow-desk-agent/src/flowdesk_agent/tools/go.openapi.json',import.meta.url),JSON.stringify(openapi,null,2)+'\n');
 const nodes = await openapiTS(input);
 await fs.mkdir(new URL('../src/shared/api/', import.meta.url), {recursive:true});
 await fs.writeFile(output, '/** Generated from Go .api via OpenAPI. DO NOT EDIT. */\n'+astToString(nodes));

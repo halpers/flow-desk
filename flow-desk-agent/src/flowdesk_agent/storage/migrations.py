@@ -1,0 +1,72 @@
+"""Agent-owned schema only. No Go business table is read or written here."""
+
+from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
+from psycopg_pool import AsyncConnectionPool
+
+MIGRATION_LOCK = 60111102
+MIGRATIONS = [
+    """
+    CREATE TABLE execution_commands (
+        dispatch_id UUID PRIMARY KEY, run_id UUID NOT NULL,
+        lease_generation BIGINT NOT NULL CHECK (lease_generation>0),
+        command TEXT NOT NULL, request_hash TEXT NOT NULL, body JSONB NOT NULL,
+        status TEXT NOT NULL DEFAULT 'queued'
+            CHECK (status IN ('queued','running','completed','failed')),
+        lease_owner UUID, lease_expires_at TIMESTAMPTZ,
+        attempt_count INTEGER NOT NULL DEFAULT 0, available_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        error_code TEXT NOT NULL DEFAULT '', created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        UNIQUE(run_id,lease_generation,command)
+    );
+    CREATE INDEX command_claim_idx ON execution_commands(status,available_at,lease_expires_at);
+    CREATE TABLE execution_owners (
+        run_id UUID PRIMARY KEY, current_generation BIGINT NOT NULL,
+        dispatch_id UUID NOT NULL, worker_id UUID NOT NULL,
+        ownership_version BIGINT NOT NULL DEFAULT 1, updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    CREATE TABLE callback_outbox (
+        source_event_id UUID PRIMARY KEY,
+        dispatch_id UUID NOT NULL REFERENCES execution_commands(dispatch_id),
+        run_id UUID NOT NULL, lease_generation BIGINT NOT NULL, position BIGINT NOT NULL,
+        type TEXT NOT NULL, body JSONB NOT NULL,
+        status TEXT NOT NULL DEFAULT 'pending'
+            CHECK(status IN ('pending','delivering','acked','permanent_failure')),
+        lease_owner UUID, lease_expires_at TIMESTAMPTZ, attempt_count INTEGER NOT NULL DEFAULT 0,
+        available_at TIMESTAMPTZ NOT NULL DEFAULT now(), error_code TEXT NOT NULL DEFAULT '',
+        ack_seq BIGINT, created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        UNIQUE(dispatch_id,position)
+    );
+    CREATE INDEX callback_claim_idx
+        ON callback_outbox(status,available_at,run_id,lease_generation,position);
+    CREATE TABLE tool_results (
+        id UUID PRIMARY KEY, dispatch_id UUID NOT NULL REFERENCES execution_commands(dispatch_id),
+        tool_name TEXT NOT NULL, arguments JSONB NOT NULL, result JSONB NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    """
+]
+
+
+async def migrate(pool: AsyncConnectionPool) -> None:
+    async with pool.connection() as conn:
+        await conn.execute("SELECT pg_advisory_lock(%s)", (MIGRATION_LOCK,))
+        try:
+            await conn.execute(
+                "CREATE TABLE IF NOT EXISTS schema_versions "
+                "(version INTEGER PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())"
+            )
+            for version, sql in enumerate(MIGRATIONS, start=1):
+                existing = await (
+                    await conn.execute(
+                        "SELECT version FROM schema_versions WHERE version=%s", (version,)
+                    )
+                ).fetchone()
+                if existing:
+                    continue
+                async with conn.transaction():
+                    await conn.execute(sql, prepare=False)
+                    await conn.execute(
+                        "INSERT INTO schema_versions(version) VALUES (%s)", (version,)
+                    )
+            await AsyncPostgresSaver(pool).setup()
+        finally:
+            await conn.execute("SELECT pg_advisory_unlock(%s)", (MIGRATION_LOCK,))

@@ -2,6 +2,7 @@ package model
 
 import (
 	"context"
+	"fmt"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
 
@@ -14,6 +15,7 @@ type (
 		usersModel
 		withSession(session sqlx.Session) UsersModel
 		FindOneTx(context.Context, sqlx.Session, string) (*Users, error)
+		SetEnabledTx(context.Context, sqlx.Session, string, bool) error
 	}
 
 	customUsersModel struct {
@@ -26,6 +28,10 @@ func NewUsersModel(conn sqlx.SqlConn) UsersModel {
 	return &customUsersModel{
 		defaultUsersModel: newUsersModel(conn),
 	}
+}
+
+func (m *customUsersModel) SetEnabledTx(ctx context.Context, tx sqlx.Session, id string, enabled bool) error {
+	return requireOne(tx.ExecCtx(ctx, fmt.Sprintf("update %s set enabled=$2 where id=$1", m.table), id, enabled))
 }
 
 func (m *customUsersModel) FindOneTx(ctx context.Context, tx sqlx.Session, id string) (*Users, error) {
