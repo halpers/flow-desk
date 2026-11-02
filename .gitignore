@@ -1,0 +1,43 @@
+# Credentials and runtime state
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.log
+runtime/
+storage/
+uploads/
+.gocache/
+.gomodcache/
+.cache/
+work/
+
+# Go and Python
+*.exe
+*.test
+coverage.out
+coverage.xml
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Frontend and editors
+node_modules/
+dist/
+coverage/
+playwright-report/
+test-results/
+*.tsbuildinfo
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Keep evaluation inputs synthetic; reports are reviewed deliverables
+flow-desk-agent/evals/local-private/

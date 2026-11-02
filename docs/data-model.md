@@ -1,0 +1,216 @@
+# 数据模型与一致性设计
+
+版本：v0.1；本文描述完整逻辑模型及约束。M1 已迁移 tenants/users/sessions；users.role 保存单一固定角色，扩展多角色关联表留待团队权限专项。其余表按后续阶段迁移，实际范围见实施记录。
+
+## 1. 数据库与公共字段
+
+PostgreSQL 单实例分 `business`、`agent`、`knowledge` 三个 schema；Go、Python、迁移程序使用不同角色。跨服务通过 API 获取对方事实，不通过数据库 JOIN 绕过授权。需要扩展到不同数据库时维持相同 API 边界。
+
+Go 所有表采用单列 UUID 主键 id；租户表另设 `UNIQUE(tenant_id,id)`，供同租户复合外键使用。tenant_id 非空并指向 tenants；所有租户对象关系使用 `(tenant_id,object_id)` 外键，阻止跨租户关联。避免将复合主键支持问题留给 goctl 生成器。
+
+公共字段：`created_at/updated_at TIMESTAMPTZ`；并发修改对象加 `version BIGINT`；枚举用受 CHECK 约束的 TEXT 并在代码中使用命名常量。业务编号与主键分离；敏感业务字段按最小需要保存及脱敏。
+
+金额使用 `NUMERIC(20,2)` 和货币码；本例使用两位小数货币，增加其他币种前扩展金额精度规则。API 返回精确字符串。状态时间以数据库时钟比较，避免多 worker 本地时钟偏差。
+
+软删除只用于确需保留引用的实体。会话关闭、文档撤回等使用明确状态，不用一个 deleted 标记隐含所有业务语义。
+
+## 2. 身份与授权表（Go）
+
+| 表 | 关键字段 | 约束/查询 |
+| --- | --- | --- |
+| tenants | code、name、status | code 全局唯一 |
+| users | tenant_id、account、password_hash、display_name、status、permission_revision | `(tenant_id,account)` 唯一；状态变化更新权限版本 |
+| roles | tenant_id、code、name | 固定角色种子，`(tenant_id,code)` 唯一 |
+| user_roles | tenant_id、user_id、role_id | 三者组合唯一，同租户复合 FK |
+| sessions | tenant_id、user_id、refresh_hash、refresh_family_id、expires_at、revoked_at、permission_revision | refresh_hash 唯一；按 user 和过期时间索引 |
+
+密码使用成熟密码哈希实现；认证实现阶段验证算法及参数。角色权限集合由代码版本化映射，Go 响应当前权限码；模型/前端不提交自己的权限列表。Refresh 轮换在同一事务内撤销旧值并创建新值，检测复用时撤销该 family。
+
+## 3. 会话与消息（Go）
+
+### conversations
+
+字段：tenant_id、owner_user_id、title、status（active/archived）、created_at、updated_at、version。
+
+索引：`(tenant_id,owner_user_id,updated_at DESC,id DESC)`。会话详情通过 owner 或独立明确授权读取；团队工单角色不自动获得会话内容权限。
+
+### messages
+
+字段：tenant_id、conversation_id、run_id（用户消息创建时与 run 原子关联）、role（user/assistant）、client_message_id、content、status（streaming/final/aborted）、generation、last_chunk_index、citations JSONB、action_receipts JSONB、created_at、updated_at。
+
+约束：用户消息的 `(tenant_id,conversation_id,client_message_id)` 唯一；助手消息的 `(tenant_id,run_id,role)` 部分唯一。content 初始限制 32,000 字符，用户输入另限 8,000。JSON 引用必须由验证后的工具结果构建，不存随意模型对象。
+
+消息正文是页面快照的权威展示源。每个有效 message.delta 更新草稿和事件须在同一 Go 事务内完成；message.completed 覆盖草稿并固定引用。失败时保留已展示草稿但标为 aborted，不能伪装成完整结论。
+
+## 4. 任务、执行与事件（Go）
+
+### runs
+
+| 字段 | 说明 |
+| --- | --- |
+| id、tenant_id、conversation_id、actor_user_id | 对象归属与发起人 |
+| input_message_id、retry_of_run_id | 输入与显式重试来源 |
+| status、version、last_event_seq | 状态条件更新与一致快照游标 |
+| lease_generation、lease_owner、lease_expires_at | 当前执行器围栏与租约 |
+| graph_version、prompt_version、model_profile_version | 可重现的执行配置快照 |
+| step_count、tool_call_count、input_tokens、output_tokens、cost_estimate | 累计预算和用量 |
+| active_execution_ms、deadline_at、wait_expires_at | 执行期限和等待期限 |
+| result_message_id、error_code、error_summary | 终态回执或脱敏原因 |
+| started_at、finished_at、created_at、updated_at | 时间线 |
+
+关键约束：同一 `(tenant_id,conversation_id)` 至多一个非终态 run，以明确活动状态集合建立部分唯一索引。status 必须在总体设计枚举中；版本/seq/预算非负。禁止终态回到活动态。
+
+索引：`(status,lease_expires_at,id)` 用于过期扫描；`(tenant_id,conversation_id,created_at DESC,id DESC)` 用于历史；`(tenant_id,actor_user_id,created_at DESC,id DESC)` 用于本人任务。
+
+### run_attempts
+
+字段：tenant_id、run_id、lease_generation、dispatch_id、command（execute/resume）、checkpoint_ref、worker_id、state、started_at、finished_at、error_code、created_at。
+
+唯一键：dispatch_id；`(tenant_id,run_id,lease_generation)`。同一次代次网络重投使用原 dispatch_id。恢复动作消耗新代次，Go 和 Python 均验证代次与当前所有者。
+
+### run_events
+
+字段：tenant_id、run_id、seq、source（go/agent）、source_event_id、source_payload_hash、type、schema_version、payload JSONB、occurred_at、created_at。
+
+唯一键：`(tenant_id,run_id,seq)`；`(tenant_id,run_id,source,source_event_id)`。按 run+seq 范围读取，无需另设只按时间排序的事件索引。事件去重先于分配 seq；所有新事件在锁定 run 行后更新 last_event_seq。
+
+事件、消息草稿/最终内容和公开状态的相关修改同事务提交。SSE 只读取提交结果，不直接转发尚未确认的 Python 网络输出。
+
+### pending_inputs
+
+字段：tenant_id、run_id、question、choices JSONB、status（pending/answered/expired/cancelled）、answer_message_id、checkpoint_ref、expires_at、version。一个 run 只允许一个 pending input。
+
+## 5. 动作、确认与幂等回执（Go）
+
+### actions
+
+字段：tenant_id、run_id、tool_name、tool_version、arguments JSONB、payload_digest、resource_versions JSONB、evidence_versions JSONB、status、expires_at、version、created_at。
+
+id 为 Python 在副作用前生成并落盘的稳定 action_id。Go 对参数规范化、补充资源版本后生成摘要。arguments/资源版本/依据版本在 prepared 之后不可变；修改必须创建新 action。
+
+### approvals
+
+字段：tenant_id、run_id、action_id、requester_user_id、status（prepared/pending/approved/rejected/expired/invalidated）、payload_digest、display_snapshot JSONB、checkpoint_ref、decided_by、decision_reason、decided_at、expires_at、version。
+
+约束：`(tenant_id,action_id)` 唯一；与 action、run 同租户。审批是普通操作人确认，不包含一期未实现的双人复核语义。
+
+### action_receipts
+
+字段：tenant_id、action_id、tool_name、business_object_type、business_object_id、result JSONB、executed_by、executed_at。
+
+唯一键：`(tenant_id,action_id)`。回执和实际业务变化、审计在同一 Go 数据库事务中提交。结果中保存足够重放响应的脱敏业务字段，而非动态依赖工单当前状态。
+
+写工具在回执已存在且调用方仍有读取权限时返回同一结果；否则验证未过期批准、精确摘要、资源版本、任务状态和当前 lease_generation 后执行。幂等记录无需通过模型判断。
+
+## 6. 订单与工单（Go）
+
+| 表 | 关键字段 | 约束/索引 |
+| --- | --- | --- |
+| orders | tenant_id、order_no、customer_ref、masked_customer_name、status、total_amount、currency、placed_at、version | `(tenant_id,order_no)` 唯一；租户+时间分页 |
+| order_items | tenant_id、order_id、sku、title、quantity、unit_amount | 订单复合 FK，数量和金额 CHECK |
+| logistics_events | tenant_id、order_id、provider_event_id、occurred_at、status、description、source_updated_at | `(tenant_id,provider_event_id)` 唯一；订单+事件时间 |
+| tickets | tenant_id、ticket_no、order_id、title、description、category、priority、status、assignee_user_id、created_by、source_action_id、version | 编号租户内唯一；source_action_id 非空时租户内唯一 |
+| ticket_notes | tenant_id、ticket_id、content、created_by、source_action_id | action 来源唯一，内部备注长度限制 |
+| ticket_events | tenant_id、ticket_id、event_type、actor_user_id、before_value、after_value、action_id | 工单+创建时间/id，保存状态及分配历史 |
+
+工单按 `(tenant_id,status,updated_at DESC,id DESC)` 和 `(tenant_id,order_id,created_at DESC,id DESC)` 查询。仅为实用查询建立索引，避免对每个筛选组合建索引。
+
+同一订单可能存在多张不同问题工单，因此不设置“每订单只一张工单”的错误全局唯一约束。创建前向工作人员展示现有相似工单；一次逻辑创建由 action_id 或手工幂等键防重。
+
+订单/物流在一期由合成种子与模拟适配器提供。不得把真实客户数据作为示例提交，也不把区块链或钱包专属表迁入本项目。
+
+## 7. 知识元数据与索引（Go / Python）
+
+### Go business 元数据
+
+| 表 | 关键字段 | 语义 |
+| --- | --- | --- |
+| knowledge_bases | tenant_id、name、status、acl_revision | 知识库权限和当前授权版本 |
+| knowledge_base_acl | tenant_id、knowledge_base_id、role_id、can_read、can_manage | 固定角色授权，同租户 FK |
+| documents | tenant_id、knowledge_base_id、title、status、active_version_id、activation_sequence、version | 有效版本指针和并发激活保护 |
+| document_versions | tenant_id、document_id、version_no、content_hash、storage_key、mime_type、file_size、status、manifest_id | `(tenant_id,document_id,version_no)` 唯一 |
+| index_jobs | tenant_id、document_version_id、activation_sequence、status、dispatch_id、attempt_count、error_code | 可重投、可取消的索引任务 |
+
+文件按服务端生成 storage_key 保存；版本创建后内容不可变。active_version_id 复合外键保证同租户，在迁移中处理 documents 与 versions 的创建顺序。内容相同只在明确的 document/tenant 作用域复用，不暴露跨租户文件存在性。
+
+索引任务状态：queued/running/ready/failed/cancelled。文档版本状态：uploaded/indexing/ready/failed/withdrawn；仅 active_version_id 指向的 ready 版本可用于当前政策。新版本失败不撤回旧版本；withdraw 会立即更新 Go 权限可见性。
+
+### Python knowledge 索引
+
+| 表 | 关键字段 |
+| --- | --- |
+| index_manifests | tenant_id、knowledge_base_id、document_id、version_id、embedding_model、dimension、splitter_version、content_hash、state、chunk_count |
+| chunks | tenant_id、knowledge_base_id、version_id、manifest_id、chunk_id、position、page、heading_path、content、token_count、lexical_text、embedding |
+
+chunk_id 是稳定 UUID，基于版本与分块序号生成或写入一次后复用。`(tenant_id,version_id,position,manifest_id)` 唯一。向量维度固定到一个 embedding collection/model namespace，模型或维度变化创建新 collection 并重建，不能混写。
+
+lexical_text 保存 Python 分词后的词项，用 PostgreSQL `simple` 配置建立全文索引；中文质量需要评测，不能假设数据库默认英文分词即可满足中文召回。索引包括租户/知识库/版本过滤、向量检索和词项检索所需结构，具体 vector 类型及索引参数由实现压测确定。
+
+流程：Python 提交 ready manifest→回调 Go→Go 验证版本/激活序号并切换指针→Python 后续清理旧 manifest。Go 和 Python 无跨库事务；检索候选最终经过 Go 复核，消除未激活、已撤回和 ACL 变化的可见性窗口。
+
+## 8. 可靠消息与审计（Go）
+
+### outbox_events
+
+字段：tenant_id、topic、aggregate_id、dispatch_id、payload JSONB、status、available_at、lease_owner、lease_expires_at、attempt_count、last_error_code、created_at、delivered_at。
+
+topic 包含 run.execute、run.resume、run.cancel、knowledge.index。唯一 dispatch_id，调度索引 `(status,available_at,id)` 仅覆盖未完成项。claim 使用短事务和 SKIP LOCKED，外部 HTTP 在事务外执行。
+
+达到重试上限进入 dead_letter，记录可诊断原因；管理员重投复用原 dispatch_id，不修改不可变 payload。业务状态、审批决定和对应 outbox 同事务落盘，避免已确认但恢复命令丢失。
+
+### api_idempotency
+
+字段：tenant_id、actor_user_id、operation、key_hash、request_hash、status、response_status、response_body、expires_at。唯一键为租户、操作者、操作名和 key_hash；保存的响应须脱敏，含令牌响应不进入此通用缓存。
+
+### audit_events
+
+字段：tenant_id、actor_user_id、service_identity、action、resource_type、resource_id、run_id、action_id、request_id、trace_id、outcome、error_code、redacted_summary、created_at。
+
+成功的业务变更审计和业务数据同事务；失败请求审计在失败事务外追加，以免随回滚消失。审计不保存密码、令牌、原始个人信息、完整模型提示或模型私有推理。后台清理与导出也留痕。
+
+## 9. Python 执行数据
+
+| agent 表/集合 | 内容与约束 |
+| --- | --- |
+| execution_commands | dispatch_id 唯一、run_id、lease_generation、command、可信上下文、状态和时间；接收先落盘 |
+| execution_owners | run_id 唯一、current_generation、worker_id、ownership_version；配合数据库执行锁 |
+| checkpoint tables | 由已锁定版本的 PostgreSQL checkpointer 管理；thread_id 固定 run:{UUID} |
+| callback_outbox | source_event_id 唯一、run_id、代次、稳定 payload/hash、顺序、重试和 ack |
+| index_commands | job_id/dispatch_id 唯一、版本和索引阶段、错误及重试状态 |
+
+Python 自有迁移与 checkpointer 的 setup/升级通过受控迁移任务完成。运行时账号不给任意 DDL 权限；启动前验证迁移版本。不得从 Go goose 迁移越权修改 Python 框架表。
+
+执行锁保证同 run 图只有一个检查点写入者；checkpoint 适配必须校验所有权。Go 业务动作由租约代次额外围栏。该并发保证需作为 M4 故障测试的硬验收，不能只依赖框架“支持恢复”的说明。
+
+## 10. 关键事务边界与锁顺序
+
+统一业务写锁顺序：run（存在时）→action→approval→业务主对象→关联表。手工业务写没有 run/action，但同样按主对象到关联表顺序。读取已有回执可先做只读检查，进入写事务后需重新验证。
+
+| 用例 | 同一事务内必须完成 | 事务外完成 |
+| --- | --- | --- |
+| 发送消息 | 幂等记录、会话权限复核、消息、queued run、初始事件、outbox | Python 投递 |
+| 待确认发布 | 验证 checkpoint 引用、prepared→pending、run waiting_approval、事件 | SSE 推送 |
+| 确认 | 版本/权限/有效期核对、决定、run queued、事件、resume outbox | Python 恢复 |
+| 执行 action | run/代次校验、批准及版本复核、业务写、回执、审计、事件 | 模型继续总结 |
+| 取消 | 阻止新写、失效未执行确认、状态、事件、cancel outbox | 执行器停止 |
+| 文档激活 | job/版本/manifest/激活序号校验、active 指针、审计 | 清理旧向量 |
+
+外部请求耗时不占用数据库锁。PostgreSQL 默认 READ COMMITTED 配合显式行锁、唯一约束和版本条件更新；一致快照读取使用短 REPEATABLE READ 事务或同等单语句快照，避免状态和 last_event_seq 对不上。
+
+## 11. 保留、清理与恢复
+
+初始保留策略：run 事件终态后 7 天；消息和完整 trace 30 天；业务 action 回执及审计至少 180 天；普通幂等记录 30 天。等待输入最长 24 小时、pending approval 15 分钟，批准后执行还必须在原动作期限内完成。
+
+清理任务跳过未终态 run、未交付 outbox 和待处理动作。事件清理保留 run 快照及最终消息，旧游标返回 410。Checkpoint 仅在任务终结且恢复窗口结束后清理；框架数据和 Go 数据分别由所属服务清理。
+
+文档撤回后即时限制读取，异步清理全文和向量；历史引用只保留授权允许的元数据，必要时移除摘录。消息和审计保留策略需在真实业务接入前按业务要求配置。
+
+备份覆盖 PostgreSQL 与原文件存储，定期演练“先恢复元数据和原文件→核对 manifest→缺失索引重建”。向量可以重建，业务回执和动作账本不能用模型重新生成。恢复过程禁止将两个未知并发执行器同时置为 active。
+
+## 12. 迁移与生成交付
+
+M1 建立生成器、迁移脚本和模型表清单。迁移按依赖拆为 identity、conversation/run、orders/tickets、actions/outbox、knowledge metadata 等文件，日期加两位顺序号。Goose 记录已应用版本，后续只新增迁移。
+
+所有业务表生成 go-zero 基础模型，并在各表 custom model 扩展本文的锁查询和条件更新。新增跨表事务由 owning logic 组织，禁止在表模型中协调其他表写操作。
+
+必须覆盖的数据库集成案例：跨租户外键拒绝、同会话并发发起、重复 action、并发确认/取消、回执提交后响应丢失、后续步骤失败回滚、旧文档索引回调乱序、旧 lease_generation 被拒。测试只使用隔离 schema/可丢弃数据库。

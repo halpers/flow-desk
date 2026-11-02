@@ -1,0 +1,74 @@
+syntax = "v1"
+
+type HealthResp {
+    Status string `json:"status"`
+    Service string `json:"service"`
+}
+
+type LoginReq {
+    Account string `json:"account"`
+    Password string `json:"password"`
+}
+
+type TokenData {
+    AccessToken string `json:"access_token"`
+    ExpiresIn int64 `json:"expires_in"`
+}
+
+type TokenResp {
+    Code string `json:"code"`
+    Message string `json:"message"`
+    RequestId string `json:"request_id"`
+    Data TokenData `json:"data"`
+}
+
+type UserData {
+    Id string `json:"id"`
+    TenantId string `json:"tenant_id"`
+    Account string `json:"account"`
+    DisplayName string `json:"display_name"`
+    Role string `json:"role"`
+    Permissions []string `json:"permissions"`
+}
+
+type UserResp {
+    Code string `json:"code"`
+    Message string `json:"message"`
+    RequestId string `json:"request_id"`
+    Data UserData `json:"data"`
+}
+
+type EmptyResp {
+    Code string `json:"code"`
+    Message string `json:"message"`
+    RequestId string `json:"request_id"`
+}
+
+service flowdesk-api {
+    @doc "Liveness | permission=- | auth=public"
+    @handler Live
+    get /health/live returns (HealthResp)
+    @doc "Readiness | permission=- | auth=public"
+    @handler Ready
+    get /health/ready returns (HealthResp)
+}
+
+@server(prefix: /api/v1/auth)
+service flowdesk-api {
+    @doc "Login | permission=- | auth=public"
+    @handler Login
+    post /login (LoginReq) returns (TokenResp)
+    @doc "Refresh | permission=- | auth=refresh_cookie"
+    @handler Refresh
+    post /refresh returns (TokenResp)
+    @doc "Logout | permission=- | auth=refresh_cookie"
+    @handler Logout
+    post /logout returns (EmptyResp)
+}
+
+@server(prefix: /api/v1/auth middleware: SessionAuth)
+service flowdesk-api {
+    @doc "Current user | permission=- | auth=required"
+    @handler Me
+    get /me returns (UserResp)
+}

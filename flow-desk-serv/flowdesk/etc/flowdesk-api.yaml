@@ -1,0 +1,13 @@
+Name: flowdesk-api
+Host: 0.0.0.0
+Port: 8080
+Mode: dev
+Middlewares:
+  Log: false
+Timeout: 10000
+DatabaseUrl: ${DATABASE_URL}
+JwtSecret: ${JWT_SECRET}
+InternalToken: ${INTERNAL_TOKEN}
+AgentUrl: ${AGENT_URL}
+AllowedOrigins: ${ALLOWED_ORIGINS}
+CookieSecure: ${COOKIE_SECURE}
