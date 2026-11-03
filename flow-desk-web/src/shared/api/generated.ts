@@ -68,6 +68,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/citations/{evidence_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** GetCitation | permission=conversation:use | auth=required */
+        get: operations["getCitation"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/conversations": {
         parameters: {
             query?: never;
@@ -115,6 +132,111 @@ export interface paths {
         put?: never;
         /** Send message | permission=conversation:use | auth=required */
         post: operations["sendMessage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/documents/{document_id}/activate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** ActivateDocument | permission=knowledge:manage | auth=required */
+        post: operations["activateDocument"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/documents/{document_id}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** ListDocumentVersions | permission=knowledge:manage | auth=required */
+        get: operations["listDocumentVersions"];
+        put?: never;
+        /** UploadDocumentVersion | permission=knowledge:manage | auth=required */
+        post: operations["uploadDocumentVersion"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/documents/{document_id}/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** WithdrawDocument | permission=knowledge:manage | auth=required */
+        post: operations["withdrawDocument"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/knowledge-bases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** ListKnowledgeBases | permission=conversation:use | auth=required */
+        get: operations["listKnowledgeBases"];
+        put?: never;
+        /** CreateKnowledgeBase | permission=knowledge:manage | auth=required */
+        post: operations["createKnowledgeBase"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/knowledge-bases/{knowledge_base_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** UpdateKnowledgeAcl | permission=knowledge:manage | auth=required */
+        patch: operations["updateKnowledgeAcl"];
+        trace?: never;
+    };
+    "/api/v1/knowledge-bases/{knowledge_base_id}/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** ListDocuments | permission=conversation:use | auth=required */
+        get: operations["listDocuments"];
+        put?: never;
+        /** UploadDocument | permission=knowledge:manage | auth=required */
+        post: operations["uploadDocument"];
         delete?: never;
         options?: never;
         head?: never;
@@ -240,6 +362,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/internal/v1/knowledge/versions/{version_id}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** CompleteIndex | permission=- | auth=service */
+        post: operations["completeIndex"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/v1/knowledge/versions/{version_id}/source": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** GetIndexSource | permission=- | auth=service */
+        get: operations["getIndexSource"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/internal/v1/runs/{run_id}/events": {
         parameters: {
             query?: never;
@@ -251,6 +407,40 @@ export interface paths {
         put?: never;
         /** Persist agent event | permission=- | auth=run_capability */
         post: operations["ingestEvent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/v1/runs/{run_id}/knowledge-scope": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** GetKnowledgeScope | permission=- | auth=run_capability */
+        get: operations["getKnowledgeScope"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/v1/runs/{run_id}/knowledge/validate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** ValidateEvidence | permission=- | auth=run_capability */
+        post: operations["validateEvidence"];
         delete?: never;
         options?: never;
         head?: never;
@@ -412,6 +602,37 @@ export interface operations {
                             expires_in: number;
                         };
                         message?: string;
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    getCitation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                evidence_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            chunk_id: string;
+                            excerpt: string;
+                            id: string;
+                            title: string;
+                            version_id: string;
+                        };
                         request_id?: string;
                     };
                 };
@@ -626,6 +847,341 @@ export interface operations {
                             status: string;
                             tool_call_count: number;
                             version: number;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    activateDocument: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    expected_version: number;
+                    version_id: string;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            active_version_id: string;
+                            id: string;
+                            knowledge_base_id: string;
+                            status: string;
+                            title: string;
+                            version: number;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    listDocumentVersions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            items: {
+                                chunk_count: number;
+                                content_hash: string;
+                                document_id: string;
+                                error_code: string;
+                                filename: string;
+                                id: string;
+                                index_status: string;
+                            }[];
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    uploadDocumentVersion: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    content: string;
+                    filename: string;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            chunk_count: number;
+                            content_hash: string;
+                            document_id: string;
+                            error_code: string;
+                            filename: string;
+                            id: string;
+                            index_status: string;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    withdrawDocument: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    expected_version: number;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            active_version_id: string;
+                            id: string;
+                            knowledge_base_id: string;
+                            status: string;
+                            title: string;
+                            version: number;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    listKnowledgeBases: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            items: {
+                                acl_revision: number;
+                                id: string;
+                                name: string;
+                                read_roles: string[];
+                            }[];
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    createKnowledgeBase: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    name: string;
+                    read_roles: string[];
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            acl_revision: number;
+                            id: string;
+                            name: string;
+                            read_roles: string[];
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    updateKnowledgeAcl: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                knowledge_base_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    expected_revision: number;
+                    read_roles: string[];
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            acl_revision: number;
+                            id: string;
+                            name: string;
+                            read_roles: string[];
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    listDocuments: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                knowledge_base_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            items: {
+                                active_version_id: string;
+                                id: string;
+                                knowledge_base_id: string;
+                                status: string;
+                                title: string;
+                                version: number;
+                            }[];
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    uploadDocument: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                knowledge_base_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    content: string;
+                    filename: string;
+                    title: string;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            chunk_count: number;
+                            content_hash: string;
+                            document_id: string;
+                            error_code: string;
+                            filename: string;
+                            id: string;
+                            index_status: string;
                         };
                         request_id?: string;
                     };
@@ -867,6 +1423,82 @@ export interface operations {
             };
         };
     };
+    completeIndex: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                version_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    chunk_count: number;
+                    content_hash: string;
+                    job_id: string;
+                    status: string;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            chunk_count: number;
+                            content_hash: string;
+                            document_id: string;
+                            error_code: string;
+                            filename: string;
+                            id: string;
+                            index_status: string;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    getIndexSource: {
+        parameters: {
+            query: {
+                job_id: string;
+            };
+            header?: never;
+            path: {
+                version_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            content: string;
+                            content_hash: string;
+                            document_id: string;
+                            knowledge_base_id: string;
+                            tenant_id: string;
+                            version_id: string;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
     ingestEvent: {
         parameters: {
             query?: never;
@@ -899,6 +1531,84 @@ export interface operations {
                         code?: string;
                         data?: {
                             seq: number;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    getKnowledgeScope: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            tenant_id: string;
+                            versions: {
+                                acl_revision: number;
+                                document_id: string;
+                                knowledge_base_id: string;
+                                title: string;
+                                version_id: string;
+                            }[];
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    validateEvidence: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    candidates: {
+                        chunk_id: string;
+                        content_hash: string;
+                        excerpt: string;
+                        version_id: string;
+                    }[];
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            items: {
+                                chunk_id: string;
+                                excerpt: string;
+                                id: string;
+                                title: string;
+                                version_id: string;
+                            }[];
                         };
                         request_id?: string;
                     };

@@ -228,6 +228,69 @@
         }
       }
     },
+    "/api/v1/citations/{evidence_id}": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "GetCitation | permission=conversation:use | auth=required",
+        "operationId": "getCitation",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "evidence_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "version_id",
+                    "chunk_id",
+                    "title",
+                    "excerpt"
+                  ],
+                  "properties": {
+                    "chunk_id": {
+                      "type": "string"
+                    },
+                    "excerpt": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "version_id": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/conversations": {
       "get": {
         "produces": [
@@ -759,6 +822,778 @@
         }
       }
     },
+    "/api/v1/documents/{document_id}/activate": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "ActivateDocument | permission=knowledge:manage | auth=required",
+        "operationId": "activateDocument",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "document_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": [
+                "version_id",
+                "expected_version"
+              ],
+              "properties": {
+                "expected_version": {
+                  "type": "integer"
+                },
+                "version_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "knowledge_base_id",
+                    "title",
+                    "active_version_id",
+                    "version",
+                    "status"
+                  ],
+                  "properties": {
+                    "active_version_id": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "knowledge_base_id": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "version": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/documents/{document_id}/versions": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "ListDocumentVersions | permission=knowledge:manage | auth=required",
+        "operationId": "listDocumentVersions",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "document_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "items"
+                  ],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "document_id",
+                          "filename",
+                          "content_hash",
+                          "index_status",
+                          "chunk_count",
+                          "error_code"
+                        ],
+                        "properties": {
+                          "chunk_count": {
+                            "type": "integer"
+                          },
+                          "content_hash": {
+                            "type": "string"
+                          },
+                          "document_id": {
+                            "type": "string"
+                          },
+                          "error_code": {
+                            "type": "string"
+                          },
+                          "filename": {
+                            "type": "string"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "index_status": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "UploadDocumentVersion | permission=knowledge:manage | auth=required",
+        "operationId": "uploadDocumentVersion",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "document_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "Idempotency-Key",
+            "in": "header"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": [
+                "filename",
+                "content"
+              ],
+              "properties": {
+                "content": {
+                  "type": "string"
+                },
+                "filename": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "document_id",
+                    "filename",
+                    "content_hash",
+                    "index_status",
+                    "chunk_count",
+                    "error_code"
+                  ],
+                  "properties": {
+                    "chunk_count": {
+                      "type": "integer"
+                    },
+                    "content_hash": {
+                      "type": "string"
+                    },
+                    "document_id": {
+                      "type": "string"
+                    },
+                    "error_code": {
+                      "type": "string"
+                    },
+                    "filename": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "index_status": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/documents/{document_id}/withdraw": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "WithdrawDocument | permission=knowledge:manage | auth=required",
+        "operationId": "withdrawDocument",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "document_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": [
+                "expected_version"
+              ],
+              "properties": {
+                "expected_version": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "knowledge_base_id",
+                    "title",
+                    "active_version_id",
+                    "version",
+                    "status"
+                  ],
+                  "properties": {
+                    "active_version_id": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "knowledge_base_id": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "version": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/knowledge-bases": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "ListKnowledgeBases | permission=conversation:use | auth=required",
+        "operationId": "listKnowledgeBases",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "items"
+                  ],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "name",
+                          "read_roles",
+                          "acl_revision"
+                        ],
+                        "properties": {
+                          "acl_revision": {
+                            "type": "integer"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "read_roles": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "CreateKnowledgeBase | permission=knowledge:manage | auth=required",
+        "operationId": "createKnowledgeBase",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "Idempotency-Key",
+            "in": "header"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": [
+                "name",
+                "read_roles"
+              ],
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "read_roles": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "name",
+                    "read_roles",
+                    "acl_revision"
+                  ],
+                  "properties": {
+                    "acl_revision": {
+                      "type": "integer"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "read_roles": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/knowledge-bases/{knowledge_base_id}": {
+      "patch": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "UpdateKnowledgeAcl | permission=knowledge:manage | auth=required",
+        "operationId": "updateKnowledgeAcl",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "knowledge_base_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": [
+                "read_roles",
+                "expected_revision"
+              ],
+              "properties": {
+                "expected_revision": {
+                  "type": "integer"
+                },
+                "read_roles": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "name",
+                    "read_roles",
+                    "acl_revision"
+                  ],
+                  "properties": {
+                    "acl_revision": {
+                      "type": "integer"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "read_roles": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/knowledge-bases/{knowledge_base_id}/documents": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "ListDocuments | permission=conversation:use | auth=required",
+        "operationId": "listDocuments",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "knowledge_base_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "items"
+                  ],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "knowledge_base_id",
+                          "title",
+                          "active_version_id",
+                          "version",
+                          "status"
+                        ],
+                        "properties": {
+                          "active_version_id": {
+                            "type": "string"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "knowledge_base_id": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "version": {
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "UploadDocument | permission=knowledge:manage | auth=required",
+        "operationId": "uploadDocument",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "knowledge_base_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "Idempotency-Key",
+            "in": "header"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": [
+                "title",
+                "filename",
+                "content"
+              ],
+              "properties": {
+                "content": {
+                  "type": "string"
+                },
+                "filename": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "document_id",
+                    "filename",
+                    "content_hash",
+                    "index_status",
+                    "chunk_count",
+                    "error_code"
+                  ],
+                  "properties": {
+                    "chunk_count": {
+                      "type": "integer"
+                    },
+                    "content_hash": {
+                      "type": "string"
+                    },
+                    "document_id": {
+                      "type": "string"
+                    },
+                    "error_code": {
+                      "type": "string"
+                    },
+                    "filename": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "index_status": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/orders": {
       "get": {
         "produces": [
@@ -1258,6 +2093,181 @@
         }
       }
     },
+    "/internal/v1/knowledge/versions/{version_id}/complete": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "CompleteIndex | permission=- | auth=service",
+        "operationId": "completeIndex",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "version_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": [
+                "job_id",
+                "content_hash",
+                "chunk_count",
+                "status"
+              ],
+              "properties": {
+                "chunk_count": {
+                  "type": "integer"
+                },
+                "content_hash": {
+                  "type": "string"
+                },
+                "job_id": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "document_id",
+                    "filename",
+                    "content_hash",
+                    "index_status",
+                    "chunk_count",
+                    "error_code"
+                  ],
+                  "properties": {
+                    "chunk_count": {
+                      "type": "integer"
+                    },
+                    "content_hash": {
+                      "type": "string"
+                    },
+                    "document_id": {
+                      "type": "string"
+                    },
+                    "error_code": {
+                      "type": "string"
+                    },
+                    "filename": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "index_status": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/v1/knowledge/versions/{version_id}/source": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "GetIndexSource | permission=- | auth=service",
+        "operationId": "getIndexSource",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "version_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "job_id",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "tenant_id",
+                    "knowledge_base_id",
+                    "document_id",
+                    "version_id",
+                    "content",
+                    "content_hash"
+                  ],
+                  "properties": {
+                    "content": {
+                      "type": "string"
+                    },
+                    "content_hash": {
+                      "type": "string"
+                    },
+                    "document_id": {
+                      "type": "string"
+                    },
+                    "knowledge_base_id": {
+                      "type": "string"
+                    },
+                    "tenant_id": {
+                      "type": "string"
+                    },
+                    "version_id": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/internal/v1/runs/{run_id}/events": {
       "post": {
         "consumes": [
@@ -1329,6 +2339,200 @@
                   "properties": {
                     "seq": {
                       "type": "integer"
+                    }
+                  }
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/v1/runs/{run_id}/knowledge-scope": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "GetKnowledgeScope | permission=- | auth=run_capability",
+        "operationId": "getKnowledgeScope",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "run_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "tenant_id",
+                    "versions"
+                  ],
+                  "properties": {
+                    "tenant_id": {
+                      "type": "string"
+                    },
+                    "versions": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "version_id",
+                          "document_id",
+                          "knowledge_base_id",
+                          "title",
+                          "acl_revision"
+                        ],
+                        "properties": {
+                          "acl_revision": {
+                            "type": "integer"
+                          },
+                          "document_id": {
+                            "type": "string"
+                          },
+                          "knowledge_base_id": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "version_id": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/v1/runs/{run_id}/knowledge/validate": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "ValidateEvidence | permission=- | auth=run_capability",
+        "operationId": "validateEvidence",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "run_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": [
+                "candidates"
+              ],
+              "properties": {
+                "candidates": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "version_id",
+                      "chunk_id",
+                      "excerpt",
+                      "content_hash"
+                    ],
+                    "properties": {
+                      "chunk_id": {
+                        "type": "string"
+                      },
+                      "content_hash": {
+                        "type": "string"
+                      },
+                      "excerpt": {
+                        "type": "string"
+                      },
+                      "version_id": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "items"
+                  ],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "version_id",
+                          "chunk_id",
+                          "title",
+                          "excerpt"
+                        ],
+                        "properties": {
+                          "chunk_id": {
+                            "type": "string"
+                          },
+                          "excerpt": {
+                            "type": "string"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "version_id": {
+                            "type": "string"
+                          }
+                        }
+                      }
                     }
                   }
                 },

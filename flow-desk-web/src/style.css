@@ -1,6 +1,23 @@
 * {
   box-sizing: border-box;
 }
+.knowledge-document {
+  margin: 16px 0;
+  padding: 16px;
+  border: 1px solid #e0e6df;
+  border-radius: 10px;
+}
+.knowledge-version {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin: 12px 0;
+}
+.citation-excerpt {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
 body {
   margin: 0;
   font-family: Inter, "Segoe UI", "Microsoft YaHei", sans-serif;

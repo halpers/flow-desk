@@ -3,6 +3,12 @@
 
 package types
 
+type ActivateDocumentReq struct {
+	DocumentId      string `path:"document_id"`
+	VersionId       string `json:"version_id"`
+	ExpectedVersion int64  `json:"expected_version"`
+}
+
 type AgentEventReq struct {
 	RunId           string                 `path:"run_id"`
 	SourceEventId   string                 `json:"source_event_id"`
@@ -10,6 +16,16 @@ type AgentEventReq struct {
 	Type            string                 `json:"type"`
 	OccurredAt      string                 `json:"occurred_at"`
 	Payload         map[string]interface{} `json:"payload"`
+}
+
+type CitationReq struct {
+	EvidenceId string `path:"evidence_id"`
+}
+
+type CitationResp struct {
+	Code      string       `json:"code"`
+	RequestId string       `json:"request_id"`
+	Data      EvidenceData `json:"data"`
 }
 
 type ConversationData struct {
@@ -48,6 +64,35 @@ type CreateConversationReq struct {
 	IdempotencyKey string `header:"Idempotency-Key"`
 }
 
+type DocumentData struct {
+	Id              string `json:"id"`
+	KnowledgeBaseId string `json:"knowledge_base_id"`
+	Title           string `json:"title"`
+	ActiveVersionId string `json:"active_version_id"`
+	Version         int64  `json:"version"`
+	Status          string `json:"status"`
+}
+
+type DocumentPage struct {
+	Items []DocumentData `json:"items"`
+}
+
+type DocumentReq struct {
+	DocumentId string `path:"document_id"`
+}
+
+type DocumentResp struct {
+	Code      string       `json:"code"`
+	RequestId string       `json:"request_id"`
+	Data      DocumentData `json:"data"`
+}
+
+type DocumentsResp struct {
+	Code      string       `json:"code"`
+	RequestId string       `json:"request_id"`
+	Data      DocumentPage `json:"data"`
+}
+
 type EmptyResp struct {
 	Code      string `json:"code"`
 	Message   string `json:"message"`
@@ -78,6 +123,36 @@ type EventsReq struct {
 	AfterSeq int64  `form:"after_seq,default=0"`
 }
 
+type EvidenceCandidate struct {
+	VersionId   string `json:"version_id"`
+	ChunkId     string `json:"chunk_id"`
+	Excerpt     string `json:"excerpt"`
+	ContentHash string `json:"content_hash"`
+}
+
+type EvidenceData struct {
+	Id        string `json:"id"`
+	VersionId string `json:"version_id"`
+	ChunkId   string `json:"chunk_id"`
+	Title     string `json:"title"`
+	Excerpt   string `json:"excerpt"`
+}
+
+type EvidencePage struct {
+	Items []EvidenceData `json:"items"`
+}
+
+type EvidenceReq struct {
+	RunId      string              `path:"run_id"`
+	Candidates []EvidenceCandidate `json:"candidates"`
+}
+
+type EvidenceResp struct {
+	Code      string       `json:"code"`
+	RequestId string       `json:"request_id"`
+	Data      EvidencePage `json:"data"`
+}
+
 type ExecutionContext struct {
 	RunId           string   `json:"run_id"`
 	TenantId        string   `json:"tenant_id"`
@@ -93,6 +168,84 @@ type ExecutionContext struct {
 type HealthResp struct {
 	Status  string `json:"status"`
 	Service string `json:"service"`
+}
+
+type IndexCompleteReq struct {
+	VersionId   string `path:"version_id"`
+	JobId       string `json:"job_id"`
+	ContentHash string `json:"content_hash"`
+	ChunkCount  int64  `json:"chunk_count"`
+	Status      string `json:"status"`
+}
+
+type IndexSourceData struct {
+	TenantId        string `json:"tenant_id"`
+	KnowledgeBaseId string `json:"knowledge_base_id"`
+	DocumentId      string `json:"document_id"`
+	VersionId       string `json:"version_id"`
+	Content         string `json:"content"`
+	ContentHash     string `json:"content_hash"`
+}
+
+type IndexSourceReq struct {
+	VersionId string `path:"version_id"`
+	JobId     string `form:"job_id"`
+}
+
+type IndexSourceResp struct {
+	Code      string          `json:"code"`
+	RequestId string          `json:"request_id"`
+	Data      IndexSourceData `json:"data"`
+}
+
+type KnowledgeAclReq struct {
+	KnowledgeBaseId  string   `path:"knowledge_base_id"`
+	ReadRoles        []string `json:"read_roles"`
+	ExpectedRevision int64    `json:"expected_revision"`
+}
+
+type KnowledgeBaseData struct {
+	Id          string   `json:"id"`
+	Name        string   `json:"name"`
+	ReadRoles   []string `json:"read_roles"`
+	AclRevision int64    `json:"acl_revision"`
+}
+
+type KnowledgeBasePage struct {
+	Items []KnowledgeBaseData `json:"items"`
+}
+
+type KnowledgeBaseReq struct {
+	KnowledgeBaseId string `path:"knowledge_base_id"`
+}
+
+type KnowledgeBaseResp struct {
+	Code      string            `json:"code"`
+	RequestId string            `json:"request_id"`
+	Data      KnowledgeBaseData `json:"data"`
+}
+
+type KnowledgeBaseWriteReq struct {
+	Name           string   `json:"name"`
+	ReadRoles      []string `json:"read_roles"`
+	IdempotencyKey string   `header:"Idempotency-Key"`
+}
+
+type KnowledgeBasesResp struct {
+	Code      string            `json:"code"`
+	RequestId string            `json:"request_id"`
+	Data      KnowledgeBasePage `json:"data"`
+}
+
+type KnowledgeScope struct {
+	TenantId string         `json:"tenant_id"`
+	Versions []ScopeVersion `json:"versions"`
+}
+
+type KnowledgeScopeResp struct {
+	Code      string         `json:"code"`
+	RequestId string         `json:"request_id"`
+	Data      KnowledgeScope `json:"data"`
 }
 
 type LeaseReq struct {
@@ -226,6 +379,14 @@ type RunResp struct {
 	Data      RunData `json:"data"`
 }
 
+type ScopeVersion struct {
+	VersionId       string `json:"version_id"`
+	DocumentId      string `json:"document_id"`
+	KnowledgeBaseId string `json:"knowledge_base_id"`
+	Title           string `json:"title"`
+	AclRevision     int64  `json:"acl_revision"`
+}
+
 type SendMessageReq struct {
 	ConversationId  string   `path:"conversation_id"`
 	IdempotencyKey  string   `header:"Idempotency-Key"`
@@ -262,6 +423,21 @@ type ToolResult struct {
 	Logistics []LogisticsData `json:"logistics,optional"`
 }
 
+type UploadDocumentReq struct {
+	KnowledgeBaseId string `path:"knowledge_base_id"`
+	Title           string `json:"title"`
+	Filename        string `json:"filename"`
+	Content         string `json:"content"`
+	IdempotencyKey  string `header:"Idempotency-Key"`
+}
+
+type UploadVersionReq struct {
+	DocumentId     string `path:"document_id"`
+	Filename       string `json:"filename"`
+	Content        string `json:"content"`
+	IdempotencyKey string `header:"Idempotency-Key"`
+}
+
 type UserData struct {
 	Id          string   `json:"id"`
 	TenantId    string   `json:"tenant_id"`
@@ -276,4 +452,35 @@ type UserResp struct {
 	Message   string   `json:"message"`
 	RequestId string   `json:"request_id"`
 	Data      UserData `json:"data"`
+}
+
+type VersionData struct {
+	Id          string `json:"id"`
+	DocumentId  string `json:"document_id"`
+	Filename    string `json:"filename"`
+	ContentHash string `json:"content_hash"`
+	IndexStatus string `json:"index_status"`
+	ChunkCount  int64  `json:"chunk_count"`
+	ErrorCode   string `json:"error_code"`
+}
+
+type VersionPage struct {
+	Items []VersionData `json:"items"`
+}
+
+type VersionResp struct {
+	Code      string      `json:"code"`
+	RequestId string      `json:"request_id"`
+	Data      VersionData `json:"data"`
+}
+
+type VersionsResp struct {
+	Code      string      `json:"code"`
+	RequestId string      `json:"request_id"`
+	Data      VersionPage `json:"data"`
+}
+
+type WithdrawDocumentReq struct {
+	DocumentId      string `path:"document_id"`
+	ExpectedVersion int64  `json:"expected_version"`
 }

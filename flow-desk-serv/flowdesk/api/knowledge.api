@@ -1,0 +1,224 @@
+syntax = "v1"
+
+type KnowledgeBaseData {
+    Id string `json:"id"`
+    Name string `json:"name"`
+    ReadRoles []string `json:"read_roles"`
+    AclRevision int64 `json:"acl_revision"`
+}
+type KnowledgeBaseWriteReq {
+    Name string `json:"name"`
+    ReadRoles []string `json:"read_roles"`
+    IdempotencyKey string `header:"Idempotency-Key"`
+}
+type KnowledgeBaseReq {
+    KnowledgeBaseId string `path:"knowledge_base_id"`
+}
+type KnowledgeAclReq {
+    KnowledgeBaseId string `path:"knowledge_base_id"`
+    ReadRoles []string `json:"read_roles"`
+    ExpectedRevision int64 `json:"expected_revision"`
+}
+type KnowledgeBaseResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data KnowledgeBaseData `json:"data"`
+}
+type KnowledgeBasePage {
+    Items []KnowledgeBaseData `json:"items"`
+}
+type KnowledgeBasesResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data KnowledgeBasePage `json:"data"`
+}
+type DocumentData {
+    Id string `json:"id"`
+    KnowledgeBaseId string `json:"knowledge_base_id"`
+    Title string `json:"title"`
+    ActiveVersionId string `json:"active_version_id"`
+    Version int64 `json:"version"`
+    Status string `json:"status"`
+}
+type UploadDocumentReq {
+    KnowledgeBaseId string `path:"knowledge_base_id"`
+    Title string `json:"title"`
+    Filename string `json:"filename"`
+    Content string `json:"content"`
+    IdempotencyKey string `header:"Idempotency-Key"`
+}
+type UploadVersionReq {
+    DocumentId string `path:"document_id"`
+    Filename string `json:"filename"`
+    Content string `json:"content"`
+    IdempotencyKey string `header:"Idempotency-Key"`
+}
+type DocumentReq {
+    DocumentId string `path:"document_id"`
+}
+type VersionData {
+    Id string `json:"id"`
+    DocumentId string `json:"document_id"`
+    Filename string `json:"filename"`
+    ContentHash string `json:"content_hash"`
+    IndexStatus string `json:"index_status"`
+    ChunkCount int64 `json:"chunk_count"`
+    ErrorCode string `json:"error_code"`
+}
+type DocumentPage {
+    Items []DocumentData `json:"items"`
+}
+type DocumentsResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data DocumentPage `json:"data"`
+}
+type DocumentResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data DocumentData `json:"data"`
+}
+type VersionPage {
+    Items []VersionData `json:"items"`
+}
+type VersionsResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data VersionPage `json:"data"`
+}
+type VersionResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data VersionData `json:"data"`
+}
+type ActivateDocumentReq {
+    DocumentId string `path:"document_id"`
+    VersionId string `json:"version_id"`
+    ExpectedVersion int64 `json:"expected_version"`
+}
+type WithdrawDocumentReq {
+    DocumentId string `path:"document_id"`
+    ExpectedVersion int64 `json:"expected_version"`
+}
+type IndexSourceReq {
+    VersionId string `path:"version_id"`
+    JobId string `form:"job_id"`
+}
+type IndexSourceData {
+    TenantId string `json:"tenant_id"`
+    KnowledgeBaseId string `json:"knowledge_base_id"`
+    DocumentId string `json:"document_id"`
+    VersionId string `json:"version_id"`
+    Content string `json:"content"`
+    ContentHash string `json:"content_hash"`
+}
+type IndexSourceResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data IndexSourceData `json:"data"`
+}
+type IndexCompleteReq {
+    VersionId string `path:"version_id"`
+    JobId string `json:"job_id"`
+    ContentHash string `json:"content_hash"`
+    ChunkCount int64 `json:"chunk_count"`
+    Status string `json:"status"`
+}
+type ScopeVersion {
+    VersionId string `json:"version_id"`
+    DocumentId string `json:"document_id"`
+    KnowledgeBaseId string `json:"knowledge_base_id"`
+    Title string `json:"title"`
+    AclRevision int64 `json:"acl_revision"`
+}
+type KnowledgeScope {
+    TenantId string `json:"tenant_id"`
+    Versions []ScopeVersion `json:"versions"`
+}
+type KnowledgeScopeResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data KnowledgeScope `json:"data"`
+}
+type EvidenceCandidate {
+    VersionId string `json:"version_id"`
+    ChunkId string `json:"chunk_id"`
+    Excerpt string `json:"excerpt"`
+    ContentHash string `json:"content_hash"`
+}
+type EvidenceData {
+    Id string `json:"id"`
+    VersionId string `json:"version_id"`
+    ChunkId string `json:"chunk_id"`
+    Title string `json:"title"`
+    Excerpt string `json:"excerpt"`
+}
+type EvidenceReq {
+    RunId string `path:"run_id"`
+    Candidates []EvidenceCandidate `json:"candidates"`
+}
+type EvidencePage {
+    Items []EvidenceData `json:"items"`
+}
+type EvidenceResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data EvidencePage `json:"data"`
+}
+type CitationReq {
+    EvidenceId string `path:"evidence_id"`
+}
+type CitationResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data EvidenceData `json:"data"`
+}
+
+@server(prefix: /api/v1 middleware: SessionAuth)
+service flowdesk-api {
+    @doc "ListKnowledgeBases | permission=conversation:use | auth=required"
+    @handler ListKnowledgeBases
+    get /knowledge-bases returns (KnowledgeBasesResp)
+    @doc "CreateKnowledgeBase | permission=knowledge:manage | auth=required"
+    @handler CreateKnowledgeBase
+    post /knowledge-bases (KnowledgeBaseWriteReq) returns (KnowledgeBaseResp)
+    @doc "UpdateKnowledgeAcl | permission=knowledge:manage | auth=required"
+    @handler UpdateKnowledgeAcl
+    patch /knowledge-bases/:knowledge_base_id (KnowledgeAclReq) returns (KnowledgeBaseResp)
+    @doc "ListDocuments | permission=conversation:use | auth=required"
+    @handler ListDocuments
+    get /knowledge-bases/:knowledge_base_id/documents (KnowledgeBaseReq) returns (DocumentsResp)
+    @doc "UploadDocument | permission=knowledge:manage | auth=required"
+    @handler UploadDocument
+    post /knowledge-bases/:knowledge_base_id/documents (UploadDocumentReq) returns (VersionResp)
+    @doc "ListDocumentVersions | permission=knowledge:manage | auth=required"
+    @handler ListDocumentVersions
+    get /documents/:document_id/versions (DocumentReq) returns (VersionsResp)
+    @doc "UploadDocumentVersion | permission=knowledge:manage | auth=required"
+    @handler UploadDocumentVersion
+    post /documents/:document_id/versions (UploadVersionReq) returns (VersionResp)
+    @doc "ActivateDocument | permission=knowledge:manage | auth=required"
+    @handler ActivateDocument
+    post /documents/:document_id/activate (ActivateDocumentReq) returns (DocumentResp)
+    @doc "WithdrawDocument | permission=knowledge:manage | auth=required"
+    @handler WithdrawDocument
+    post /documents/:document_id/withdraw (WithdrawDocumentReq) returns (DocumentResp)
+    @doc "GetCitation | permission=conversation:use | auth=required"
+    @handler GetCitation
+    get /citations/:evidence_id (CitationReq) returns (CitationResp)
+}
+@server(prefix: /internal/v1 middleware: ServiceAuth)
+service flowdesk-api {
+    @doc "GetIndexSource | permission=- | auth=service"
+    @handler GetIndexSource
+    get /knowledge/versions/:version_id/source (IndexSourceReq) returns (IndexSourceResp)
+    @doc "CompleteIndex | permission=- | auth=service"
+    @handler CompleteIndex
+    post /knowledge/versions/:version_id/complete (IndexCompleteReq) returns (VersionResp)
+    @doc "GetKnowledgeScope | permission=- | auth=run_capability"
+    @handler GetKnowledgeScope
+    get /runs/:run_id/knowledge-scope (RunReq) returns (KnowledgeScopeResp)
+    @doc "ValidateEvidence | permission=- | auth=run_capability"
+    @handler ValidateEvidence
+    post /runs/:run_id/knowledge/validate (EvidenceReq) returns (EvidenceResp)
+}

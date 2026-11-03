@@ -34,6 +34,7 @@ services:
       MODEL_BASE_URL: ${MODEL_BASE_URL:-}
       MODEL_API_KEY: ${MODEL_API_KEY:-}
       MODEL_NAME: ${MODEL_NAME:-}
+      MODEL_JSON_MODE: ${MODEL_JSON_MODE:-json_object}
     depends_on: {migrate: {condition: service_completed_successfully}}
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://localhost:8000/health/ready')"]

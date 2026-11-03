@@ -12,10 +12,12 @@ from psycopg.rows import dict_row
 from psycopg_pool import AsyncConnectionPool
 from pydantic import BaseModel
 
-from flowdesk_agent.api.schemas import CommandReceipt, ExecutionCommand
+from flowdesk_agent.api.schemas import CommandReceipt, ExecutionCommand, IndexCommand
+from flowdesk_agent.retrieval import KnowledgeIndex
 from flowdesk_agent.runtime import AgentRuntime
 from flowdesk_agent.storage.commands import CommandConflict
 from flowdesk_agent.storage.migrations import migrate
+from flowdesk_agent.tools.go_client import ToolError
 
 
 class Health(BaseModel):
@@ -47,7 +49,9 @@ async def lifespan(app: FastAPI):
             runtime = AgentRuntime(pool, http)
             app.state.pool = pool
             app.state.runtime = runtime
+            app.state.knowledge = KnowledgeIndex(pool, http)
             workers = [asyncio.create_task(runtime.execution_loop())]
+            workers.append(asyncio.create_task(app.state.knowledge.loop()))
             workers.extend(asyncio.create_task(runtime.callback_loop()) for _ in range(4))
             app.state.workers = workers
             try:
@@ -67,6 +71,15 @@ def service_auth(authorization: str = Header(default="")):
     expected = os.environ.get("INTERNAL_TOKEN", "")
     if len(expected) < 32 or not hmac.compare_digest(authorization, f"Bearer {expected}"):
         raise HTTPException(401, "service authentication required")
+
+
+@app.post("/internal/v1/knowledge/index", status_code=202, dependencies=[Depends(service_auth)])
+async def accept_index(command: IndexCommand):
+    try:
+        await app.state.knowledge.accept(command.job_id, command.version_id)
+    except ToolError as exc:
+        raise HTTPException(409, "index command conflict") from exc
+    return {"job_id": str(command.job_id), "status": "accepted"}
 
 
 @app.post(

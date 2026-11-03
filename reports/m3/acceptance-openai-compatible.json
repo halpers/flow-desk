@@ -1,0 +1,111 @@
+{
+  "profile": "openai-compatible",
+  "chat_model": "deepseek-chat",
+  "retrieval_profile": "char-ngram-v1+fts+rrf",
+  "started_at": "2026-11-03T02:11:10.910432+00:00",
+  "cases": [
+    {
+      "task_id": "return-window",
+      "passed": true,
+      "status": "succeeded",
+      "error_code": "",
+      "citation_count": 1,
+      "duration_ms": 2907
+    },
+    {
+      "task_id": "refund-time",
+      "passed": true,
+      "status": "succeeded",
+      "error_code": "",
+      "citation_count": 1,
+      "duration_ms": 2906
+    },
+    {
+      "task_id": "invoice",
+      "passed": true,
+      "status": "succeeded",
+      "error_code": "",
+      "citation_count": 1,
+      "duration_ms": 2391
+    },
+    {
+      "task_id": "warranty",
+      "passed": true,
+      "status": "succeeded",
+      "error_code": "",
+      "citation_count": 2,
+      "duration_ms": 3437
+    },
+    {
+      "task_id": "damage",
+      "passed": true,
+      "status": "succeeded",
+      "error_code": "",
+      "citation_count": 1,
+      "duration_ms": 2656
+    },
+    {
+      "task_id": "shipping",
+      "passed": true,
+      "status": "succeeded",
+      "error_code": "",
+      "citation_count": 1,
+      "duration_ms": 2641
+    },
+    {
+      "task_id": "cancel",
+      "passed": true,
+      "status": "succeeded",
+      "error_code": "",
+      "citation_count": 1,
+      "duration_ms": 2907
+    },
+    {
+      "task_id": "address",
+      "passed": true,
+      "status": "succeeded",
+      "error_code": "",
+      "citation_count": 1,
+      "duration_ms": 2375
+    },
+    {
+      "task_id": "delay",
+      "passed": true,
+      "status": "succeeded",
+      "error_code": "",
+      "citation_count": 1,
+      "duration_ms": 2641
+    },
+    {
+      "task_id": "exchange",
+      "passed": true,
+      "status": "succeeded",
+      "error_code": "",
+      "citation_count": 1,
+      "duration_ms": 2390
+    }
+  ],
+  "run_ids": [
+    "1b809d94-80e0-4a8d-9ad2-e901f5a07d8c",
+    "9b651769-a8c1-4c11-82af-b5e042dfbba3",
+    "9f3c8148-d2cc-4b1b-848e-7b48644f7328",
+    "ddae5d66-f99a-4e01-955e-f3c1ad355069",
+    "71f66b7f-7953-495a-977e-9803a5b4ddc0",
+    "cb656ded-711a-433f-a101-1365f0753898",
+    "85662756-a0b4-4bd7-a2d9-f9cfdbd64592",
+    "f6aae244-8586-4a3d-a803-9ea672622da8",
+    "ca963de5-220b-42ed-b951-f6a607252061",
+    "c0c8f680-0cbf-4b43-aa8d-2ec06b8fc81b"
+  ],
+  "cost_status": "unknown",
+  "kind": "functional acceptance, not M5 quality benchmark",
+  "withdrawal_and_replay_passed": true,
+  "tenant_isolation_passed": true,
+  "usage": {
+    "calls": 20,
+    "input_tokens": 8662,
+    "output_tokens": 1042,
+    "reserved_units": 58063
+  },
+  "completed_at": "2026-11-03T02:12:02.685423+00:00"
+}

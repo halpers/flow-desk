@@ -109,7 +109,7 @@ func RenewLease(ctx context.Context, s *svc.ServiceContext, req *types.LeaseReq)
 		if expires.After(run.DeadlineAt) {
 			expires = run.DeadlineAt
 		}
-		scopes := []string{domain.ToolOrderLookup, domain.ToolLogisticsTrack, "event:append"}
+		scopes := []string{domain.ToolOrderLookup, domain.ToolLogisticsTrack, "event:append", "knowledge:read"}
 		claims := runCapability{RegisteredClaims: jwt.RegisteredClaims{Issuer: "flowdesk", Subject: run.ActorUserId, Audience: jwt.ClaimStrings{"go-tools"}, ExpiresAt: jwt.NewNumericDate(expires), IssuedAt: jwt.NewNumericDate(time.Now()), ID: uuid.NewString()}, RunId: run.Id, TenantId: run.TenantId, ActorUserId: run.ActorUserId, SessionId: run.SessionId, Generation: run.LeaseGeneration, Scopes: scopes}
 		token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte(s.Config.JwtSecret))
 		if err != nil {
@@ -217,8 +217,8 @@ func IngestEvent(ctx context.Context, s *svc.ServiceContext, req *types.AgentEve
 			if run.Status != domain.RunRunning || payload["message_id"] != run.ResultMessageId {
 				return errStale
 			}
-			// M2 has no citation or write authority. Later stages add Go-side evidence/receipt validation.
-			for _, key := range []string{"citations", "action_receipts"} {
+			// Receipt authority is added in M4; citations are selected from Go-registered evidence.
+			for _, key := range []string{"action_receipts"} {
 				values, ok := payload[key].([]interface{})
 				if !ok || len(values) != 0 {
 					return errForbidden
@@ -228,7 +228,12 @@ func IngestEvent(ctx context.Context, s *svc.ServiceContext, req *types.AgentEve
 			if !ok {
 				return errArgument
 			}
-			if err = s.MessagesModel.UpdateFinalTx(ctx, tx, run.ResultMessageId, content, "[]", "[]"); err != nil {
+			citations, err := canonicalCitationsTx(ctx, s, tx, run, payload["citations"])
+			if err != nil {
+				return err
+			}
+			payload["citations"] = citations
+			if err = s.MessagesModel.UpdateFinalTx(ctx, tx, run.ResultMessageId, content, marshal(citations), "[]"); err != nil {
 				return err
 			}
 		case domain.EventRunSucceeded:
@@ -283,6 +288,10 @@ func ListRunEvents(ctx context.Context, s *svc.ServiceContext, runID string, aft
 		var payload map[string]any
 		if err = json.Unmarshal([]byte(row.Payload), &payload); err != nil {
 			return nil, err
+		}
+		if row.Type == domain.EventMessageCompleted {
+			payload["content"] = snapshot.CurrentMessage.Content
+			payload["citations"] = snapshot.CurrentMessage.Citations
 		}
 		events = append(events, types.EventData{SchemaVersion: "1", RunId: row.RunId, Seq: row.Seq, Type: row.Type, OccurredAt: row.OccurredAt.UTC().Format(time.RFC3339Nano), Payload: payload})
 	}
@@ -375,7 +384,12 @@ func DispatchNext(ctx context.Context, s *svc.ServiceContext) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	if err = s.AgentClient.Dispatch(ctx, event.Payload); err != nil {
+	if event.Topic == "knowledge.index" {
+		err = s.AgentClient.DispatchKnowledge(ctx, event.Payload)
+	} else {
+		err = s.AgentClient.Dispatch(ctx, event.Payload)
+	}
+	if err != nil {
 		return true, s.OutboxEventsModel.UpdateRetry(ctx, event.Id, event.AttemptCount, "AGENT_UNAVAILABLE")
 	}
 	return true, s.OutboxEventsModel.UpdateDelivered(ctx, event.Id, event.AttemptCount)

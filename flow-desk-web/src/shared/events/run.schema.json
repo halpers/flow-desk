@@ -36,13 +36,23 @@
         "duration_ms": {"type": "integer", "minimum": 0, "maximum": 120000}
       }
     },
+    "citation": {
+      "type":"object", "additionalProperties":false,
+      "required":["id","version_id","chunk_id","title"],
+      "properties":{
+        "id":{"type":"string","format":"uuid"},
+        "version_id":{"type":"string","format":"uuid"},
+        "chunk_id":{"type":"string","format":"uuid"},
+        "title":{"type":"string","minLength":1,"maxLength":120}
+      }
+    },
     "messagePayload": {
       "type": "object", "additionalProperties": false,
       "required": ["message_id", "content", "citations", "action_receipts"],
       "properties": {
         "message_id": {"type": "string", "pattern": "^[0-9a-fA-F-]{36}$"},
         "content": {"type": "string", "minLength": 1, "maxLength": 32000},
-        "citations": {"type": "array", "maxItems": 20, "items": {"type": "object"}},
+        "citations": {"type": "array", "maxItems": 5, "items": {"$ref": "#/$defs/citation"}},
         "action_receipts": {"type": "array", "maxItems": 20, "items": {"type": "object"}}
       }
     }

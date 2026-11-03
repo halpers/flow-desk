@@ -90,6 +90,27 @@
         "title": "Health",
         "type": "object"
       },
+      "IndexCommand": {
+        "additionalProperties": false,
+        "properties": {
+          "job_id": {
+            "format": "uuid",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "version_id": {
+            "format": "uuid",
+            "title": "Version Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "job_id",
+          "version_id"
+        ],
+        "title": "IndexCommand",
+        "type": "object"
+      },
       "ValidationError": {
         "properties": {
           "ctx": {
@@ -272,6 +293,54 @@
           }
         },
         "summary": "Get Execution"
+      }
+    },
+    "/internal/v1/knowledge/index": {
+      "post": {
+        "operationId": "accept_index_internal_v1_knowledge_index_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Authorization",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IndexCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Accept Index"
       }
     }
   }

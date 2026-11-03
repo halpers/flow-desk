@@ -143,15 +143,16 @@ Agent 写工具和手工写 API 都进入同一 logic 业务校验，来源分�
 | Method | Path | 行为与权限 |
 | --- | --- | --- |
 | GET/POST | `/knowledge-bases` | 读取授权知识库 / admin 创建 |
-| GET/PATCH | `/knowledge-bases/{knowledge_base_id}` | 元数据读取 / admin 更新访问策略及版本 |
+| PATCH | `/knowledge-bases/{knowledge_base_id}` | admin 以 expected_revision 更新固定角色访问策略 |
 | GET | `/knowledge-bases/{knowledge_base_id}/documents` | 文档与当前索引状态 |
-| POST | `/knowledge-bases/{knowledge_base_id}/documents` | admin multipart 上传，创建文档和首版本，返回 202 |
+| POST | `/knowledge-bases/{knowledge_base_id}/documents` | admin JSON 文本上传，创建文档和首版本，返回 202 |
 | POST | `/documents/{document_id}/versions` | admin 上传新版本，返回索引任务 |
-| GET | `/documents/{document_id}/versions` | 授权用户读取版本元数据 |
+| GET | `/documents/{document_id}/versions` | admin 读取版本元数据与索引状态 |
+| POST | `/documents/{document_id}/activate` | admin 激活 ready 版本，携带 version_id 和 expected_version |
 | POST | `/documents/{document_id}/withdraw` | admin 撤回；即时停止可见性，异步清理索引 |
-| GET | `/document-versions/{version_id}/content` | 授权下载/预览，安全 Content-Disposition |
+| GET | `/citations/{evidence_id}` | run 所有者读取仍然授权、有效的引用片段 |
 
-首版支持 UTF-8 Markdown/TXT、文本型 PDF；单文件 10 MiB、最多 100 页；扫描件返回 `OCR_UNSUPPORTED`。同一 document 的激活序号防止较旧索引任务覆盖新版本。
+M3 支持 UTF-8 Markdown/TXT，经 JSON 提交 filename/content；单文件最多 256 KiB、20,000 字符。不解析 PDF/OCR，扩展解析器属于后续范围。每租户 50 个知识库、每库 200 份文档、每文档 100 个版本。文档 expected_version 防止并发激活覆盖，索引回调仅标记 ready，从不自动切换指针。历史消息、run 快照与 SSE 回放会隐藏已撤回或失权的政策答复，已下载到客户端的既有数据无法远程删除。实现说明见 [M3](m3-rag.md)。
 
 知识库读写权限由租户成员及固定角色/ACL 决定，不能由上传者在文档文本中定义。
 

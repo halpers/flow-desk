@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+import os
 from datetime import UTC, datetime
 
 import httpx
@@ -10,6 +11,8 @@ from psycopg_pool import AsyncConnectionPool
 
 from flowdesk_agent.api.schemas import ExecutionCommand
 from flowdesk_agent.graph.read_graph import build_graph
+from flowdesk_agent.models import CompatibleModel
+from flowdesk_agent.retrieval import Retriever
 from flowdesk_agent.storage.callbacks import CallbackStore, DeliveryFailed
 from flowdesk_agent.storage.commands import CommandStore
 from flowdesk_agent.storage.tool_cache import ToolCache
@@ -18,6 +21,17 @@ from flowdesk_agent.tools.go_client import GoTools, OwnershipLost, ToolError
 logger = logging.getLogger(__name__)
 MAX_EXECUTIONS = 10
 POLL_SECONDS = 0.1
+
+
+def execution_guard(commands, conn, saver, command, owner):
+    async def guard():
+        # Saver pipelines run in the background; every query on the execution
+        # session shares this mutex, including the ownership fence.
+        async with saver.lock:
+            if not await commands.still_owned(conn, command.dispatch_id, owner):
+                raise OwnershipLost
+
+    return guard
 
 
 class AgentRuntime:
@@ -84,9 +98,8 @@ class AgentRuntime:
                     return
                 locked = True
 
-                async def guard():
-                    if not await self.commands.still_owned(conn, command.dispatch_id, owner):
-                        raise OwnershipLost
+                saver = AsyncPostgresSaver(conn)
+                guard = execution_guard(self.commands, conn, saver, command, owner)
 
                 async def heartbeat():
                     while True:
@@ -118,7 +131,11 @@ class AgentRuntime:
                         # The saver uses this exact session, so losing
                         # the execution lock also loses checkpoint write
                         # access.
-                        graph = build_graph(tools, AsyncPostgresSaver(conn))
+                        provider = os.environ.get("MODEL_PROVIDER", "mock")
+                        if provider not in ("mock", "openai-compatible"):
+                            raise ToolError("MODEL_CONFIG_INVALID")
+                        model = CompatibleModel(self.pool, command) if provider != "mock" else None
+                        graph = build_graph(tools, saver, model, Retriever(self.pool, tools))
                         config = {
                             "configurable": {"thread_id": f"run:{command.run_id}"},
                             "recursion_limit": 20,
@@ -134,10 +151,11 @@ class AgentRuntime:
                         heartbeat_task.cancel()
                         await asyncio.gather(heartbeat_task, return_exceptions=True)
                     if locked and not conn.closed:
-                        await conn.execute(
-                            "SELECT pg_advisory_unlock(hashtextextended(%s,3))",
-                            (str(command.run_id),),
-                        )
+                        async with saver.lock:
+                            await conn.execute(
+                                "SELECT pg_advisory_unlock(hashtextextended(%s,3))",
+                                (str(command.run_id),),
+                            )
         except asyncio.CancelledError:
             await self.commands.release(command.dispatch_id, owner, "queued")
             raise

@@ -7,3 +7,4 @@ info (
 
 import "api/common.api"
 import "api/tasks.api"
+import "api/knowledge.api"

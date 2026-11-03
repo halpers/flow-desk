@@ -121,6 +121,8 @@ id 为 Python 在副作用前生成并落盘的稳定 action_id。Go 对参数�
 
 ## 7. 知识元数据与索引（Go / Python）
 
+以下表格保留完整目标模型。M3 实际落地采用 `knowledge_bases.read_roles` JSONB 固定角色 ACL；`documents.version` 作为激活/撤回并发保护；不可变正文暂存 `document_versions.content`，该表同时保存 job_id/index_status。Go outbox 负责投递，Python `agent.knowledge_jobs` 负责持久化 claim 和回调恢复。Python 的 `knowledge_manifests`、`knowledge_chunks`、`model_calls` 暂位于 agent schema，vector 扩展类型仍在 knowledge schema。Go `run_evidence` 保存已复核的运行证据。物理分离 schema 和对象存储可后续独立迁移，当前账户写权限仍按服务分隔。细节与边界见 [M3 说明](m3-rag.md)。
+
 ### Go business 元数据
 
 | 表 | 关键字段 | 语义 |

@@ -14,62 +14,6 @@ import (
 
 func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 	server.AddRoutes(
-		[]rest.Route{
-			{
-				// Liveness | permission=- | auth=public
-				Method:  http.MethodGet,
-				Path:    "/health/live",
-				Handler: LiveHandler(serverCtx),
-			},
-			{
-				// Readiness | permission=- | auth=public
-				Method:  http.MethodGet,
-				Path:    "/health/ready",
-				Handler: ReadyHandler(serverCtx),
-			},
-		},
-	)
-
-	server.AddRoutes(
-		[]rest.Route{
-			{
-				// Login | permission=- | auth=public
-				Method:  http.MethodPost,
-				Path:    "/login",
-				Handler: LoginHandler(serverCtx),
-			},
-			{
-				// Logout | permission=- | auth=refresh_cookie
-				Method:  http.MethodPost,
-				Path:    "/logout",
-				Handler: LogoutHandler(serverCtx),
-			},
-			{
-				// Refresh | permission=- | auth=refresh_cookie
-				Method:  http.MethodPost,
-				Path:    "/refresh",
-				Handler: RefreshHandler(serverCtx),
-			},
-		},
-		rest.WithPrefix("/api/v1/auth"),
-	)
-
-	server.AddRoutes(
-		rest.WithMiddlewares(
-			[]rest.Middleware{serverCtx.SessionAuth},
-			[]rest.Route{
-				{
-					// Current user | permission=- | auth=required
-					Method:  http.MethodGet,
-					Path:    "/me",
-					Handler: MeHandler(serverCtx),
-				},
-			}...,
-		),
-		rest.WithPrefix("/api/v1/auth"),
-	)
-
-	server.AddRoutes(
 		rest.WithMiddlewares(
 			[]rest.Middleware{serverCtx.SessionAuth},
 			[]rest.Route{
@@ -174,5 +118,149 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 			}...,
 		),
 		rest.WithPrefix("/internal/v1"),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.SessionAuth},
+			[]rest.Route{
+				{
+					Method:  http.MethodGet,
+					Path:    "/citations/:evidence_id",
+					Handler: GetCitationHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/documents/:document_id/activate",
+					Handler: ActivateDocumentHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/documents/:document_id/versions",
+					Handler: ListDocumentVersionsHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/documents/:document_id/versions",
+					Handler: UploadDocumentVersionHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/documents/:document_id/withdraw",
+					Handler: WithdrawDocumentHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/knowledge-bases",
+					Handler: ListKnowledgeBasesHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/knowledge-bases",
+					Handler: CreateKnowledgeBaseHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPatch,
+					Path:    "/knowledge-bases/:knowledge_base_id",
+					Handler: UpdateKnowledgeAclHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/knowledge-bases/:knowledge_base_id/documents",
+					Handler: ListDocumentsHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/knowledge-bases/:knowledge_base_id/documents",
+					Handler: UploadDocumentHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithPrefix("/api/v1"),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.ServiceAuth},
+			[]rest.Route{
+				{
+					Method:  http.MethodPost,
+					Path:    "/knowledge/versions/:version_id/complete",
+					Handler: CompleteIndexHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/knowledge/versions/:version_id/source",
+					Handler: GetIndexSourceHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/runs/:run_id/knowledge-scope",
+					Handler: GetKnowledgeScopeHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/runs/:run_id/knowledge/validate",
+					Handler: ValidateEvidenceHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithPrefix("/internal/v1"),
+	)
+
+	server.AddRoutes(
+		[]rest.Route{
+			{
+				// Liveness | permission=- | auth=public
+				Method:  http.MethodGet,
+				Path:    "/health/live",
+				Handler: LiveHandler(serverCtx),
+			},
+			{
+				// Readiness | permission=- | auth=public
+				Method:  http.MethodGet,
+				Path:    "/health/ready",
+				Handler: ReadyHandler(serverCtx),
+			},
+		},
+	)
+
+	server.AddRoutes(
+		[]rest.Route{
+			{
+				// Login | permission=- | auth=public
+				Method:  http.MethodPost,
+				Path:    "/login",
+				Handler: LoginHandler(serverCtx),
+			},
+			{
+				// Logout | permission=- | auth=refresh_cookie
+				Method:  http.MethodPost,
+				Path:    "/logout",
+				Handler: LogoutHandler(serverCtx),
+			},
+			{
+				// Refresh | permission=- | auth=refresh_cookie
+				Method:  http.MethodPost,
+				Path:    "/refresh",
+				Handler: RefreshHandler(serverCtx),
+			},
+		},
+		rest.WithPrefix("/api/v1/auth"),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.SessionAuth},
+			[]rest.Route{
+				{
+					// Current user | permission=- | auth=required
+					Method:  http.MethodGet,
+					Path:    "/me",
+					Handler: MeHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithPrefix("/api/v1/auth"),
 	)
 }

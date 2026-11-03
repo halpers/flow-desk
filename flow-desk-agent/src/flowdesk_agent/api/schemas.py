@@ -20,6 +20,12 @@ class CommandReceipt(BaseModel):
     status: str
 
 
+class IndexCommand(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    job_id: UUID
+    version_id: UUID
+
+
 class TrustedContext(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     run_id: UUID

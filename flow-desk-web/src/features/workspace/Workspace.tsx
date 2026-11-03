@@ -9,6 +9,7 @@ import { api, ApiError, type User } from "../../shared/api/client";
 import type { Models as Schemas } from "../../shared/api/models";
 import { terminal, watchRun, type Run } from "../../shared/events/watch";
 import type { RunEvent } from "../../shared/events/sse";
+import { Citation } from "../knowledge/Knowledge";
 
 type Conversation = Schemas["ConversationData"];
 type Message = Schemas["MessageData"];
@@ -39,7 +40,15 @@ const progressLabel = (event: RunEvent) =>
 export function Workspace({ user }: { user: User }) {
   const cache = useQueryClient();
   const scope = ["workspace", user.tenant_id, user.id];
-  const [selected, setSelected] = useState("");
+  const selectionKey = `flowdesk:conversation:${user.tenant_id}:${user.id}`;
+  const [selected, setSelected] = useState(() => {
+    try {
+      const stored = sessionStorage.getItem(selectionKey) || "";
+      return /^[0-9a-f-]{36}$/i.test(stored) ? stored : "";
+    } catch {
+      return "";
+    }
+  });
   const [runId, setRunId] = useState("");
   const [run, setRun] = useState<Run | null>(null);
   const [events, setEvents] = useState<RunEvent[]>([]);
@@ -115,9 +124,24 @@ export function Workspace({ user }: { user: User }) {
     setError("");
   };
   useEffect(() => {
+    try {
+      if (selected) sessionStorage.setItem(selectionKey, selected);
+      else sessionStorage.removeItem(selectionKey);
+    } catch {
+      /* Selection persistence is optional. */
+    }
+  }, [selected, selectionKey]);
+  useEffect(() => {
+    if (
+      conversation.error instanceof ApiError &&
+      conversation.error.status === 404
+    )
+      choose("");
+  }, [conversation.error]);
+  useEffect(() => {
     if (!selected && conversationItems.length)
       setSelected(conversationItems[0].id);
-  }, [conversations.data]);
+  }, [conversations.data, selected]);
   useEffect(() => {
     if (conversation.data?.active_run_id)
       setRunId(conversation.data.active_run_id);
@@ -324,6 +348,16 @@ export function Workspace({ user }: { user: User }) {
                     : "正在查询，请稍候…")}
               </div>
               {message.status === "aborted" && <Tag color="red">查询中止</Tag>}
+              {message.citations?.map(
+                (citation, index) =>
+                  typeof citation.id === "string" && (
+                    <Citation
+                      key={citation.id || index}
+                      id={citation.id}
+                      title={String(citation.title || "政策片段")}
+                    />
+                  ),
+              )}
             </article>
           ))}
           {messages.data?.has_more && (

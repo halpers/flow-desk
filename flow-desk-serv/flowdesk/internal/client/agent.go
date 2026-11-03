@@ -21,7 +21,13 @@ func NewAgentClient(baseURL, token string) *AgentClient {
 	return &AgentClient{strings.TrimRight(baseURL, "/"), token, &http.Client{Timeout: dispatchTimeout}}
 }
 func (c *AgentClient) Dispatch(ctx context.Context, payload string) error {
-	request, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseURL+"/internal/v1/executions", bytes.NewBufferString(payload))
+	return c.dispatch(ctx, "/internal/v1/executions", payload)
+}
+func (c *AgentClient) DispatchKnowledge(ctx context.Context, payload string) error {
+	return c.dispatch(ctx, "/internal/v1/knowledge/index", payload)
+}
+func (c *AgentClient) dispatch(ctx context.Context, path, payload string) error {
+	request, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseURL+path, bytes.NewBufferString(payload))
 	if err != nil {
 		return err
 	}

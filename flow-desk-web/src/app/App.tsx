@@ -4,6 +4,7 @@ import { api, login, logout, refresh, type User } from "../shared/api/client";
 import { clearSession } from "../shared/api/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { Workspace } from "../features/workspace/Workspace";
+import { Knowledge } from "../features/knowledge/Knowledge";
 
 export function App() {
   const cache = useQueryClient();
@@ -88,6 +89,7 @@ export function App() {
           <p className="subtitle">从问题到解决，让流程清晰可见。</p>
         </div>
         <Space>
+          <Knowledge key={`${user.tenant_id}:${user.id}`} user={user} />
           <Tag>{user.role}</Tag>
           <span>{user.display_name}</span>
           <Button

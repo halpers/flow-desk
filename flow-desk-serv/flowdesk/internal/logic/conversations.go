@@ -33,7 +33,11 @@ func runDataTx(ctx context.Context, s *svc.ServiceContext, tx sqlx.Session, row 
 	if err != nil {
 		return types.RunData{}, err
 	}
-	return types.RunData{Id: row.Id, ConversationId: row.ConversationId, Status: row.Status, Version: row.Version, LastEventSeq: row.LastEventSeq, ErrorCode: row.ErrorCode, ToolCallCount: row.ToolCallCount, CurrentMessage: messageData(message)}, nil
+	visible := messageData(message)
+	if err = redactMessageTx(ctx, s, tx, row, &visible); err != nil {
+		return types.RunData{}, err
+	}
+	return types.RunData{Id: row.Id, ConversationId: row.ConversationId, Status: row.Status, Version: row.Version, LastEventSeq: row.LastEventSeq, ErrorCode: row.ErrorCode, ToolCallCount: row.ToolCallCount, CurrentMessage: visible}, nil
 }
 
 func CreateConversation(ctx context.Context, s *svc.ServiceContext, req *types.CreateConversationReq) (types.ConversationData, error) {
@@ -165,7 +169,20 @@ func ListMessages(ctx context.Context, s *svc.ServiceContext, req *types.Message
 		rows = rows[:limit]
 	}
 	for index := range rows {
-		result.Items = append(result.Items, messageData(&rows[index]))
+		message := messageData(&rows[index])
+		if len(message.Citations) > 0 {
+			err = s.Conn.TransactCtx(ctx, func(ctx context.Context, tx sqlx.Session) error {
+				run, err := s.RunsModel.FindOneOwnedForShareTx(ctx, tx, actor.TenantId, actor.Id, message.RunId)
+				if err != nil {
+					return err
+				}
+				return redactMessageTx(ctx, s, tx, run, &message)
+			})
+			if err != nil {
+				return result, err
+			}
+		}
+		result.Items = append(result.Items, message)
 	}
 	if result.HasMore {
 		result.NextCursor = encodeCursor(scope, strconv.FormatInt(rows[len(rows)-1].Position, 10))

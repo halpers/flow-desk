@@ -42,7 +42,39 @@ MIGRATIONS = [
         tool_name TEXT NOT NULL, arguments JSONB NOT NULL, result JSONB NOT NULL,
         created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
+    """,
     """
+    CREATE TABLE knowledge_jobs (
+        job_id UUID PRIMARY KEY, version_id UUID NOT NULL UNIQUE,
+        status TEXT NOT NULL DEFAULT 'pending', attempts INTEGER NOT NULL DEFAULT 0,
+        lease_until TIMESTAMPTZ, available_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    CREATE TABLE knowledge_manifests (
+        version_id UUID PRIMARY KEY, tenant_id UUID NOT NULL, knowledge_base_id UUID NOT NULL,
+        document_id UUID NOT NULL, content_hash TEXT NOT NULL,
+        profile TEXT NOT NULL, dimension INTEGER NOT NULL, splitter_version TEXT NOT NULL,
+        chunk_count INTEGER NOT NULL
+    );
+    CREATE TABLE knowledge_chunks (
+        chunk_id UUID PRIMARY KEY,
+        version_id UUID NOT NULL REFERENCES knowledge_manifests(version_id),
+        tenant_id UUID NOT NULL, position INTEGER NOT NULL,
+        content TEXT NOT NULL, content_hash TEXT NOT NULL,
+        lexical TSVECTOR NOT NULL, embedding knowledge.vector(256) NOT NULL,
+        UNIQUE(version_id,position)
+    );
+    CREATE INDEX knowledge_chunk_filter ON knowledge_chunks(tenant_id,version_id);
+    CREATE INDEX knowledge_chunk_lexical ON knowledge_chunks USING gin(lexical);
+    CREATE TABLE model_calls (
+        call_id UUID PRIMARY KEY, run_id UUID NOT NULL, request_hash TEXT NOT NULL,
+        model TEXT NOT NULL, profile TEXT NOT NULL, reserved_units INTEGER NOT NULL,
+        input_tokens INTEGER, output_tokens INTEGER, output JSONB,
+        status TEXT NOT NULL DEFAULT 'reserved', error_code TEXT NOT NULL DEFAULT '',
+        cost_status TEXT NOT NULL DEFAULT 'unknown', created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    CREATE INDEX model_call_run ON model_calls(run_id);
+    """,
 ]
 
 

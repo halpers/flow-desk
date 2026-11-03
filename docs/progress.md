@@ -6,7 +6,7 @@
 | --- | --- | --- |
 | M1 工程与契约 | 已完成 | 三服务健康、认证集成/HTTP smoke、契约生成与前端构建通过 |
 | M2 只读任务 | 已完成 | 浏览器查询、SSE 回放、持久化队列/检查点、权限与配额测试通过 |
-| M3 RAG 与真实模型 | 待开始 | 版本化索引、引用、模型与预算 |
+| M3 RAG 与真实模型 | 已完成 | 版本化索引/激活、检索引用、DeepSeek 实测与预算；见下方证据 |
 | M4 办理与恢复 | 待开始 | 审批、幂等、取消、中断恢复 |
 | M5 评测与展示 | 待开始 | 固定数据集、质量/故障/性能报告 |
 
@@ -34,3 +34,16 @@ M6 是可选扩展，不属于本轮默认实施范围。
 - 当前使用确定性假模型，尚无政策检索、真实模型、写工具或审批。M3 真实模型接口已按用户选择确定为兼容 OpenAI 协议。
 
 实现细节及可重跑命令见 [M2 交付说明](m2-read-tasks.md)。
+
+## M3 验收（2026-11-03）
+
+- 管理员可创建固定角色 ACL 知识库、上传 UTF-8 TXT/Markdown、查看索引状态、追加版本、按 expected_version 激活或撤回。上传和 outbox 原子写入；索引命令持久化、租约代次隔离，丢失回调恢复不重复分块，旧回调不自动改变激活版本。
+- 租户/有效版本在全文和向量排序前过滤，RRF 融合候选；Go 登记并复核 run_evidence，拒绝伪造片段、外 run 引用和已失权引用。撤回后引用、消息/run 快照及 SSE 回放隐藏政策答复。
+- 接入用户配置的 DeepSeek `deepseek-chat` / JSON mode；Pydantic 验证计划与答复，引用 ID 必须来自当次证据。每次调用尝试持久化预算预留和 usage，恢复复用成功结果，密钥只在本地环境配置。
+- `scripts/check-go.ps1`：10 个数据库集成用例及 vet 通过；新增激活/幂等、伪造证据、撤回/回放、ACL 和租户用例。
+- `scripts/check-agent.py`：6 个用例通过；新增混合检索权限过滤、索引回调丢失、模型限流/输出失败/缓存/预算，以及检查点 pipeline 与所有权检查的互斥回归。验收中发现并修复了共享连接并发进入 pipeline 的问题。
+- Ruff、格式检查、pip check、前端生产构建与 3 个 SSE 单测通过。2 个 Chrome E2E 通过：上传/激活/引用/撤回/刷新，以及订单查询中断 SSE 后重连和退出。当前会话按 tenant/user 保存在 sessionStorage，刷新不受其他并行会话创建影响。
+- 固定 10 条合成政策问答：mock 10/10；真实 DeepSeek 10/10，均验证预期关键词、文档版本引用、外租户拒绝和撤回后快照/回放。报告分别见 [mock](../reports/m3/acceptance-mock.json) 与 [真实模型](../reports/m3/acceptance-openai-compatible.json)，包含实际 tokens。费用 unknown，不猜测供应商价格；这不是 M5 留出集质量结论。
+- 当前检索向量是 256 维字符 n-gram 词面基线，不是语义 embedding；PDF/OCR、对象存储、索引物理删除和语义 embedding 尚未实现。具体边界、端点及复跑方法见 [M3 说明](m3-rag.md)。
+
+提交主题：`feat(m3): add versioned knowledge, cited retrieval and budgeted model calls`。
