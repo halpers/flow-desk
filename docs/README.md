@@ -17,6 +17,7 @@
 | [演示与运维](demo-and-operations.md) | 正常办理、失败恢复、备份恢复和排障边界 |
 | [M6 专项计划](m6-plan.md) | 语义 RAG、MCP、部署配置与本地监控的顺序及验收 |
 | [M6.1 语义 RAG](m6-semantic-rag.md) | embedding 预算、索引重建、重排、配置回退与实测 |
+| [M6.2 MCP](m6-mcp.md) | 官方 SDK、工具发现、stdio 生命周期、Go 授权与审批执行 |
 
 ## 阅读与修改顺序
 

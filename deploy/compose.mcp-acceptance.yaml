@@ -1,0 +1,11 @@
+# Deterministic synthetic acceptance: never call the configured paid providers.
+services:
+  agent:
+    environment:
+      MODEL_PROVIDER: mock
+      EMBEDDING_BASE_URL: ""
+      EMBEDDING_MODEL: ""
+      EMBEDDING_API_KEY: ""
+      RETRIEVAL_PROFILE: baseline
+      RERANK_PROVIDER: none
+      TOOL_TRANSPORT: mcp

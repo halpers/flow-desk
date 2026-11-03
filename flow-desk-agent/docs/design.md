@@ -100,7 +100,7 @@ GoToolsClient 自动注入服务身份、run capability、request/run/trace 标�
 
 读工具最多两次可重试网络失败；写工具仅以稳定 action_id 查询/执行。普通参数错误最多一次受限修正，权限拒绝不让模型尝试其他租户或绕过工具。每次尝试计入预算。
 
-后续 MCP 适配复用相同工具定义和 Go action 执行逻辑。MCP 的工具发现、协议版本、HTTP 授权需要单独实现和测试；一期的 HTTP client 不标记成 MCP client。
+M6.2 已实现官方 SDK stdio MCP 适配，复用相同工具定义和 Go action 执行逻辑；配置、生命周期及实测见[MCP 说明](../../docs/m6-mcp.md)。MCP 不开放远程 HTTP 端口，原 HTTP client 仍作为默认适配；第三方远程 MCP/OAuth 尚未实现。
 
 ## 7. RAG 索引与检索
 

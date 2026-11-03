@@ -115,7 +115,23 @@ func RenewLease(ctx context.Context, s *svc.ServiceContext, req *types.LeaseReq)
 		if err != nil {
 			return err
 		}
-		result = types.ExecutionContext{RunId: run.Id, TenantId: run.TenantId, ActorUserId: run.ActorUserId, LeaseGeneration: run.LeaseGeneration, Capability: token, Content: input.Content, MessageId: run.ResultMessageId, DeadlineAt: run.DeadlineAt.UTC().Format(time.RFC3339Nano), Tools: []string{domain.ToolOrderLookup, domain.ToolLogisticsTrack, ticketSearchTool}, ResumeData: jsonObject(run.ResumeData)}
+		actor, err := s.UsersModel.FindOneTx(ctx, tx, run.ActorUserId)
+		if err != nil {
+			return err
+		}
+		tools := []string{}
+		if permitted(actor, "order:read") {
+			tools = append(tools, domain.ToolOrderLookup, domain.ToolLogisticsTrack)
+			if permitted(actor, "ticket:read") {
+				tools = append(tools, ticketSearchTool)
+			}
+		}
+		for _, tool := range []string{"ticket.create", "ticket.add_note"} {
+			if permitted(actor, actionPermission(tool)) {
+				tools = append(tools, tool)
+			}
+		}
+		result = types.ExecutionContext{RunId: run.Id, TenantId: run.TenantId, ActorUserId: run.ActorUserId, LeaseGeneration: run.LeaseGeneration, Capability: token, Content: input.Content, MessageId: run.ResultMessageId, DeadlineAt: run.DeadlineAt.UTC().Format(time.RFC3339Nano), Tools: tools, ResumeData: jsonObject(run.ResumeData)}
 		return nil
 	})
 	return result, err

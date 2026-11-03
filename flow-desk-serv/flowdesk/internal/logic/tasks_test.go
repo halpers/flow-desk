@@ -147,6 +147,13 @@ func TestEventReplaySnapshotAndInvalidCallbackRollback(t *testing.T) {
 	conversation := newConversation(t, ctx, s)
 	run := newTask(t, ctx, s, conversation.Id)
 	lease := leaseTask(t, s, run.Id)
+	allowed := map[string]bool{}
+	for _, name := range lease.Tools {
+		allowed[name] = true
+	}
+	if !allowed["ticket.create"] || !allowed["ticket.add_note"] || !allowed[domain.ToolOrderLookup] {
+		t.Fatal("lease did not advertise current business tools")
+	}
 	started := eventRequest(run.Id, domain.EventRunStarted, map[string]any{})
 	ack, err := IngestEvent(ctx, s, started, lease.Capability)
 	if err != nil || ack.Seq != 2 {

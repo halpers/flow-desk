@@ -46,4 +46,4 @@ M1–M4 已交付：登录与租户权限、持久化任务/SSE、版本化知�
 
 固定 100 条合成任务按 60/20/20 划分开发、回归和留出集，分别报告 mock 功能断言与 DeepSeek 真实留出结果。复跑步骤见 [M5 评测](docs/m5-evaluation.md)，查询→检索→确认→真实工单及失败恢复的展示步骤见[演示与运维](docs/demo-and-operations.md)。模型费用未知时标为 unknown，密钥仅放在本地 `.env`。
 
-M6.1 增加独立语义 embedding、全文 RRF 与可选重排，保留字符基线及配置回退；配置和索引升级见[语义 RAG](docs/m6-semantic-rag.md)，实测见[M6 报告](reports/m6/summary.md)。PDF/OCR、MCP、团队共享权限和生产监控平台仍待对应专项实现。性能数字仅适用于报告中的本机合成环境。
+M6.1 增加独立语义 embedding、全文 RRF 与可选重排，保留字符基线及配置回退；配置和索引升级见[语义 RAG](docs/m6-semantic-rag.md)。M6.2 提供官方 SDK 的[MCP 工具发现与调用](docs/m6-mcp.md)，保持 Go 授权与审批事务。实测见[M6 报告](reports/m6/summary.md)。PDF/OCR、团队共享权限和生产监控平台仍待对应专项实现。性能数字仅适用于报告中的本机合成环境。

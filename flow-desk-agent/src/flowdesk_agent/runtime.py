@@ -20,6 +20,7 @@ from flowdesk_agent.storage.callbacks import CallbackStore, DeliveryFailed
 from flowdesk_agent.storage.commands import CommandStore
 from flowdesk_agent.storage.tool_cache import ToolCache
 from flowdesk_agent.tools.go_client import GoTools, OwnershipLost, ToolError
+from flowdesk_agent.tools.mcp_client import MCPTools
 
 logger = logging.getLogger(__name__)
 MAX_EXECUTIONS = 10
@@ -125,7 +126,15 @@ class AgentRuntime:
                         await self.callbacks.wait(suspended["source_event_id"])
                         await self.commands.release(command.dispatch_id, owner, "waiting")
                         return
-                    tools = GoTools(self.http, command, self.callbacks, self.cache, guard)
+                    transport = os.getenv("TOOL_TRANSPORT", "http")
+                    if transport not in ("http", "mcp"):
+                        raise ToolError("TOOL_TRANSPORT_INVALID")
+                    mcp = (
+                        MCPTools(command, str(self.http.base_url), os.environ["INTERNAL_TOKEN"])
+                        if transport == "mcp"
+                        else None
+                    )
+                    tools = GoTools(self.http, command, self.callbacks, self.cache, guard, mcp=mcp)
                     context = await tools.authorize()
                     remaining = min(
                         120.0,

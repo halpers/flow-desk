@@ -66,6 +66,7 @@ services:
       EMBEDDING_REVISION: ${EMBEDDING_REVISION:-1}
       RETRIEVAL_PROFILE: ${RETRIEVAL_PROFILE:-baseline}
       RERANK_PROVIDER: ${RERANK_PROVIDER:-none}
+      TOOL_TRANSPORT: ${TOOL_TRANSPORT:-http}
     depends_on:
       migrate:
         condition: service_completed_successfully

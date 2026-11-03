@@ -19,3 +19,5 @@ M3 已添加持久化索引队列、字符向量/全文 RRF 检索、Go 复核�
 M4 的 `ticket-v1` 图支持补充信息与审批中断、稳定 action_id、Go 回执及持久化取消。等待时先保存检查点，再通过 callback outbox 通知 Go；恢复仍使用同一 run 图线程。执行后的回执单独保存，总结失败不会抹去业务效果。仍兼容已存在的 `read-v1` 命令。验证方式见 [M4 交付说明](../docs/m4-actions.md)与[故障证据](../docs/m4-fault-matrix.md)。
 
 M5 的固定数据位于 `eval/datasets/tasks-v1.jsonl`，执行和报告脚本位于根目录 `scripts/`。节点 metadata trace 与模型调用耗时保存在 Agent 自有表，不保存提示词或推理到 trace；预算和业务写入授权仍分别由模型适配与 Go 执行。复跑和限制见 [M5 说明](../docs/m5-evaluation.md)。
+
+M6.2 的官方 SDK stdio MCP 提供三个读工具及已批准 action_id 执行，复用 Go 权限/审批与稳定回执；默认 `TOOL_TRANSPORT=http`，可配置 mcp。边界及本地验收见[MCP 说明](../docs/m6-mcp.md)。

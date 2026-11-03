@@ -291,6 +291,10 @@ Python 完成中断检查点后发布 approval.required，Go 原子提升 approv
 
 当前 HTTP 路由以生成的 OpenAPI 为准；本文前述表格保留目标设计。M6.1 不新增公开 API 字段，扩展 Agent 内部供应商响应契约，见[语义 RAG](m6-semantic-rag.md)。兼容 embedding 响应及受限重排结果从 Pydantic 生成到 `shared/contracts/retrieval/v1/`。每次召回在 SQL 排名前过滤当前授权版本，重排前后均由 Go 复核证据；模型输出不产生新引用 ID。
 
+### 7.5 M6.2 MCP 适配
+
+MCP 提供三个既有读工具及 `actions.execute`；读参数复用 read.schema.json，执行参数来自 mcp-action.schema.json，均拒绝额外字段。Go lease 上下文的 tools 列表按当前权限返回读/写工具名，MCP 不接受调用者覆写可信身份。执行只提交稳定 action_id，沿用现有 HTTP 动作准备与 Go 审批/事务/回执。默认 HTTP 可配置切换到固定官方 SDK stdio transport；错误 structured_content 仅包含受限 code。生命周期及边界见[M6.2](m6-mcp.md)。
+
 ## 8. 错误与重试策略
 
 | HTTP | code | 行为 |

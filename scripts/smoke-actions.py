@@ -17,6 +17,9 @@ ROOT = Path(__file__).resolve().parents[1]
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--restart-agent", action="store_true")
+    parser.add_argument("--output", type=Path)
+    parser.add_argument("--transport", choices=["http", "mcp"], default="http")
+    parser.add_argument("--profile", choices=["mock", "openai-compatible"])
     args = parser.parse_args()
     settings = dict(
         line.split("=", 1)
@@ -25,8 +28,9 @@ def main():
     )
     base = "http://localhost:" + settings["WEB_HOST_PORT"]
     report = {
-        "phase": "M4",
-        "profile": settings.get("MODEL_PROVIDER", "mock"),
+        "phase": "M6.2" if args.transport == "mcp" else "M4",
+        "tool_transport": args.transport,
+        "profile": args.profile or settings.get("MODEL_PROVIDER", "mock"),
         "started_at": datetime.now(UTC).isoformat(),
         "cases": [],
         "restart_verified": False,
@@ -81,9 +85,7 @@ def main():
         raise AssertionError(f"run did not reach {status}")
 
     def decide(client, run, decision):
-        approval = next(
-            item for item in run["approvals"] if item["status"] == "pending"
-        )
+        approval = next(item for item in run["approvals"] if item["status"] == "pending")
         path = f"/approvals/{approval['id']}/decision"
         body = {
             "expected_version": approval["version"],
@@ -105,14 +107,10 @@ def main():
         login(client, "demo.operator")
         login(foreign, "other.operator")
         try:
-            order = call(client, "GET", "/orders?order_no=FD202611020002&limit=1")[
-                "items"
-            ][0]
+            order = call(client, "GET", "/orders?order_no=FD202611020002&limit=1")["items"][0]
 
             def tickets():
-                return call(
-                    client, "GET", f"/tickets?order_id={order['id']}&limit=100"
-                )["items"]
+                return call(client, "GET", f"/tickets?order_id={order['id']}&limit=100")["items"]
 
             before = len(tickets())
             run = start(client, "请创建售后工单，跟进配送问题")
@@ -125,10 +123,7 @@ def main():
                 "content": "FD202611020002",
             }
             queued = call(client, "POST", f"/runs/{run['id']}/inputs", body, 202, key)
-            assert (
-                call(client, "POST", f"/runs/{run['id']}/inputs", body, 202, key)
-                == queued
-            )
+            assert call(client, "POST", f"/runs/{run['id']}/inputs", body, 202, key) == queued
             waiting = wait(client, run, "waiting_approval")
             assert len(tickets()) == before, "write happened before approval"
             if args.restart_agent:
@@ -148,8 +143,7 @@ def main():
                     check=True,
                 )
                 assert (
-                    call(client, "GET", f"/runs/{run['id']}")["approvals"]
-                    == waiting["approvals"]
+                    call(client, "GET", f"/runs/{run['id']}")["approvals"] == waiting["approvals"]
                 )
                 report["restart_verified"] = True
             decide(client, waiting, "approve")
@@ -165,10 +159,7 @@ def main():
             assert len(tickets()) == before + 1
             assert receipt["result"]["ticket_no"] in final["current_message"]["content"]
             assert (
-                foreign.get(
-                    f"/api/v1/tickets/{receipt['business_object_id']}"
-                ).status_code
-                == 404
+                foreign.get(f"/api/v1/tickets/{receipt['business_object_id']}").status_code == 404
             )
             report["cases"].append(
                 {
@@ -180,7 +171,8 @@ def main():
             )
             note = start(
                 client,
-                f"为订单 FD202611020002 的工单 {receipt['result']['ticket_no']} 添加备注：合成配送回访已登记",
+                f"为订单 FD202611020002 的工单 {receipt['result']['ticket_no']} "
+                "添加备注：合成配送回访已登记",
             )
             waiting = wait(client, note, "waiting_approval")
             decide(client, waiting, "approve")
@@ -191,16 +183,8 @@ def main():
                 "GET",
                 f"/tickets/{receipt['business_object_id']}/events?limit=100",
             )
-            assert (
-                sum(
-                    item["operation"] == "ticket.note_added"
-                    for item in timeline["items"]
-                )
-                == 1
-            )
-            report["cases"].append(
-                {"name": "approved note", "passed": True, "run_id": note["id"]}
-            )
+            assert sum(item["operation"] == "ticket.note_added" for item in timeline["items"]) == 1
+            report["cases"].append({"name": "approved note", "passed": True, "run_id": note["id"]})
             rejected = start(client, "创建工单 FD202611020002")
             waiting = wait(client, rejected, "waiting_approval")
             assert decide(client, waiting, "reject")["status"] == "cancelled"
@@ -245,13 +229,12 @@ def main():
             client.post("/api/v1/auth/logout")
             foreign.post("/api/v1/auth/logout")
     report["completed_at"] = datetime.now(UTC).isoformat()
-    directory = ROOT / "reports/m4"
-    directory.mkdir(parents=True, exist_ok=True)
-    (directory / ("acceptance-" + report["profile"] + ".json")).write_text(
-        json.dumps(report, indent=2) + "\n", encoding="utf-8"
-    )
+    output = args.output or ROOT / "reports/m4" / ("acceptance-" + report["profile"] + ".json")
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     print(
-        "M4 HTTP acceptance passed: 4/4; persistent waits, exact approvals, receipts, reject/cancel and tenant boundary"
+        report["phase"]
+        + " HTTP acceptance passed: 4/4; waits, approvals, receipts and tenant boundary"
     )
 
 

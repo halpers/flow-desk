@@ -43,12 +43,14 @@ class GoTools:
         callbacks: CallbackStore,
         cache: ToolCache,
         guard: Callable[[], Awaitable[None]],
+        mcp=None,
     ):
         self.http = http
         self.command = command
         self.callbacks = callbacks
         self.cache = cache
         self.guard = guard
+        self.mcp = mcp
         self.context: TrustedContext | None = None
 
     async def authorize(self) -> TrustedContext:
@@ -96,29 +98,15 @@ class GoTools:
         result = await self.cache.find(call_id)
         begin = time.monotonic()
         if result is None:
-            for attempt in range(3):
+            if self.mcp is not None:
                 await self.guard()
-                try:
-                    response = await self.http.post(
-                        f"/internal/v1/tools/{tool}",
-                        json={"arguments": arguments},
-                        headers={"X-Run-Capability": context.capability},
-                    )
-                    if response.status_code >= 500:
-                        raise httpx.TransportError("upstream unavailable")
-                    if response.status_code != 200:
-                        raise ToolError(response.json().get("code", "TOOL_FAILED"))
-                    body = response.json()
-                    result_validator.validate(body)
-                    result = body["data"]
-                    await self.cache.insert(
-                        call_id, self.command.dispatch_id, tool, arguments, result
-                    )
-                    break
-                except httpx.TransportError:
-                    if attempt == 2:
-                        raise ToolError("UPSTREAM_UNAVAILABLE") from None
-                    await asyncio.sleep(0.25 * (2**attempt))
+                result = await self.mcp.call(tool, arguments)
+                result_validator.validate({"code": "OK", "request_id": "mcp", "data": result})
+                await self.guard()
+                await self.cache.insert(call_id, self.command.dispatch_id, tool, arguments, result)
+            else:
+                result = await self.read_http(tool, arguments, context.capability)
+                await self.cache.insert(call_id, self.command.dispatch_id, tool, arguments, result)
         assert result is not None
         completed = await self.callbacks.emit(
             self.command,
@@ -133,6 +121,28 @@ class GoTools:
         )
         await self.callbacks.wait(completed)
         return result
+
+    async def read_http(self, tool: str, arguments: dict, capability: str):
+        for attempt in range(3):
+            await self.guard()
+            try:
+                response = await self.http.post(
+                    f"/internal/v1/tools/{tool}",
+                    json={"arguments": arguments},
+                    headers={"X-Run-Capability": capability},
+                )
+                if response.status_code >= 500:
+                    raise httpx.TransportError("upstream unavailable")
+                if response.status_code != 200:
+                    raise ToolError(response.json().get("code", "TOOL_FAILED"))
+                body = response.json()
+                result_validator.validate(body)
+                result = body["data"]
+                return result
+            except httpx.TransportError:
+                if attempt == 2:
+                    raise ToolError("UPSTREAM_UNAVAILABLE") from None
+                await asyncio.sleep(0.25 * (2**attempt))
 
     async def action_request(self, path: str, body: dict | None = None, method: str = "POST"):
         context = await self.authorize()
@@ -171,7 +181,12 @@ class GoTools:
 
     async def execute_action(self, action_id: str):
         # A response lost after COMMIT is safely replayed with this exact ID.
-        result = await self.action_request(f"/actions/{action_id}/execute", {})
+        if self.mcp is None:
+            result = await self.action_request(f"/actions/{action_id}/execute", {})
+        else:
+            await self.authorize()
+            result = await self.mcp.call("actions.execute", {"action_id": action_id})
+            await self.guard()
         contract = go_contract["paths"]["/internal/v1/runs/{run_id}/actions/{action_id}/execute"][
             "post"
         ]["responses"]["200"]["content"]["application/json"]["schema"]
