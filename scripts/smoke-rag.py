@@ -17,10 +17,9 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--profile", choices=["mock", "openai-compatible"], required=True
-    )
+    parser.add_argument("--profile", choices=["mock", "openai-compatible"], required=True)
     parser.add_argument("--limit", type=int, default=10)
+    parser.add_argument("--output", type=Path)
     args = parser.parse_args()
     settings = dict(
         line.split("=", 1)
@@ -35,10 +34,9 @@ def main():
     )
     report = {
         "profile": args.profile,
-        "chat_model": settings.get("MODEL_NAME")
-        if args.profile != "mock"
-        else "FakeModel",
-        "retrieval_profile": "char-ngram-v1+fts+rrf",
+        "chat_model": settings.get("MODEL_NAME") if args.profile != "mock" else "FakeModel",
+        "retrieval_profile": settings.get("RETRIEVAL_PROFILE", "baseline"),
+        "rerank_provider": settings.get("RERANK_PROVIDER", "none"),
         "started_at": datetime.now(UTC).isoformat(),
         "cases": [],
         "run_ids": [],
@@ -90,18 +88,12 @@ def main():
             {"name": name, "read_roles": ["operator", "supervisor", "admin"]},
             201,
         )
-        documents = call(admin, "GET", f"/knowledge-bases/{knowledge['id']}/documents")[
-            "items"
-        ]
+        documents = call(admin, "GET", f"/knowledge-bases/{knowledge['id']}/documents")["items"]
         versions = []
         for fixture in fixtures:
-            doc = next(
-                (item for item in documents if item["title"] == fixture["title"]), None
-            )
+            doc = next((item for item in documents if item["title"] == fixture["title"]), None)
             if doc:
-                version = call(admin, "GET", f"/documents/{doc['id']}/versions")[
-                    "items"
-                ][0]
+                version = call(admin, "GET", f"/documents/{doc['id']}/versions")["items"][0]
             else:
                 text = fixture["content"] + (
                     " 其他租户专属标记：FOREIGN_POLICY_SENTINEL。" if foreign else ""
@@ -122,14 +114,14 @@ def main():
                 if time.monotonic() > deadline:
                     raise RuntimeError("INDEX_TIMEOUT")
                 time.sleep(0.3)
-                version = call(
-                    admin, "GET", f"/documents/{version['document_id']}/versions"
-                )["items"][0]
+                version = call(admin, "GET", f"/documents/{version['document_id']}/versions")[
+                    "items"
+                ][0]
             doc = next(
                 item
-                for item in call(
-                    admin, "GET", f"/knowledge-bases/{knowledge['id']}/documents"
-                )["items"]
+                for item in call(admin, "GET", f"/knowledge-bases/{knowledge['id']}/documents")[
+                    "items"
+                ]
                 if item["id"] == version["document_id"]
             )
             if doc["active_version_id"] != version["id"]:
@@ -152,15 +144,10 @@ def main():
             knowledge, versions = prepare(admin)
             foreign_base, _ = prepare(other_admin, True)
             assert (
-                other.get(
-                    f"/api/v1/knowledge-bases/{knowledge['id']}/documents"
-                ).status_code
-                == 404
+                other.get(f"/api/v1/knowledge-bases/{knowledge['id']}/documents").status_code == 404
             )
             assert (
-                operator.get(
-                    f"/api/v1/knowledge-bases/{foreign_base['id']}/documents"
-                ).status_code
+                operator.get(f"/api/v1/knowledge-bases/{foreign_base['id']}/documents").status_code
                 == 404
             )
             first = None
@@ -196,19 +183,13 @@ def main():
                 passed = (
                     run["status"] == "succeeded"
                     and fixture["expected"] in message["content"]
-                    and any(
-                        item["version_id"] == version["id"]
-                        for item in message["citations"]
-                    )
+                    and any(item["version_id"] == version["id"] for item in message["citations"])
                 )
                 assert "FOREIGN_POLICY_SENTINEL" not in message["content"]
                 for citation in message["citations"]:
                     evidence = call(operator, "GET", "/citations/" + citation["id"])
                     assert "FOREIGN_POLICY_SENTINEL" not in evidence["excerpt"]
-                    assert (
-                        other.get("/api/v1/citations/" + citation["id"]).status_code
-                        == 404
-                    )
+                    assert other.get("/api/v1/citations/" + citation["id"]).status_code == 404
                 report["cases"].append(
                     {
                         "task_id": fixture["id"],
@@ -219,18 +200,16 @@ def main():
                         "duration_ms": round((time.monotonic() - begin) * 1000),
                     }
                 )
-                print(
-                    f"{fixture['id']}: {run['status']}, assertions={passed}", flush=True
-                )
+                print(f"{fixture['id']}: {run['status']}, assertions={passed}", flush=True)
                 if not passed:
                     raise RuntimeError("POLICY_ASSERTION_FAILED")
                 first = first or run
             if first:
                 document = next(
                     item
-                    for item in call(
-                        admin, "GET", f"/knowledge-bases/{knowledge['id']}/documents"
-                    )["items"]
+                    for item in call(admin, "GET", f"/knowledge-bases/{knowledge['id']}/documents")[
+                        "items"
+                    ]
                     if item["id"] == versions[0]["document_id"]
                 )
                 call(
@@ -242,17 +221,11 @@ def main():
                 for citation in first["current_message"]["citations"]:
                     if citation["version_id"] == versions[0]["id"]:
                         assert (
-                            operator.get(
-                                "/api/v1/citations/" + citation["id"]
-                            ).status_code
-                            == 409
+                            operator.get("/api/v1/citations/" + citation["id"]).status_code == 409
                         )
                 snapshot = call(operator, "GET", f"/runs/{first['id']}")
                 assert "七天" not in snapshot["current_message"]["content"]
-                assert (
-                    "七天"
-                    not in operator.get(f"/api/v1/runs/{first['id']}/events").text
-                )
+                assert "七天" not in operator.get(f"/api/v1/runs/{first['id']}/events").text
                 report["withdrawal_and_replay_passed"] = True
             report["tenant_isolation_passed"] = True
     finally:
@@ -265,14 +238,17 @@ def main():
                 options="-cstatement_timeout=10000",
             ) as conn:
                 report["usage"] = conn.execute(
-                    "SELECT count(*) AS calls,coalesce(sum(input_tokens),0) AS input_tokens,coalesce(sum(output_tokens),0) AS output_tokens,coalesce(sum(reserved_units),0) AS reserved_units FROM agent.model_calls WHERE run_id::text=ANY(%s)",
+                    "SELECT count(*) AS calls,coalesce(sum(input_tokens),0) AS input_tokens,"
+                    "coalesce(sum(output_tokens),0) AS output_tokens,"
+                    "coalesce(sum(reserved_units),0) AS reserved_units "
+                    "FROM agent.model_calls WHERE run_id::text=ANY(%s)",
                     (report["run_ids"],),
                 ).fetchone()
         report["completed_at"] = datetime.now(UTC).isoformat()
-        output = ROOT / "reports/m3" / f"acceptance-{args.profile}.json"
-        output.write_text(
-            json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
-        )
+        output = args.output or ROOT / "reports/m3" / f"acceptance-{args.profile}.json"
+        output = output.resolve()
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         print("Saved " + str(output.relative_to(ROOT)))
 
 

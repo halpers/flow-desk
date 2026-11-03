@@ -1,11 +1,14 @@
-"""Tenant-filtered lexical/character-vector baseline with fenced, durable indexing."""
+"""Filtered lexical/semantic retrieval with immutable profiles and fenced indexing."""
 
 import asyncio
 import hashlib
 import math
+import os
 import re
-from uuid import UUID, uuid5
+from uuid import UUID, uuid4, uuid5
 
+from flowdesk_agent.embeddings import configured_embedder, vector_literal
+from flowdesk_agent.semantic_index import SemanticIndex
 from flowdesk_agent.tools.go_client import ToolError
 
 PROFILE = "char-ngram-v1"
@@ -37,8 +40,9 @@ def split_text(content):
 
 
 class KnowledgeIndex:
-    def __init__(self, pool, http):
+    def __init__(self, pool, http, *, embedder=None):
         self.pool, self.http = pool, http
+        self.embedder = embedder
 
     async def accept(self, job, version):
         async with self.pool.connection() as conn:
@@ -140,6 +144,23 @@ class KnowledgeIndex:
                             vector(chunk),
                         ),
                     )
+        if self.embedder:
+
+            async def renew():
+                async with self.pool.connection() as connection:
+                    renewed = await connection.execute(
+                        "UPDATE knowledge_jobs SET lease_until=now()+interval '60 seconds' "
+                        "WHERE job_id=%s AND attempts=%s AND status='working' "
+                        "AND lease_until>now()",
+                        (job["job_id"], job["attempts"]),
+                    )
+                    if not renewed.rowcount:
+                        raise ToolError("INDEX_LEASE_LOST")
+
+            await SemanticIndex(self.pool, self.embedder).rebuild(
+                job["version_id"], guard=renew, job=job
+            )
+            await renew()
         completed = await self.http.post(
             f"/internal/v1/knowledge/versions/{job['version_id']}/complete",
             json={
@@ -182,8 +203,19 @@ class KnowledgeIndex:
 
 
 class Retriever:
-    def __init__(self, pool, tools):
+    def __init__(self, pool, tools, *, embedder=None, profile=None, reranker=None):
         self.pool, self.tools = pool, tools
+        self.profile = (
+            profile if profile is not None else os.environ.get("RETRIEVAL_PROFILE", "baseline")
+        )
+        if self.profile not in ("baseline", "semantic"):
+            raise ToolError("RETRIEVAL_CONFIG_INVALID")
+        self.embedder = embedder
+        if self.profile == "semantic" and self.embedder is None:
+            self.embedder = configured_embedder(pool)
+            if self.embedder is None:
+                raise ToolError("EMBEDDING_NOT_CONFIGURED")
+        self.reranker = reranker
 
     async def search(self, query, top_k=3):
         if not 1 <= top_k <= 5 or len(query) > 500:
@@ -201,8 +233,31 @@ class Retriever:
         versions = [UUID(item["version_id"]) for item in scope["versions"]]
         if not versions:
             return []
-        chosen = await self.rank(query, context.tenant_id, versions, top_k)
+        chosen = await self.rank(
+            query,
+            context.tenant_id,
+            versions,
+            5 if self.reranker else top_k,
+            operation="query:" + str(context.run_id),
+            guard=self.tools.authorize,
+        )
         context = await self.tools.authorize()
+        items = await self.validate(context, chosen)
+        if not self.reranker or not items:
+            return items[:top_k]
+        # Only Go-revalidated excerpts may be sent to the external reranking model.
+        by_chunk = {str(item["chunk_id"]): item for item in chosen}
+        candidates = [
+            {**by_chunk[item["chunk_id"]], "content": item["excerpt"]}
+            for item in items
+            if item.get("chunk_id") in by_chunk
+        ]
+        selected = await self.reranker.rank(query, candidates, self.profile)
+        context = await self.tools.authorize()
+        # Recheck revocation after the external call before returning any evidence.
+        return await self.validate(context, selected[:top_k])
+
+    async def validate(self, context, chosen):
         checked = await self.tools.http.post(
             f"/internal/v1/runs/{context.run_id}/knowledge/validate",
             headers={"X-Run-Capability": context.capability},
@@ -222,42 +277,110 @@ class Retriever:
             raise ToolError("EVIDENCE_REJECTED")
         return checked.json()["data"]["items"]
 
-    async def rank(self, query, tenant_id, versions, top_k=5, mode="hybrid"):
+    async def rank(
+        self,
+        query,
+        tenant_id,
+        versions,
+        top_k=5,
+        mode="hybrid",
+        *,
+        operation=None,
+        guard=None,
+    ):
+        if not 1 <= top_k <= 5 or len(query) > 500 or mode not in ("lexical", "hybrid"):
+            raise ToolError("RETRIEVAL_ARGUMENT_INVALID")
         query_terms = list(dict.fromkeys(terms(query)))[:200]
-        if not query_terms:
+        if not query_terms and self.profile == "baseline":
+            return []
+        if not versions:
             return []
         async with self.pool.connection() as conn:
             # Access filters are applied before either candidate list is ranked.
-            lexical = await (
-                await conn.execute(
-                    "SELECT c.*,ts_rank(c.lexical,to_tsquery('simple',%s)) AS rank "
-                    "FROM knowledge_chunks c JOIN knowledge_manifests m USING(version_id) "
-                    "WHERE c.tenant_id=%s AND c.version_id=ANY(%s) AND m.profile=%s "
-                    "AND c.lexical @@ to_tsquery('simple',%s) "
-                    "ORDER BY rank DESC,c.chunk_id LIMIT 20",
-                    (
-                        " | ".join(query_terms),
-                        tenant_id,
-                        versions,
-                        PROFILE,
-                        " | ".join(query_terms),
-                    ),
-                )
-            ).fetchall()
+            lexical = (
+                await (
+                    await conn.execute(
+                        "SELECT c.*,ts_rank(c.lexical,to_tsquery('simple',%s)) AS rank "
+                        "FROM knowledge_chunks c JOIN knowledge_manifests m USING(version_id) "
+                        "WHERE c.tenant_id=%s AND c.version_id=ANY(%s) AND m.profile=%s "
+                        "AND c.lexical @@ to_tsquery('simple',%s) "
+                        "ORDER BY rank DESC,c.chunk_id LIMIT 20",
+                        (
+                            " | ".join(query_terms),
+                            tenant_id,
+                            versions,
+                            PROFILE,
+                            " | ".join(query_terms),
+                        ),
+                    )
+                ).fetchall()
+                if query_terms
+                else []
+            )
             if mode == "lexical":
                 return lexical[:top_k]
-            semantic = await (
-                await conn.execute(
-                    "SELECT c.*,1-(embedding OPERATOR(knowledge.<=>) %s::knowledge.vector) AS rank "
-                    "FROM knowledge_chunks c JOIN knowledge_manifests m USING(version_id) "
-                    "WHERE c.tenant_id=%s AND c.version_id=ANY(%s) AND m.profile=%s "
-                    "ORDER BY embedding OPERATOR(knowledge.<=>) %s::knowledge.vector,"
-                    "c.chunk_id LIMIT 20",
-                    (vector(query), tenant_id, versions, PROFILE, vector(query)),
+            if self.profile == "baseline":
+                semantic = await (
+                    await conn.execute(
+                        "SELECT c.*,1-(embedding OPERATOR(knowledge.<=>) "
+                        "%s::knowledge.vector) AS rank "
+                        "FROM knowledge_chunks c JOIN knowledge_manifests m USING(version_id) "
+                        "WHERE c.tenant_id=%s AND c.version_id=ANY(%s) AND m.profile=%s "
+                        "ORDER BY embedding OPERATOR(knowledge.<=>) %s::knowledge.vector,"
+                        "c.chunk_id LIMIT 20",
+                        (vector(query), tenant_id, versions, PROFILE, vector(query)),
+                    )
+                ).fetchall()
+            else:
+                owned = await (
+                    await conn.execute(
+                        "SELECT version_id FROM knowledge_manifests "
+                        "WHERE tenant_id=%s AND version_id=ANY(%s)",
+                        (tenant_id, versions),
+                    )
+                ).fetchall()
+                manifests = await (
+                    await conn.execute(
+                        "SELECT version_id,dimension FROM semantic_manifests "
+                        "WHERE tenant_id=%s AND profile=%s AND version_id=ANY(%s)",
+                        (tenant_id, self.embedder.profile, versions),
+                    )
+                ).fetchall()
+                if {row["version_id"] for row in owned} != {row["version_id"] for row in manifests}:
+                    raise ToolError("RETRIEVAL_INDEX_NOT_READY")
+                if not owned:
+                    return []
+                dimensions = {row["dimension"] for row in manifests}
+        if self.profile == "semantic":
+            values = (
+                await self.embedder.encode(
+                    tenant_id, [query], operation or "query:" + str(uuid4()), guard=guard
                 )
-            ).fetchall()
+            )[0]
+            if dimensions != {len(values)}:
+                raise ToolError("EMBEDDING_DIMENSION_CHANGED")
+            literal = vector_literal(values)
+            async with self.pool.connection() as conn:
+                semantic = await (
+                    await conn.execute(
+                        "SELECT c.*,1-(s.embedding OPERATOR(knowledge.<=>) "
+                        "%s::knowledge.vector) AS rank "
+                        "FROM semantic_vectors s JOIN knowledge_chunks c "
+                        "ON c.chunk_id=s.chunk_id AND c.version_id=s.version_id "
+                        "AND c.tenant_id=s.tenant_id "
+                        "WHERE s.tenant_id=%s AND s.profile=%s AND s.version_id=ANY(%s) "
+                        "ORDER BY s.embedding OPERATOR(knowledge.<=>) %s::knowledge.vector,"
+                        "c.chunk_id LIMIT 20",
+                        (literal, tenant_id, self.embedder.profile, versions, literal),
+                    )
+                ).fetchall()
         candidates, scores = {}, {}
-        for ranking in (lexical, [item for item in semantic if item["rank"] >= 0.15]):
+        vector_candidates = (
+            semantic
+            if self.profile == "semantic"
+            else [item for item in semantic if item["rank"] >= 0.15]
+        )
+        for ranking in (lexical, vector_candidates):
             for rank, item in enumerate(ranking, start=1):
                 chunk = str(item["chunk_id"])
                 candidates[chunk] = item

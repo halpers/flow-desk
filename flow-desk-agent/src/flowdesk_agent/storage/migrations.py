@@ -96,6 +96,50 @@ MIGRATIONS = [
     ALTER TABLE model_calls ADD COLUMN duration_ms BIGINT;
     ALTER TABLE model_calls ADD COLUMN completed_at TIMESTAMPTZ;
     """,
+    """
+    CREATE TABLE embedding_calls (
+        call_id UUID PRIMARY KEY, tenant_id UUID NOT NULL, profile TEXT NOT NULL,
+        operation TEXT NOT NULL, request_hash TEXT NOT NULL,
+        reserved_bytes INTEGER NOT NULL CHECK(reserved_bytes>0),
+        status TEXT NOT NULL CHECK(status IN ('reserved','completed','failed')),
+        input_tokens INTEGER, dimension INTEGER, duration_ms BIGINT,
+        error_code TEXT NOT NULL DEFAULT '', cost_status TEXT NOT NULL DEFAULT 'unknown',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(), completed_at TIMESTAMPTZ
+    );
+    CREATE INDEX embedding_call_budget ON embedding_calls(tenant_id,profile,operation);
+    CREATE TABLE embedding_cache (
+        tenant_id UUID NOT NULL, profile TEXT NOT NULL, content_hash TEXT NOT NULL,
+        dimension INTEGER NOT NULL CHECK(dimension BETWEEN 1 AND 8192),
+        embedding knowledge.vector NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        PRIMARY KEY(tenant_id,profile,content_hash),
+        CHECK(knowledge.vector_dims(embedding)=dimension)
+    );
+    CREATE TABLE semantic_manifests (
+        version_id UUID NOT NULL REFERENCES knowledge_manifests(version_id),
+        profile TEXT NOT NULL, tenant_id UUID NOT NULL, content_hash TEXT NOT NULL,
+        model TEXT NOT NULL, dimension INTEGER NOT NULL CHECK(dimension BETWEEN 1 AND 8192),
+        chunk_count INTEGER NOT NULL CHECK(chunk_count>0),
+        completed_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        PRIMARY KEY(version_id,profile)
+    );
+    CREATE INDEX semantic_manifest_filter ON semantic_manifests(tenant_id,profile,version_id);
+    CREATE TABLE semantic_vectors (
+        chunk_id UUID NOT NULL REFERENCES knowledge_chunks(chunk_id),
+        version_id UUID NOT NULL, profile TEXT NOT NULL, tenant_id UUID NOT NULL,
+        dimension INTEGER NOT NULL CHECK(dimension BETWEEN 1 AND 8192),
+        embedding knowledge.vector NOT NULL,
+        PRIMARY KEY(chunk_id,profile),
+        FOREIGN KEY(version_id,profile) REFERENCES semantic_manifests(version_id,profile),
+        CHECK(knowledge.vector_dims(embedding)=dimension)
+    );
+    CREATE INDEX semantic_vector_filter ON semantic_vectors(tenant_id,profile,version_id);
+    CREATE TABLE retrieval_attempts (
+        attempt_id UUID PRIMARY KEY, run_id UUID NOT NULL, profile TEXT NOT NULL,
+        status TEXT NOT NULL, candidate_count INTEGER NOT NULL,
+        duration_ms BIGINT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    """,
 ]
 
 

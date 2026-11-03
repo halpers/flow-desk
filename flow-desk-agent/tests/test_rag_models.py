@@ -87,7 +87,9 @@ def test_index_replay_filtered_hybrid_retrieval():
                 async def authorize():
                     return context
 
-                retriever = Retriever(pool, SimpleNamespace(http=http, authorize=authorize))
+                retriever = Retriever(
+                    pool, SimpleNamespace(http=http, authorize=authorize), profile="baseline"
+                )
                 result = await retriever.search("退货期限")
                 assert len(result) == 1 and "七天" in result[0]["excerpt"]
                 scope[:] = []

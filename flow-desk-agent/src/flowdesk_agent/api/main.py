@@ -13,6 +13,7 @@ from psycopg_pool import AsyncConnectionPool
 from pydantic import BaseModel
 
 from flowdesk_agent.api.schemas import CancelCommand, CommandReceipt, ExecutionCommand, IndexCommand
+from flowdesk_agent.embeddings import configured_embedder
 from flowdesk_agent.retrieval import KnowledgeIndex
 from flowdesk_agent.runtime import AgentRuntime
 from flowdesk_agent.storage.commands import CommandConflict
@@ -49,7 +50,7 @@ async def lifespan(app: FastAPI):
             runtime = AgentRuntime(pool, http)
             app.state.pool = pool
             app.state.runtime = runtime
-            app.state.knowledge = KnowledgeIndex(pool, http)
+            app.state.knowledge = KnowledgeIndex(pool, http, embedder=configured_embedder(pool))
             workers = [asyncio.create_task(runtime.execution_loop())]
             workers.append(asyncio.create_task(app.state.knowledge.loop()))
             workers.extend(asyncio.create_task(runtime.callback_loop()) for _ in range(4))

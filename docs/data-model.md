@@ -186,6 +186,8 @@ Python 自有迁移与 checkpointer 的 setup/升级通过受控迁移任务完�
 
 ## 10. 关键事务边界与锁顺序
 
+M6.1 的 Python 追加迁移还创建 embedding 调用账本/租户缓存、语义 manifest/向量和检索尝试 metadata。profile 区分供应商 endpoint、模型、请求维度及 revision；实际维度受约束，不能混用。预算在 HTTP 前事务预留；语义 manifest/向量提交必须通过当前索引 job 代次围栏。此升级不修改 Go 业务表或文档激活指针。完整字段以 Python 迁移为准，行为见[语义 RAG](m6-semantic-rag.md)。
+
 统一业务写锁顺序：run（存在时）→action→approval→业务主对象→关联表。手工业务写没有 run/action，但同样按主对象到关联表顺序。读取已有回执可先做只读检查，进入写事务后需重新验证。
 
 | 用例 | 同一事务内必须完成 | 事务外完成 |

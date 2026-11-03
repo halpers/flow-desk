@@ -1,0 +1,12 @@
+{
+  "status": "invalid",
+  "fixture": "m6-retrieval-v1",
+  "reason": "Evaluation harness used an unsupported graph_version before the first reranking call.",
+  "error_type": "ValidationError",
+  "quality_result": null,
+  "real_embedding_was_called": true,
+  "actual_embedding_usage": null,
+  "accounting_limitation": "The original harness removed the temporary schema before exporting accounting on errors. Token and attempt totals were not retained. Subsequent harness revisions export accounting in finally.",
+  "cost_status": "unknown",
+  "temporary_schema_removed": true
+}

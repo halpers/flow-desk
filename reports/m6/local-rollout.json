@@ -1,0 +1,21 @@
+{
+  "semantic_indexes": [
+    {
+      "profile": "semantic-v1-67b6166499f55397045283d2",
+      "versions": 16,
+      "rebuilt": 16,
+      "dimension": 1024,
+      "activation": "unchanged",
+      "synthetic_account": "demo.admin"
+    },
+    {
+      "profile": "semantic-v1-67b6166499f55397045283d2",
+      "versions": 11,
+      "rebuilt": 11,
+      "dimension": 1024,
+      "activation": "unchanged",
+      "synthetic_account": "other.admin"
+    }
+  ],
+  "activation": "baseline retained until HTTP acceptance"
+}

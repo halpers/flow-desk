@@ -15,6 +15,8 @@
 | [协议来源](../shared/contracts/README.md) | 契约唯一来源与生成流水线 |
 | [M5 评测](m5-evaluation.md) | 固定任务、评分断言、模型/检索/性能报告及复跑方式 |
 | [演示与运维](demo-and-operations.md) | 正常办理、失败恢复、备份恢复和排障边界 |
+| [M6 专项计划](m6-plan.md) | 语义 RAG、MCP、部署配置与本地监控的顺序及验收 |
+| [M6.1 语义 RAG](m6-semantic-rag.md) | embedding 预算、索引重建、重排、配置回退与实测 |
 
 ## 阅读与修改顺序
 

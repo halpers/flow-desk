@@ -14,7 +14,7 @@ Python 3.12 创建独立 `.venv` 后执行 `pip install -r requirements.lock`；
 
 跨服务接口见 [接口契约](../docs/contracts.md)，实际阶段状态见 [实施记录](../docs/progress.md)。
 
-M3 已添加持久化索引队列、字符向量/全文 RRF 检索、Go 复核证据、兼容 Chat Completions 的结构化模型适配与持久化预算。合成政策位于 `eval/m3-policies.json`，复跑方式及限制见 [M3 说明](../docs/m3-rag.md)。仅模型答复使用外部服务；文档索引当前使用本地词面向量基线。
+M3 已添加持久化索引队列、字符向量/全文 RRF 检索、Go 复核证据、兼容 Chat Completions 的结构化模型适配与持久化预算。合成政策位于 `eval/m3-policies.json`，历史基线及限制见 [M3 说明](../docs/m3-rag.md)。M6.1 增加独立兼容 embeddings 接口、租户隔离的持久缓存/预算、语义 profile 重建及可选模型重排，部署默认仍为词面基线；切换与回退见[语义 RAG](../docs/m6-semantic-rag.md)。
 
 M4 的 `ticket-v1` 图支持补充信息与审批中断、稳定 action_id、Go 回执及持久化取消。等待时先保存检查点，再通过 callback outbox 通知 Go；恢复仍使用同一 run 图线程。执行后的回执单独保存，总结失败不会抹去业务效果。仍兼容已存在的 `read-v1` 命令。验证方式见 [M4 交付说明](../docs/m4-actions.md)与[故障证据](../docs/m4-fault-matrix.md)。
 

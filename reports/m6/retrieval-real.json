@@ -1,0 +1,706 @@
+{
+  "started_at": "2026-11-03T08:17:49.733370+00:00",
+  "fixture": "m6-retrieval-v1",
+  "fixture_sha256": "226537f04428fe98411052674eeb8182b6524b4f6212052c8df5ed3ad448483e",
+  "synthetic": true,
+  "isolated_schema": true,
+  "real_embedding": true,
+  "reranking": true,
+  "cost_status": "unknown",
+  "scope": "tenant/version filters before ranking; Go evidence validation covered separately",
+  "method": "24 independent paraphrases; rerank reorders the same five candidates; combined latency includes the original cold semantic query",
+  "embedding_model": "qwen3.7-text-embedding-flash",
+  "embedding_dimension": 1024,
+  "index_profile": "semantic-v1-67b6166499f55397045283d2",
+  "results": {
+    "baseline": {
+      "total": 24,
+      "hits_at_5": 11,
+      "recall_at_5": 0.4583333333333333,
+      "recall_at_1": 0.25,
+      "mrr_at_5": 0.31875000000000003,
+      "latency_p50_ms": 2,
+      "latency_p95_ms": 4,
+      "cases": [
+        {
+          "id": "delay",
+          "rank": 5,
+          "duration_ms": 4,
+          "returned_ids": [
+            "price",
+            "intercept",
+            "split",
+            "customs",
+            "delay"
+          ]
+        },
+        {
+          "id": "missing-delivery",
+          "rank": null,
+          "duration_ms": 3,
+          "returned_ids": [
+            "address"
+          ]
+        },
+        {
+          "id": "lost",
+          "rank": null,
+          "duration_ms": 3,
+          "returned_ids": [
+            "damage",
+            "invoice-fix",
+            "delay"
+          ]
+        },
+        {
+          "id": "address",
+          "rank": 4,
+          "duration_ms": 2,
+          "returned_ids": [
+            "store",
+            "split",
+            "preorder",
+            "address",
+            "priority"
+          ]
+        },
+        {
+          "id": "intercept",
+          "rank": null,
+          "duration_ms": 2,
+          "returned_ids": [
+            "address"
+          ]
+        },
+        {
+          "id": "return-window",
+          "rank": 5,
+          "duration_ms": 5,
+          "returned_ids": [
+            "split",
+            "price",
+            "store",
+            "postage",
+            "return-window"
+          ]
+        },
+        {
+          "id": "defect",
+          "rank": null,
+          "duration_ms": 2,
+          "returned_ids": [
+            "store",
+            "parts",
+            "preorder",
+            "priority"
+          ]
+        },
+        {
+          "id": "postage",
+          "rank": null,
+          "duration_ms": 3,
+          "returned_ids": [
+            "warranty",
+            "gift"
+          ]
+        },
+        {
+          "id": "invoice",
+          "rank": 2,
+          "duration_ms": 3,
+          "returned_ids": [
+            "refund",
+            "invoice",
+            "invoice-fix",
+            "address"
+          ]
+        },
+        {
+          "id": "invoice-fix",
+          "rank": 1,
+          "duration_ms": 2,
+          "returned_ids": [
+            "invoice-fix"
+          ]
+        },
+        {
+          "id": "price",
+          "rank": 1,
+          "duration_ms": 3,
+          "returned_ids": [
+            "price",
+            "exchange"
+          ]
+        },
+        {
+          "id": "installation",
+          "rank": null,
+          "duration_ms": 2,
+          "returned_ids": [
+            "postage"
+          ]
+        },
+        {
+          "id": "damage",
+          "rank": 2,
+          "duration_ms": 2,
+          "returned_ids": [
+            "refund",
+            "damage",
+            "invoice",
+            "installation"
+          ]
+        },
+        {
+          "id": "parts",
+          "rank": null,
+          "duration_ms": 2,
+          "returned_ids": [
+            "invoice"
+          ]
+        },
+        {
+          "id": "preorder",
+          "rank": null,
+          "duration_ms": 3,
+          "returned_ids": [
+            "store"
+          ]
+        },
+        {
+          "id": "split",
+          "rank": null,
+          "duration_ms": 4,
+          "returned_ids": []
+        },
+        {
+          "id": "refund",
+          "rank": null,
+          "duration_ms": 4,
+          "returned_ids": [
+            "address"
+          ]
+        },
+        {
+          "id": "warranty",
+          "rank": 1,
+          "duration_ms": 2,
+          "returned_ids": [
+            "warranty"
+          ]
+        },
+        {
+          "id": "exchange",
+          "rank": null,
+          "duration_ms": 2,
+          "returned_ids": [
+            "split",
+            "locker",
+            "return-window",
+            "address"
+          ]
+        },
+        {
+          "id": "gift",
+          "rank": null,
+          "duration_ms": 2,
+          "returned_ids": [
+            "parts",
+            "split",
+            "price",
+            "store",
+            "postage"
+          ]
+        },
+        {
+          "id": "priority",
+          "rank": 1,
+          "duration_ms": 2,
+          "returned_ids": [
+            "priority",
+            "refund",
+            "defect",
+            "invoice",
+            "locker"
+          ]
+        },
+        {
+          "id": "customs",
+          "rank": 1,
+          "duration_ms": 3,
+          "returned_ids": [
+            "customs",
+            "locker"
+          ]
+        },
+        {
+          "id": "locker",
+          "rank": null,
+          "duration_ms": 3,
+          "returned_ids": [
+            "postage"
+          ]
+        },
+        {
+          "id": "store",
+          "rank": 1,
+          "duration_ms": 2,
+          "returned_ids": [
+            "store",
+            "price",
+            "invoice-fix"
+          ]
+        }
+      ]
+    },
+    "semantic": {
+      "total": 24,
+      "hits_at_5": 23,
+      "recall_at_5": 0.9583333333333334,
+      "recall_at_1": 0.4583333333333333,
+      "mrr_at_5": 0.6784722222222223,
+      "latency_p50_ms": 306,
+      "latency_p95_ms": 580,
+      "cases": [
+        {
+          "id": "delay",
+          "rank": 1,
+          "duration_ms": 284,
+          "returned_ids": [
+            "delay",
+            "customs",
+            "split",
+            "price",
+            "address"
+          ]
+        },
+        {
+          "id": "missing-delivery",
+          "rank": 2,
+          "duration_ms": 257,
+          "returned_ids": [
+            "address",
+            "missing-delivery",
+            "exchange",
+            "gift",
+            "delay"
+          ]
+        },
+        {
+          "id": "lost",
+          "rank": 4,
+          "duration_ms": 294,
+          "returned_ids": [
+            "damage",
+            "delay",
+            "invoice-fix",
+            "lost",
+            "intercept"
+          ]
+        },
+        {
+          "id": "address",
+          "rank": 1,
+          "duration_ms": 256,
+          "returned_ids": [
+            "address",
+            "split",
+            "store",
+            "preorder",
+            "intercept"
+          ]
+        },
+        {
+          "id": "intercept",
+          "rank": 2,
+          "duration_ms": 278,
+          "returned_ids": [
+            "address",
+            "intercept",
+            "delay",
+            "exchange",
+            "missing-delivery"
+          ]
+        },
+        {
+          "id": "return-window",
+          "rank": 2,
+          "duration_ms": 319,
+          "returned_ids": [
+            "price",
+            "return-window",
+            "store",
+            "parts",
+            "postage"
+          ]
+        },
+        {
+          "id": "defect",
+          "rank": null,
+          "duration_ms": 283,
+          "returned_ids": [
+            "parts",
+            "store",
+            "preorder",
+            "warranty",
+            "return-window"
+          ]
+        },
+        {
+          "id": "postage",
+          "rank": 2,
+          "duration_ms": 410,
+          "returned_ids": [
+            "gift",
+            "postage",
+            "defect",
+            "intercept",
+            "missing-delivery"
+          ]
+        },
+        {
+          "id": "invoice",
+          "rank": 1,
+          "duration_ms": 307,
+          "returned_ids": [
+            "invoice",
+            "refund",
+            "invoice-fix",
+            "missing-delivery",
+            "address"
+          ]
+        },
+        {
+          "id": "invoice-fix",
+          "rank": 1,
+          "duration_ms": 298,
+          "returned_ids": [
+            "invoice-fix",
+            "invoice",
+            "lost",
+            "refund",
+            "missing-delivery"
+          ]
+        },
+        {
+          "id": "price",
+          "rank": 1,
+          "duration_ms": 300,
+          "returned_ids": [
+            "price",
+            "exchange",
+            "parts",
+            "return-window",
+            "gift"
+          ]
+        },
+        {
+          "id": "installation",
+          "rank": 2,
+          "duration_ms": 531,
+          "returned_ids": [
+            "postage",
+            "installation",
+            "parts",
+            "missing-delivery",
+            "intercept"
+          ]
+        },
+        {
+          "id": "damage",
+          "rank": 1,
+          "duration_ms": 536,
+          "returned_ids": [
+            "damage",
+            "installation",
+            "refund",
+            "invoice",
+            "parts"
+          ]
+        },
+        {
+          "id": "parts",
+          "rank": 2,
+          "duration_ms": 639,
+          "returned_ids": [
+            "invoice",
+            "parts",
+            "split",
+            "missing-delivery",
+            "gift"
+          ]
+        },
+        {
+          "id": "preorder",
+          "rank": 2,
+          "duration_ms": 365,
+          "returned_ids": [
+            "store",
+            "preorder",
+            "return-window",
+            "parts",
+            "missing-delivery"
+          ]
+        },
+        {
+          "id": "split",
+          "rank": 2,
+          "duration_ms": 391,
+          "returned_ids": [
+            "parts",
+            "split",
+            "gift",
+            "locker",
+            "intercept"
+          ]
+        },
+        {
+          "id": "refund",
+          "rank": 2,
+          "duration_ms": 304,
+          "returned_ids": [
+            "address",
+            "refund",
+            "price",
+            "intercept",
+            "return-window"
+          ]
+        },
+        {
+          "id": "warranty",
+          "rank": 1,
+          "duration_ms": 580,
+          "returned_ids": [
+            "warranty",
+            "defect",
+            "return-window",
+            "parts",
+            "price"
+          ]
+        },
+        {
+          "id": "exchange",
+          "rank": 3,
+          "duration_ms": 280,
+          "returned_ids": [
+            "address",
+            "split",
+            "exchange",
+            "intercept",
+            "parts"
+          ]
+        },
+        {
+          "id": "gift",
+          "rank": 5,
+          "duration_ms": 298,
+          "returned_ids": [
+            "parts",
+            "store",
+            "price",
+            "postage",
+            "gift"
+          ]
+        },
+        {
+          "id": "priority",
+          "rank": 1,
+          "duration_ms": 310,
+          "returned_ids": [
+            "priority",
+            "refund",
+            "delay",
+            "defect",
+            "locker"
+          ]
+        },
+        {
+          "id": "customs",
+          "rank": 1,
+          "duration_ms": 426,
+          "returned_ids": [
+            "customs",
+            "locker",
+            "parts",
+            "delay",
+            "damage"
+          ]
+        },
+        {
+          "id": "locker",
+          "rank": 1,
+          "duration_ms": 290,
+          "returned_ids": [
+            "locker",
+            "missing-delivery",
+            "parts",
+            "delay",
+            "intercept"
+          ]
+        },
+        {
+          "id": "store",
+          "rank": 1,
+          "duration_ms": 317,
+          "returned_ids": [
+            "store",
+            "price",
+            "invoice-fix",
+            "postage",
+            "address"
+          ]
+        }
+      ]
+    },
+    "semantic_rerank": {
+      "total": 24,
+      "hits_at_5": 23,
+      "recall_at_5": 0.9583333333333334,
+      "recall_at_1": 0.9583333333333334,
+      "mrr_at_5": 0.9583333333333334,
+      "latency_p50_ms": 1818,
+      "latency_p95_ms": 2266,
+      "cases": [
+        {
+          "id": "delay",
+          "rank": 1,
+          "duration_ms": 1801
+        },
+        {
+          "id": "missing-delivery",
+          "rank": 1,
+          "duration_ms": 1847
+        },
+        {
+          "id": "lost",
+          "rank": 1,
+          "duration_ms": 1890
+        },
+        {
+          "id": "address",
+          "rank": 1,
+          "duration_ms": 1880
+        },
+        {
+          "id": "intercept",
+          "rank": 1,
+          "duration_ms": 1718
+        },
+        {
+          "id": "return-window",
+          "rank": 1,
+          "duration_ms": 1727
+        },
+        {
+          "id": "defect",
+          "rank": null,
+          "duration_ms": 1817
+        },
+        {
+          "id": "postage",
+          "rank": 1,
+          "duration_ms": 1732
+        },
+        {
+          "id": "invoice",
+          "rank": 1,
+          "duration_ms": 1683
+        },
+        {
+          "id": "invoice-fix",
+          "rank": 1,
+          "duration_ms": 1716
+        },
+        {
+          "id": "price",
+          "rank": 1,
+          "duration_ms": 1818
+        },
+        {
+          "id": "installation",
+          "rank": 1,
+          "duration_ms": 2145
+        },
+        {
+          "id": "damage",
+          "rank": 1,
+          "duration_ms": 2058
+        },
+        {
+          "id": "parts",
+          "rank": 1,
+          "duration_ms": 2403
+        },
+        {
+          "id": "preorder",
+          "rank": 1,
+          "duration_ms": 2051
+        },
+        {
+          "id": "split",
+          "rank": 1,
+          "duration_ms": 2035
+        },
+        {
+          "id": "refund",
+          "rank": 1,
+          "duration_ms": 2239
+        },
+        {
+          "id": "warranty",
+          "rank": 1,
+          "duration_ms": 2266
+        },
+        {
+          "id": "exchange",
+          "rank": 1,
+          "duration_ms": 1583
+        },
+        {
+          "id": "gift",
+          "rank": 1,
+          "duration_ms": 1722
+        },
+        {
+          "id": "priority",
+          "rank": 1,
+          "duration_ms": 1543
+        },
+        {
+          "id": "customs",
+          "rank": 1,
+          "duration_ms": 1921
+        },
+        {
+          "id": "locker",
+          "rank": 1,
+          "duration_ms": 1545
+        },
+        {
+          "id": "store",
+          "rank": 1,
+          "duration_ms": 1708
+        }
+      ]
+    }
+  },
+  "embedding_calls": {
+    "attempts": 48,
+    "input_tokens": 1800,
+    "failures": 0
+  },
+  "model_calls": {
+    "attempts": 24,
+    "input_tokens": 14523,
+    "failures": 0
+  },
+  "model_output_tokens": 4730,
+  "rerank_statuses": [
+    {
+      "status": "reranked",
+      "total": 24
+    }
+  ],
+  "completed_at": "2026-11-03T08:18:42.297398+00:00",
+  "temporary_schema_removed": true
+}

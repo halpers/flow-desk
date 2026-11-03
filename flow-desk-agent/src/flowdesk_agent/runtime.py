@@ -14,6 +14,7 @@ from flowdesk_agent.api.schemas import ExecutionCommand
 from flowdesk_agent.graph.read_graph import build_graph
 from flowdesk_agent.models import CompatibleModel
 from flowdesk_agent.observability.spans import SpanRecorder
+from flowdesk_agent.reranking import ModelReranker
 from flowdesk_agent.retrieval import Retriever
 from flowdesk_agent.storage.callbacks import CallbackStore, DeliveryFailed
 from flowdesk_agent.storage.commands import CommandStore
@@ -143,11 +144,19 @@ class AgentRuntime:
                         if provider not in ("mock", "openai-compatible"):
                             raise ToolError("MODEL_CONFIG_INVALID")
                         model = CompatibleModel(self.pool, command) if provider != "mock" else None
+                        rerank_provider = os.environ.get("RERANK_PROVIDER", "none")
+                        if rerank_provider not in ("none", "chat") or (
+                            rerank_provider == "chat" and model is None
+                        ):
+                            raise ToolError("RERANK_CONFIG_INVALID")
+                        reranker = (
+                            ModelReranker(self.pool, model) if rerank_provider == "chat" else None
+                        )
                         graph = build_graph(
                             tools,
                             saver,
                             model,
-                            Retriever(self.pool, tools),
+                            Retriever(self.pool, tools, reranker=reranker),
                             SpanRecorder(self.pool, command),
                         )
                         config = {

@@ -40,10 +40,10 @@ M1–M4 已交付：登录与租户权限、持久化任务/SSE、版本化知�
 
 [CI/CD](deploy/ci-cd.md) 使用 GitHub Actions 执行测试与 Compose 启动检查，成功后将三个服务镜像推送到 GHCR 和阿里云 ACR。启用阿里云推送前，在仓库 Secrets 设置 `ACR_USERNAME`、`ACR_PASSWORD`；公网地址和命名空间已配置默认值。
 
-运行、生成、测试和故障排查见 [本地运行说明](docs/runtime.md)。每阶段验收通过后提交并推送一次，M6 为可选扩展。设计文档包含完整目标范围，尚未实现的内容不代表当前功能。
+运行、生成、测试和故障排查见 [本地运行说明](docs/runtime.md)。每阶段验收通过后提交并推送一次，M6 按[专项计划](docs/m6-plan.md)继续实施。设计文档包含完整目标范围，尚未实现的内容不代表当前功能。
 
 ## 评测与演示
 
 固定 100 条合成任务按 60/20/20 划分开发、回归和留出集，分别报告 mock 功能断言与 DeepSeek 真实留出结果。复跑步骤见 [M5 评测](docs/m5-evaluation.md)，查询→检索→确认→真实工单及失败恢复的展示步骤见[演示与运维](docs/demo-and-operations.md)。模型费用未知时标为 unknown，密钥仅放在本地 `.env`。
 
-当前检索使用字符词面向量和全文 RRF；尚未实现语义 embedding、PDF/OCR、MCP、团队共享权限或生产监控平台。性能数字仅适用于报告中的本机合成环境。
+M6.1 增加独立语义 embedding、全文 RRF 与可选重排，保留字符基线及配置回退；配置和索引升级见[语义 RAG](docs/m6-semantic-rag.md)，实测见[M6 报告](reports/m6/summary.md)。PDF/OCR、MCP、团队共享权限和生产监控平台仍待对应专项实现。性能数字仅适用于报告中的本机合成环境。

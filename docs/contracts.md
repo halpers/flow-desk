@@ -287,6 +287,10 @@ Python 完成中断检查点后发布 approval.required，Go 原子提升 approv
 
 引用只允许来自本 run 的已验证检索结果。展示时检查文档权限；撤回内容返回受限提示，不继续泄露原片段。索引内容和业务引用共享稳定 UUID，但不共享写权限。
 
+### 7.4 M6.1 检索 profile 与重排
+
+当前 HTTP 路由以生成的 OpenAPI 为准；本文前述表格保留目标设计。M6.1 不新增公开 API 字段，扩展 Agent 内部供应商响应契约，见[语义 RAG](m6-semantic-rag.md)。兼容 embedding 响应及受限重排结果从 Pydantic 生成到 `shared/contracts/retrieval/v1/`。每次召回在 SQL 排名前过滤当前授权版本，重排前后均由 Go 复核证据；模型输出不产生新引用 ID。
+
 ## 8. 错误与重试策略
 
 | HTTP | code | 行为 |
