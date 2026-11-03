@@ -1,5 +1,39 @@
 /** Generated from Go .api via OpenAPI. DO NOT EDIT. */
 export interface paths {
+    "/api/v1/approvals/{approval_id}/decision": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Decide immutable action | permission=conversation:use | auth=required */
+        post: operations["decideApproval"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/audit-events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Tenant audit | permission=audit:read | auth=required */
+        get: operations["listAuditEvents"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/login": {
         parameters: {
             query?: never;
@@ -311,6 +345,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/runs/{run_id}/approvals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List own run approvals | permission=conversation:use | auth=required */
+        get: operations["listApprovals"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/runs/{run_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel own run | permission=conversation:use | auth=required */
+        post: operations["cancelRun"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/runs/{run_id}/events": {
         parameters: {
             query?: never;
@@ -326,6 +394,126 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v1/runs/{run_id}/inputs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Supply requested input | permission=conversation:use | auth=required */
+        post: operations["submitInput"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tickets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List tenant tickets | permission=ticket:read | auth=required */
+        get: operations["listTickets"];
+        put?: never;
+        /** Create manual ticket | permission=ticket:create | auth=required */
+        post: operations["createTicket"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tickets/{ticket_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get tenant ticket | permission=ticket:read | auth=required */
+        get: operations["getTicket"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tickets/{ticket_id}/assignment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Assign ticket | permission=ticket:manage | auth=required */
+        patch: operations["assignTicket"];
+        trace?: never;
+    };
+    "/api/v1/tickets/{ticket_id}/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Ticket timeline | permission=ticket:read | auth=required */
+        get: operations["listTicketEvents"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tickets/{ticket_id}/notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add internal note | permission=ticket:note | auth=required */
+        post: operations["addTicketNote"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tickets/{ticket_id}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Change ticket status | permission=ticket:manage | auth=required */
+        patch: operations["changeTicketStatus"];
         trace?: never;
     };
     "/health/live": {
@@ -388,6 +576,57 @@ export interface paths {
         };
         /** GetIndexSource | permission=- | auth=service */
         get: operations["getIndexSource"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/v1/runs/{run_id}/actions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Prepare immutable action | permission=- | auth=run_capability */
+        post: operations["prepareAction"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/v1/runs/{run_id}/actions/{action_id}/execute": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Execute approved action | permission=- | auth=run_capability */
+        post: operations["executeAction"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/internal/v1/runs/{run_id}/actions/{action_id}/receipt": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read action receipt | permission=- | auth=run_capability */
+        get: operations["getActionReceipt"];
         put?: never;
         post?: never;
         delete?: never;
@@ -487,12 +726,157 @@ export interface components {
     schemas: never;
     responses: never;
     parameters: never;
-    requestBodies: never;
+    requestBodies: {
+        assignTicketBody: {
+            content: {
+                "application/json": {
+                    assignee_user_id?: string;
+                    expected_version: number;
+                    status?: string;
+                };
+            };
+        };
+        withdrawDocumentBody: {
+            content: {
+                "application/json": {
+                    expected_version: number;
+                };
+            };
+        };
+    };
     headers: never;
     pathItems: never;
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    decideApproval: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                approval_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    decision: string;
+                    expected_version: number;
+                    reason?: string;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            action_receipts: {
+                                action_id: string;
+                                business_object_id: string;
+                                business_object_type: string;
+                                executed_at: string;
+                                result: {
+                                    [key: string]: unknown;
+                                };
+                                tool_name: string;
+                            }[];
+                            approvals: {
+                                action_id: string;
+                                decision_reason: string;
+                                display_snapshot: {
+                                    [key: string]: unknown;
+                                };
+                                expires_at: string;
+                                id: string;
+                                payload_digest: string;
+                                run_id: string;
+                                status: string;
+                                version: number;
+                            }[];
+                            conversation_id: string;
+                            current_message: {
+                                action_receipts: {
+                                    [key: string]: unknown;
+                                }[];
+                                citations: {
+                                    [key: string]: unknown;
+                                }[];
+                                content: string;
+                                created_at: string;
+                                generation: number;
+                                id: string;
+                                position: number;
+                                role: string;
+                                run_id: string;
+                                status: string;
+                            };
+                            error_code: string;
+                            id: string;
+                            last_event_seq: number;
+                            pending_inputs: {
+                                expires_at: string;
+                                id: string;
+                                question: string;
+                                status: string;
+                                version: number;
+                            }[];
+                            status: string;
+                            tool_call_count: number;
+                            version: number;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    listAuditEvents: {
+        parameters: {
+            query: {
+                cursor?: string;
+                /** @example 20 */
+                limit: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            has_more: boolean;
+                            items: {
+                                actor_user_id: string;
+                                created_at: string;
+                                id: string;
+                                object_id: string;
+                                operation: string;
+                                source: string;
+                                summary: string;
+                            }[];
+                            next_cursor: string;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
     login: {
         parameters: {
             query?: never;
@@ -824,6 +1208,29 @@ export interface operations {
                     "application/json": {
                         code?: string;
                         data?: {
+                            action_receipts: {
+                                action_id: string;
+                                business_object_id: string;
+                                business_object_type: string;
+                                executed_at: string;
+                                result: {
+                                    [key: string]: unknown;
+                                };
+                                tool_name: string;
+                            }[];
+                            approvals: {
+                                action_id: string;
+                                decision_reason: string;
+                                display_snapshot: {
+                                    [key: string]: unknown;
+                                };
+                                expires_at: string;
+                                id: string;
+                                payload_digest: string;
+                                run_id: string;
+                                status: string;
+                                version: number;
+                            }[];
                             conversation_id: string;
                             current_message: {
                                 action_receipts: {
@@ -844,6 +1251,13 @@ export interface operations {
                             error_code: string;
                             id: string;
                             last_event_seq: number;
+                            pending_inputs: {
+                                expires_at: string;
+                                id: string;
+                                question: string;
+                                status: string;
+                                version: number;
+                            }[];
                             status: string;
                             tool_call_count: number;
                             version: number;
@@ -979,13 +1393,7 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": {
-                    expected_version: number;
-                };
-            };
-        };
+        requestBody: components["requestBodies"]["withdrawDocumentBody"];
         responses: {
             200: {
                 headers: {
@@ -1316,6 +1724,29 @@ export interface operations {
                     "application/json": {
                         code?: string;
                         data?: {
+                            action_receipts: {
+                                action_id: string;
+                                business_object_id: string;
+                                business_object_type: string;
+                                executed_at: string;
+                                result: {
+                                    [key: string]: unknown;
+                                };
+                                tool_name: string;
+                            }[];
+                            approvals: {
+                                action_id: string;
+                                decision_reason: string;
+                                display_snapshot: {
+                                    [key: string]: unknown;
+                                };
+                                expires_at: string;
+                                id: string;
+                                payload_digest: string;
+                                run_id: string;
+                                status: string;
+                                version: number;
+                            }[];
                             conversation_id: string;
                             current_message: {
                                 action_receipts: {
@@ -1336,6 +1767,133 @@ export interface operations {
                             error_code: string;
                             id: string;
                             last_event_seq: number;
+                            pending_inputs: {
+                                expires_at: string;
+                                id: string;
+                                question: string;
+                                status: string;
+                                version: number;
+                            }[];
+                            status: string;
+                            tool_call_count: number;
+                            version: number;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    listApprovals: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            items: {
+                                action_id: string;
+                                decision_reason: string;
+                                display_snapshot: {
+                                    [key: string]: unknown;
+                                };
+                                expires_at: string;
+                                id: string;
+                                payload_digest: string;
+                                run_id: string;
+                                status: string;
+                                version: number;
+                            }[];
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    cancelRun: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: components["requestBodies"]["withdrawDocumentBody"];
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            action_receipts: {
+                                action_id: string;
+                                business_object_id: string;
+                                business_object_type: string;
+                                executed_at: string;
+                                result: {
+                                    [key: string]: unknown;
+                                };
+                                tool_name: string;
+                            }[];
+                            approvals: {
+                                action_id: string;
+                                decision_reason: string;
+                                display_snapshot: {
+                                    [key: string]: unknown;
+                                };
+                                expires_at: string;
+                                id: string;
+                                payload_digest: string;
+                                run_id: string;
+                                status: string;
+                                version: number;
+                            }[];
+                            conversation_id: string;
+                            current_message: {
+                                action_receipts: {
+                                    [key: string]: unknown;
+                                }[];
+                                citations: {
+                                    [key: string]: unknown;
+                                }[];
+                                content: string;
+                                created_at: string;
+                                generation: number;
+                                id: string;
+                                position: number;
+                                role: string;
+                                run_id: string;
+                                status: string;
+                            };
+                            error_code: string;
+                            id: string;
+                            last_event_seq: number;
+                            pending_inputs: {
+                                expires_at: string;
+                                id: string;
+                                question: string;
+                                status: string;
+                                version: number;
+                            }[];
                             status: string;
                             tool_call_count: number;
                             version: number;
@@ -1374,6 +1932,390 @@ export interface operations {
                         schema_version?: string;
                         seq?: number;
                         type?: string;
+                    };
+                };
+            };
+        };
+    };
+    submitInput: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    content: string;
+                    expected_version: number;
+                    input_id: string;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            action_receipts: {
+                                action_id: string;
+                                business_object_id: string;
+                                business_object_type: string;
+                                executed_at: string;
+                                result: {
+                                    [key: string]: unknown;
+                                };
+                                tool_name: string;
+                            }[];
+                            approvals: {
+                                action_id: string;
+                                decision_reason: string;
+                                display_snapshot: {
+                                    [key: string]: unknown;
+                                };
+                                expires_at: string;
+                                id: string;
+                                payload_digest: string;
+                                run_id: string;
+                                status: string;
+                                version: number;
+                            }[];
+                            conversation_id: string;
+                            current_message: {
+                                action_receipts: {
+                                    [key: string]: unknown;
+                                }[];
+                                citations: {
+                                    [key: string]: unknown;
+                                }[];
+                                content: string;
+                                created_at: string;
+                                generation: number;
+                                id: string;
+                                position: number;
+                                role: string;
+                                run_id: string;
+                                status: string;
+                            };
+                            error_code: string;
+                            id: string;
+                            last_event_seq: number;
+                            pending_inputs: {
+                                expires_at: string;
+                                id: string;
+                                question: string;
+                                status: string;
+                                version: number;
+                            }[];
+                            status: string;
+                            tool_call_count: number;
+                            version: number;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    listTickets: {
+        parameters: {
+            query: {
+                cursor?: string;
+                /** @example 20 */
+                limit: number;
+                order_id?: string;
+                status?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            has_more: boolean;
+                            items: {
+                                assignee_user_id: string;
+                                category: string;
+                                created_at: string;
+                                description: string;
+                                id: string;
+                                order_id: string;
+                                priority: string;
+                                status: string;
+                                ticket_no: string;
+                                title: string;
+                                version: number;
+                            }[];
+                            next_cursor: string;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    createTicket: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    category: string;
+                    description: string;
+                    expected_version: number;
+                    order_id: string;
+                    priority: string;
+                    title: string;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            assignee_user_id: string;
+                            category: string;
+                            created_at: string;
+                            description: string;
+                            id: string;
+                            order_id: string;
+                            priority: string;
+                            status: string;
+                            ticket_no: string;
+                            title: string;
+                            version: number;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    getTicket: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ticket_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            assignee_user_id: string;
+                            category: string;
+                            created_at: string;
+                            description: string;
+                            id: string;
+                            order_id: string;
+                            priority: string;
+                            status: string;
+                            ticket_no: string;
+                            title: string;
+                            version: number;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    assignTicket: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                ticket_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: components["requestBodies"]["assignTicketBody"];
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            assignee_user_id: string;
+                            category: string;
+                            created_at: string;
+                            description: string;
+                            id: string;
+                            order_id: string;
+                            priority: string;
+                            status: string;
+                            ticket_no: string;
+                            title: string;
+                            version: number;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    listTicketEvents: {
+        parameters: {
+            query: {
+                cursor?: string;
+                /** @example 20 */
+                limit: number;
+            };
+            header?: never;
+            path: {
+                ticket_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            has_more: boolean;
+                            items: {
+                                actor_user_id: string;
+                                created_at: string;
+                                id: string;
+                                object_id: string;
+                                operation: string;
+                                source: string;
+                                summary: string;
+                            }[];
+                            next_cursor: string;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    addTicketNote: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                ticket_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    content: string;
+                    expected_version: number;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            assignee_user_id: string;
+                            category: string;
+                            created_at: string;
+                            description: string;
+                            id: string;
+                            order_id: string;
+                            priority: string;
+                            status: string;
+                            ticket_no: string;
+                            title: string;
+                            version: number;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    changeTicketStatus: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                ticket_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: components["requestBodies"]["assignTicketBody"];
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            assignee_user_id: string;
+                            category: string;
+                            created_at: string;
+                            description: string;
+                            id: string;
+                            order_id: string;
+                            priority: string;
+                            status: string;
+                            ticket_no: string;
+                            title: string;
+                            version: number;
+                        };
+                        request_id?: string;
                     };
                 };
             };
@@ -1492,6 +2434,124 @@ export interface operations {
                             knowledge_base_id: string;
                             tenant_id: string;
                             version_id: string;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    prepareAction: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    action_id: string;
+                    arguments: {
+                        [key: string]: unknown;
+                    };
+                    evidence_ids: string[];
+                    tool_name: string;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            action_id: string;
+                            decision_reason: string;
+                            display_snapshot: {
+                                [key: string]: unknown;
+                            };
+                            expires_at: string;
+                            id: string;
+                            payload_digest: string;
+                            run_id: string;
+                            status: string;
+                            version: number;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    executeAction: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+                action_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            action_id: string;
+                            business_object_id: string;
+                            business_object_type: string;
+                            executed_at: string;
+                            result: {
+                                [key: string]: unknown;
+                            };
+                            tool_name: string;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    getActionReceipt: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+                action_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            action_id: string;
+                            business_object_id: string;
+                            business_object_type: string;
+                            executed_at: string;
+                            result: {
+                                [key: string]: unknown;
+                            };
+                            tool_name: string;
                         };
                         request_id?: string;
                     };
@@ -1648,6 +2708,9 @@ export interface operations {
                             deadline_at: string;
                             lease_generation: number;
                             message_id: string;
+                            resume_data: {
+                                [key: string]: unknown;
+                            };
                             run_id: string;
                             tenant_id: string;
                             tools: string[];
@@ -1702,6 +2765,19 @@ export interface operations {
                                 total_amount: string;
                                 version: number;
                             };
+                            tickets?: {
+                                assignee_user_id: string;
+                                category: string;
+                                created_at: string;
+                                description: string;
+                                id: string;
+                                order_id: string;
+                                priority: string;
+                                status: string;
+                                ticket_no: string;
+                                title: string;
+                                version: number;
+                            }[];
                         };
                         request_id?: string;
                     };

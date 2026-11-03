@@ -1,6 +1,33 @@
 {
   "components": {
     "schemas": {
+      "CancelCommand": {
+        "additionalProperties": false,
+        "properties": {
+          "dispatch_id": {
+            "format": "uuid",
+            "title": "Dispatch Id",
+            "type": "string"
+          },
+          "lease_generation": {
+            "minimum": 1.0,
+            "title": "Lease Generation",
+            "type": "integer"
+          },
+          "run_id": {
+            "format": "uuid",
+            "title": "Run Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "dispatch_id",
+          "run_id",
+          "lease_generation"
+        ],
+        "title": "CancelCommand",
+        "type": "object"
+      },
       "CommandReceipt": {
         "properties": {
           "dispatch_id": {
@@ -24,7 +51,10 @@
         "additionalProperties": false,
         "properties": {
           "command": {
-            "const": "execute",
+            "enum": [
+              "execute",
+              "resume"
+            ],
             "title": "Command",
             "type": "string"
           },
@@ -34,7 +64,10 @@
             "type": "string"
           },
           "graph_version": {
-            "const": "read-v1",
+            "enum": [
+              "read-v1",
+              "ticket-v1"
+            ],
             "title": "Graph Version",
             "type": "string"
           },
@@ -293,6 +326,64 @@
           }
         },
         "summary": "Get Execution"
+      }
+    },
+    "/internal/v1/executions/{run_id}/cancel": {
+      "post": {
+        "operationId": "cancel_execution_internal_v1_executions__run_id__cancel_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Authorization",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Cancel Execution"
       }
     },
     "/internal/v1/knowledge/index": {

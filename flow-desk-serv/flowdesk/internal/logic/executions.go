@@ -109,13 +109,13 @@ func RenewLease(ctx context.Context, s *svc.ServiceContext, req *types.LeaseReq)
 		if expires.After(run.DeadlineAt) {
 			expires = run.DeadlineAt
 		}
-		scopes := []string{domain.ToolOrderLookup, domain.ToolLogisticsTrack, "event:append", "knowledge:read"}
+		scopes := []string{domain.ToolOrderLookup, domain.ToolLogisticsTrack, ticketSearchTool, "event:append", "knowledge:read", actionPrepareScope, actionExecuteScope}
 		claims := runCapability{RegisteredClaims: jwt.RegisteredClaims{Issuer: "flowdesk", Subject: run.ActorUserId, Audience: jwt.ClaimStrings{"go-tools"}, ExpiresAt: jwt.NewNumericDate(expires), IssuedAt: jwt.NewNumericDate(time.Now()), ID: uuid.NewString()}, RunId: run.Id, TenantId: run.TenantId, ActorUserId: run.ActorUserId, SessionId: run.SessionId, Generation: run.LeaseGeneration, Scopes: scopes}
 		token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte(s.Config.JwtSecret))
 		if err != nil {
 			return err
 		}
-		result = types.ExecutionContext{RunId: run.Id, TenantId: run.TenantId, ActorUserId: run.ActorUserId, LeaseGeneration: run.LeaseGeneration, Capability: token, Content: input.Content, MessageId: run.ResultMessageId, DeadlineAt: run.DeadlineAt.UTC().Format(time.RFC3339Nano), Tools: []string{domain.ToolOrderLookup, domain.ToolLogisticsTrack}}
+		result = types.ExecutionContext{RunId: run.Id, TenantId: run.TenantId, ActorUserId: run.ActorUserId, LeaseGeneration: run.LeaseGeneration, Capability: token, Content: input.Content, MessageId: run.ResultMessageId, DeadlineAt: run.DeadlineAt.UTC().Format(time.RFC3339Nano), Tools: []string{domain.ToolOrderLookup, domain.ToolLogisticsTrack, ticketSearchTool}, ResumeData: jsonObject(run.ResumeData)}
 		return nil
 	})
 	return result, err
@@ -213,17 +213,19 @@ func IngestEvent(ctx context.Context, s *svc.ServiceContext, req *types.AgentEve
 			if run.Status != domain.RunRunning {
 				return errStale
 			}
+		case domain.EventRunWaitingApproval, domain.EventRunWaitingInput:
+			if err = registerWaitTx(ctx, s, tx, run, req.Type, payload); err != nil {
+				return err
+			}
 		case domain.EventMessageCompleted:
 			if run.Status != domain.RunRunning || payload["message_id"] != run.ResultMessageId {
 				return errStale
 			}
-			// Receipt authority is added in M4; citations are selected from Go-registered evidence.
-			for _, key := range []string{"action_receipts"} {
-				values, ok := payload[key].([]interface{})
-				if !ok || len(values) != 0 {
-					return errForbidden
-				}
+			receipts, err := canonicalReceiptsTx(ctx, s, tx, run, payload["action_receipts"])
+			if err != nil {
+				return err
 			}
+			payload["action_receipts"] = receipts
 			content, ok := payload["content"].(string)
 			if !ok {
 				return errArgument
@@ -233,7 +235,7 @@ func IngestEvent(ctx context.Context, s *svc.ServiceContext, req *types.AgentEve
 				return err
 			}
 			payload["citations"] = citations
-			if err = s.MessagesModel.UpdateFinalTx(ctx, tx, run.ResultMessageId, content, marshal(citations), "[]"); err != nil {
+			if err = s.MessagesModel.UpdateFinalTx(ctx, tx, run.ResultMessageId, content, marshal(citations), marshal(receipts)); err != nil {
 				return err
 			}
 		case domain.EventRunSucceeded:
@@ -299,12 +301,12 @@ func ListRunEvents(ctx context.Context, s *svc.ServiceContext, runID string, aft
 }
 
 func CallTool(ctx context.Context, s *svc.ServiceContext, req *types.ToolReq, rawCapability string) (types.ToolResult, error) {
-	result := types.ToolResult{Logistics: []types.LogisticsData{}}
+	result := types.ToolResult{Logistics: []types.LogisticsData{}, Tickets: []types.TicketData{}}
 	var toolError error
 	if err := domain.ValidateTool(map[string]any{"tool_name": req.ToolName, "arguments": req.Arguments}); err != nil {
 		return result, errArgument
 	}
-	if req.ToolName != domain.ToolOrderLookup && req.ToolName != domain.ToolLogisticsTrack {
+	if req.ToolName != domain.ToolOrderLookup && req.ToolName != domain.ToolLogisticsTrack && req.ToolName != ticketSearchTool {
 		return result, errArgument
 	}
 	if len(req.Arguments) != 1 {
@@ -336,6 +338,9 @@ func CallTool(ctx context.Context, s *svc.ServiceContext, req *types.ToolReq, ra
 		if !permitted(actor, "order:read") {
 			return errForbidden
 		}
+		if req.ToolName == ticketSearchTool && !permitted(actor, "ticket:read") {
+			return errForbidden
+		}
 		if err = s.RunsModel.UpdateToolCountTx(ctx, tx, run.Id); err != nil {
 			return failure(429, "BUDGET_EXCEEDED", "工具调用次数已达到上限")
 		}
@@ -349,12 +354,20 @@ func CallTool(ctx context.Context, s *svc.ServiceContext, req *types.ToolReq, ra
 		}
 		if req.ToolName == domain.ToolOrderLookup {
 			result.Order = orderData(order)
-		} else {
+		} else if req.ToolName == domain.ToolLogisticsTrack {
 			rows, err := s.LogisticsEventsModel.ListByOrderTx(ctx, tx, run.TenantId, order.Id)
 			if err != nil {
 				return err
 			}
 			result.Logistics = logisticsData(rows)
+		} else {
+			rows, err := s.TicketsModel.ListTenantTx(ctx, tx, run.TenantId, order.Id, "", "", 20)
+			if err != nil {
+				return err
+			}
+			for i := range rows {
+				result.Tickets = append(result.Tickets, ticketData(&rows[i]))
+			}
 		}
 		return nil
 	})
@@ -386,6 +399,8 @@ func DispatchNext(ctx context.Context, s *svc.ServiceContext) (bool, error) {
 	}
 	if event.Topic == "knowledge.index" {
 		err = s.AgentClient.DispatchKnowledge(ctx, event.Payload)
+	} else if event.Topic == "run.cancel" {
+		err = s.AgentClient.Cancel(ctx, event.AggregateId, event.Payload)
 	} else {
 		err = s.AgentClient.Dispatch(ctx, event.Payload)
 	}
@@ -406,11 +421,18 @@ func ExpireOverdueRuns(ctx context.Context, s *svc.ServiceContext) error {
 			if err != nil {
 				return err
 			}
-			if domain.IsTerminal(run.Status) || time.Now().Before(run.DeadlineAt) {
+			waiting := run.Status == domain.RunWaitingInput || run.Status == domain.RunWaitingApproval
+			if domain.IsTerminal(run.Status) || (!waiting && time.Now().Before(run.DeadlineAt)) || (waiting && (!run.WaitExpiresAt.Valid || time.Now().Before(run.WaitExpiresAt.Time))) {
 				return nil
+			}
+			if err = invalidatePendingTx(ctx, s, tx, run, "expired"); err != nil {
+				return err
 			}
 			run.Status = domain.RunExpired
 			run.ErrorCode = "EXECUTION_TIMEOUT"
+			if waiting {
+				run.ErrorCode = "WAIT_TIMEOUT"
+			}
 			if err = s.MessagesModel.UpdateAbortedTx(ctx, tx, run.ResultMessageId); err != nil {
 				return err
 			}

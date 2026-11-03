@@ -34,3 +34,4 @@ for target in ["flow-desk-serv/flowdesk/internal/domain", "flow-desk-agent/src/f
 tool_source = root / "shared/contracts/tools/v1/read.schema.json"
 for target in ["flow-desk-serv/flowdesk/internal/domain", "flow-desk-agent/src/flowdesk_agent/tools"]:
     (root / target / "read.schema.json").write_bytes(tool_source.read_bytes())
+    (root / target / "actions.schema.json").write_bytes((root / "shared/contracts/tools/v1/actions.schema.json").read_bytes())

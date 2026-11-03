@@ -10,12 +10,16 @@ import type { Models as Schemas } from "../../shared/api/models";
 import { terminal, watchRun, type Run } from "../../shared/events/watch";
 import type { RunEvent } from "../../shared/events/sse";
 import { Citation } from "../knowledge/Knowledge";
+import { RunControls, Receipt } from "./RunControls";
+import { Tickets } from "./Tickets";
 
 type Conversation = Schemas["ConversationData"];
 type Message = Schemas["MessageData"];
 const statuses: Record<string, string> = {
   queued: "排队中",
   running: "查询中",
+  waiting_input: "等待补充信息",
+  waiting_approval: "等待确认",
   succeeded: "已完成",
   failed: "处理失败",
   expired: "执行超时",
@@ -32,6 +36,11 @@ const progressLabel = (event: RunEvent) =>
           "run.succeeded": "查询完成",
           "run.failed": "处理失败",
           "run.expired": "执行超时",
+          "run.waiting_input": "等待补充信息",
+          "run.waiting_approval": "等待确认操作",
+          "approval.decided": "已记录确认决定",
+          "action.executed": "业务办理成功",
+          "run.cancelled": "任务已取消",
         } as Record<string, string>
       )[event.type] ||
       event.type,
@@ -51,6 +60,17 @@ export function Workspace({ user }: { user: User }) {
   });
   const [runId, setRunId] = useState("");
   const [run, setRun] = useState<Run | null>(null);
+  const latestRun = useRef<Run | null>(null);
+  function applyRun(snapshot: Run) {
+    if (
+      latestRun.current?.id === snapshot.id &&
+      latestRun.current.version > snapshot.version
+    )
+      return false;
+    latestRun.current = snapshot;
+    setRun(snapshot);
+    return true;
+  }
   const [events, setEvents] = useState<RunEvent[]>([]);
   const [connection, setConnection] = useState("");
   const [draft, setDraft] = useState("");
@@ -120,6 +140,7 @@ export function Workspace({ user }: { user: User }) {
     setMessagesMore("");
     setRunId("");
     setRun(null);
+    latestRun.current = null;
     setEvents([]);
     setError("");
   };
@@ -165,7 +186,7 @@ export function Workspace({ user }: { user: User }) {
           snapshot.conversation_id !== selected
         )
           return;
-        setRun(snapshot);
+        if (!applyRun(snapshot)) return;
         cache.setQueriesData<Schemas["MessagePage"]>(
           { queryKey: [...scope, "messages", selected] },
           (old) =>
@@ -250,7 +271,7 @@ export function Workspace({ user }: { user: User }) {
       });
       pending.current = null;
       setDraft("");
-      setRun(result);
+      applyRun(result);
       setRunId(result.id);
       await cache.invalidateQueries({
         queryKey: [...scope, "messages", selected],
@@ -311,6 +332,7 @@ export function Workspace({ user }: { user: User }) {
       <section className="panel conversation-panel">
         <div className="panel-heading">
           <h2>{conversation.data?.title || "开始一次服务咨询"}</h2>
+          <Tickets user={user} />
           {run && (
             <Tag color={run.status === "succeeded" ? "green" : "blue"}>
               {statuses[run.status] || run.status}
@@ -344,8 +366,8 @@ export function Workspace({ user }: { user: User }) {
               <div className="message-content">
                 {message.content ||
                   (message.status === "aborted"
-                    ? "本次查询未完成，请重试。"
-                    : "正在查询，请稍候…")}
+                    ? "任务已结束，请查看进度和业务回执。"
+                    : "正在处理，请稍候…")}
               </div>
               {message.status === "aborted" && <Tag color="red">查询中止</Tag>}
               {message.citations?.map(
@@ -358,6 +380,13 @@ export function Workspace({ user }: { user: User }) {
                     />
                   ),
               )}
+              {message.run_id !== run?.id &&
+                message.action_receipts?.map((receipt, index) => (
+                  <Receipt
+                    key={String(receipt.action_id || index)}
+                    value={receipt}
+                  />
+                ))}
             </article>
           ))}
           {messages.data?.has_more && (
@@ -367,6 +396,22 @@ export function Workspace({ user }: { user: User }) {
           )}
           {run?.error_code && (
             <Alert type="warning" title={`本次任务未完成：${run.error_code}`} />
+          )}
+          {run && (
+            <RunControls
+              key={run.id}
+              run={run}
+              onUpdated={(updated) => {
+                if (!applyRun(updated)) return;
+                void cache.invalidateQueries({
+                  queryKey: [...scope, "messages", selected],
+                });
+                void cache.invalidateQueries({
+                  queryKey: [...scope, "conversation", selected],
+                });
+                void cache.invalidateQueries({ queryKey: ["tickets"] });
+              }}
+            />
           )}
         </div>
         <div className="composer">
@@ -391,7 +436,7 @@ export function Workspace({ user }: { user: User }) {
             disabled={!selected}
           />
           <div className="composer-footer">
-            <span>订单号以 FD 开头 · 当前支持查询</span>
+            <span>查询、政策与工单办理 · 写入前需要确认</span>
             <Button
               type="primary"
               onClick={send}

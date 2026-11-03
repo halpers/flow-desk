@@ -75,6 +75,15 @@ MIGRATIONS = [
     );
     CREATE INDEX model_call_run ON model_calls(run_id);
     """,
+    """
+    ALTER TABLE execution_commands DROP CONSTRAINT execution_commands_status_check;
+    ALTER TABLE execution_commands ADD CHECK(
+        status IN ('queued','running','waiting','completed','failed','cancelled'));
+    CREATE TABLE execution_cancellations (
+        run_id UUID PRIMARY KEY, dispatch_id UUID NOT NULL UNIQUE,
+        lease_generation BIGINT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    """,
 ]
 
 

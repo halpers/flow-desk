@@ -15,6 +15,379 @@
   },
   "basePath": "/",
   "paths": {
+    "/api/v1/approvals/{approval_id}/decision": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "Decide immutable action | permission=conversation:use | auth=required",
+        "operationId": "decideApproval",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "approval_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "Idempotency-Key",
+            "in": "header"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": [
+                "expected_version",
+                "decision"
+              ],
+              "properties": {
+                "decision": {
+                  "type": "string"
+                },
+                "expected_version": {
+                  "type": "integer"
+                },
+                "reason": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "conversation_id",
+                    "status",
+                    "version",
+                    "last_event_seq",
+                    "error_code",
+                    "tool_call_count",
+                    "current_message",
+                    "pending_inputs",
+                    "approvals",
+                    "action_receipts"
+                  ],
+                  "properties": {
+                    "action_receipts": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "action_id",
+                          "tool_name",
+                          "business_object_type",
+                          "business_object_id",
+                          "result",
+                          "executed_at"
+                        ],
+                        "properties": {
+                          "action_id": {
+                            "type": "string"
+                          },
+                          "business_object_id": {
+                            "type": "string"
+                          },
+                          "business_object_type": {
+                            "type": "string"
+                          },
+                          "executed_at": {
+                            "type": "string"
+                          },
+                          "result": {
+                            "type": "object",
+                            "additionalProperties": {}
+                          },
+                          "tool_name": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "approvals": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "run_id",
+                          "action_id",
+                          "status",
+                          "version",
+                          "payload_digest",
+                          "display_snapshot",
+                          "expires_at",
+                          "decision_reason"
+                        ],
+                        "properties": {
+                          "action_id": {
+                            "type": "string"
+                          },
+                          "decision_reason": {
+                            "type": "string"
+                          },
+                          "display_snapshot": {
+                            "type": "object",
+                            "additionalProperties": {}
+                          },
+                          "expires_at": {
+                            "type": "string"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "payload_digest": {
+                            "type": "string"
+                          },
+                          "run_id": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string"
+                          },
+                          "version": {
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    },
+                    "conversation_id": {
+                      "type": "string"
+                    },
+                    "current_message": {
+                      "type": "object",
+                      "required": [
+                        "id",
+                        "run_id",
+                        "role",
+                        "content",
+                        "status",
+                        "generation",
+                        "position",
+                        "citations",
+                        "action_receipts",
+                        "created_at"
+                      ],
+                      "properties": {
+                        "action_receipts": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": {}
+                          }
+                        },
+                        "citations": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": {}
+                          }
+                        },
+                        "content": {
+                          "type": "string"
+                        },
+                        "created_at": {
+                          "type": "string"
+                        },
+                        "generation": {
+                          "type": "integer"
+                        },
+                        "id": {
+                          "type": "string"
+                        },
+                        "position": {
+                          "type": "integer"
+                        },
+                        "role": {
+                          "type": "string"
+                        },
+                        "run_id": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "error_code": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "last_event_seq": {
+                      "type": "integer"
+                    },
+                    "pending_inputs": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "question",
+                          "status",
+                          "version",
+                          "expires_at"
+                        ],
+                        "properties": {
+                          "expires_at": {
+                            "type": "string"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "question": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string"
+                          },
+                          "version": {
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "tool_call_count": {
+                      "type": "integer"
+                    },
+                    "version": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/audit-events": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "Tenant audit | permission=audit:read | auth=required",
+        "operationId": "listAuditEvents",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "cursor",
+            "in": "query",
+            "allowEmptyValue": true
+          },
+          {
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer",
+            "default": 20,
+            "example": 20,
+            "name": "limit",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "items",
+                    "next_cursor",
+                    "has_more"
+                  ],
+                  "properties": {
+                    "has_more": {
+                      "type": "boolean"
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "operation",
+                          "summary",
+                          "actor_user_id",
+                          "object_id",
+                          "source",
+                          "created_at"
+                        ],
+                        "properties": {
+                          "actor_user_id": {
+                            "type": "string"
+                          },
+                          "created_at": {
+                            "type": "string"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "object_id": {
+                            "type": "string"
+                          },
+                          "operation": {
+                            "type": "string"
+                          },
+                          "source": {
+                            "type": "string"
+                          },
+                          "summary": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "next_cursor": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/auth/login": {
       "post": {
         "consumes": [
@@ -732,9 +1105,94 @@
                     "last_event_seq",
                     "error_code",
                     "tool_call_count",
-                    "current_message"
+                    "current_message",
+                    "pending_inputs",
+                    "approvals",
+                    "action_receipts"
                   ],
                   "properties": {
+                    "action_receipts": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "action_id",
+                          "tool_name",
+                          "business_object_type",
+                          "business_object_id",
+                          "result",
+                          "executed_at"
+                        ],
+                        "properties": {
+                          "action_id": {
+                            "type": "string"
+                          },
+                          "business_object_id": {
+                            "type": "string"
+                          },
+                          "business_object_type": {
+                            "type": "string"
+                          },
+                          "executed_at": {
+                            "type": "string"
+                          },
+                          "result": {
+                            "type": "object",
+                            "additionalProperties": {}
+                          },
+                          "tool_name": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "approvals": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "run_id",
+                          "action_id",
+                          "status",
+                          "version",
+                          "payload_digest",
+                          "display_snapshot",
+                          "expires_at",
+                          "decision_reason"
+                        ],
+                        "properties": {
+                          "action_id": {
+                            "type": "string"
+                          },
+                          "decision_reason": {
+                            "type": "string"
+                          },
+                          "display_snapshot": {
+                            "type": "object",
+                            "additionalProperties": {}
+                          },
+                          "expires_at": {
+                            "type": "string"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "payload_digest": {
+                            "type": "string"
+                          },
+                          "run_id": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string"
+                          },
+                          "version": {
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    },
                     "conversation_id": {
                       "type": "string"
                     },
@@ -801,6 +1259,36 @@
                     },
                     "last_event_seq": {
                       "type": "integer"
+                    },
+                    "pending_inputs": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "question",
+                          "status",
+                          "version",
+                          "expires_at"
+                        ],
+                        "properties": {
+                          "expires_at": {
+                            "type": "string"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "question": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string"
+                          },
+                          "version": {
+                            "type": "integer"
+                          }
+                        }
+                      }
                     },
                     "status": {
                       "type": "string"
@@ -1890,9 +2378,94 @@
                     "last_event_seq",
                     "error_code",
                     "tool_call_count",
-                    "current_message"
+                    "current_message",
+                    "pending_inputs",
+                    "approvals",
+                    "action_receipts"
                   ],
                   "properties": {
+                    "action_receipts": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "action_id",
+                          "tool_name",
+                          "business_object_type",
+                          "business_object_id",
+                          "result",
+                          "executed_at"
+                        ],
+                        "properties": {
+                          "action_id": {
+                            "type": "string"
+                          },
+                          "business_object_id": {
+                            "type": "string"
+                          },
+                          "business_object_type": {
+                            "type": "string"
+                          },
+                          "executed_at": {
+                            "type": "string"
+                          },
+                          "result": {
+                            "type": "object",
+                            "additionalProperties": {}
+                          },
+                          "tool_name": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "approvals": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "run_id",
+                          "action_id",
+                          "status",
+                          "version",
+                          "payload_digest",
+                          "display_snapshot",
+                          "expires_at",
+                          "decision_reason"
+                        ],
+                        "properties": {
+                          "action_id": {
+                            "type": "string"
+                          },
+                          "decision_reason": {
+                            "type": "string"
+                          },
+                          "display_snapshot": {
+                            "type": "object",
+                            "additionalProperties": {}
+                          },
+                          "expires_at": {
+                            "type": "string"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "payload_digest": {
+                            "type": "string"
+                          },
+                          "run_id": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string"
+                          },
+                          "version": {
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    },
                     "conversation_id": {
                       "type": "string"
                     },
@@ -1959,6 +2532,393 @@
                     },
                     "last_event_seq": {
                       "type": "integer"
+                    },
+                    "pending_inputs": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "question",
+                          "status",
+                          "version",
+                          "expires_at"
+                        ],
+                        "properties": {
+                          "expires_at": {
+                            "type": "string"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "question": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string"
+                          },
+                          "version": {
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "tool_call_count": {
+                      "type": "integer"
+                    },
+                    "version": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/runs/{run_id}/approvals": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "List own run approvals | permission=conversation:use | auth=required",
+        "operationId": "listApprovals",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "run_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "items"
+                  ],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "run_id",
+                          "action_id",
+                          "status",
+                          "version",
+                          "payload_digest",
+                          "display_snapshot",
+                          "expires_at",
+                          "decision_reason"
+                        ],
+                        "properties": {
+                          "action_id": {
+                            "type": "string"
+                          },
+                          "decision_reason": {
+                            "type": "string"
+                          },
+                          "display_snapshot": {
+                            "type": "object",
+                            "additionalProperties": {}
+                          },
+                          "expires_at": {
+                            "type": "string"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "payload_digest": {
+                            "type": "string"
+                          },
+                          "run_id": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string"
+                          },
+                          "version": {
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/runs/{run_id}/cancel": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "Cancel own run | permission=conversation:use | auth=required",
+        "operationId": "cancelRun",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "run_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "Idempotency-Key",
+            "in": "header"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": [
+                "expected_version"
+              ],
+              "properties": {
+                "expected_version": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "conversation_id",
+                    "status",
+                    "version",
+                    "last_event_seq",
+                    "error_code",
+                    "tool_call_count",
+                    "current_message",
+                    "pending_inputs",
+                    "approvals",
+                    "action_receipts"
+                  ],
+                  "properties": {
+                    "action_receipts": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "action_id",
+                          "tool_name",
+                          "business_object_type",
+                          "business_object_id",
+                          "result",
+                          "executed_at"
+                        ],
+                        "properties": {
+                          "action_id": {
+                            "type": "string"
+                          },
+                          "business_object_id": {
+                            "type": "string"
+                          },
+                          "business_object_type": {
+                            "type": "string"
+                          },
+                          "executed_at": {
+                            "type": "string"
+                          },
+                          "result": {
+                            "type": "object",
+                            "additionalProperties": {}
+                          },
+                          "tool_name": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "approvals": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "run_id",
+                          "action_id",
+                          "status",
+                          "version",
+                          "payload_digest",
+                          "display_snapshot",
+                          "expires_at",
+                          "decision_reason"
+                        ],
+                        "properties": {
+                          "action_id": {
+                            "type": "string"
+                          },
+                          "decision_reason": {
+                            "type": "string"
+                          },
+                          "display_snapshot": {
+                            "type": "object",
+                            "additionalProperties": {}
+                          },
+                          "expires_at": {
+                            "type": "string"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "payload_digest": {
+                            "type": "string"
+                          },
+                          "run_id": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string"
+                          },
+                          "version": {
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    },
+                    "conversation_id": {
+                      "type": "string"
+                    },
+                    "current_message": {
+                      "type": "object",
+                      "required": [
+                        "id",
+                        "run_id",
+                        "role",
+                        "content",
+                        "status",
+                        "generation",
+                        "position",
+                        "citations",
+                        "action_receipts",
+                        "created_at"
+                      ],
+                      "properties": {
+                        "action_receipts": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": {}
+                          }
+                        },
+                        "citations": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": {}
+                          }
+                        },
+                        "content": {
+                          "type": "string"
+                        },
+                        "created_at": {
+                          "type": "string"
+                        },
+                        "generation": {
+                          "type": "integer"
+                        },
+                        "id": {
+                          "type": "string"
+                        },
+                        "position": {
+                          "type": "integer"
+                        },
+                        "role": {
+                          "type": "string"
+                        },
+                        "run_id": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "error_code": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "last_event_seq": {
+                      "type": "integer"
+                    },
+                    "pending_inputs": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "question",
+                          "status",
+                          "version",
+                          "expires_at"
+                        ],
+                        "properties": {
+                          "expires_at": {
+                            "type": "string"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "question": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string"
+                          },
+                          "version": {
+                            "type": "integer"
+                          }
+                        }
+                      }
                     },
                     "status": {
                       "type": "string"
@@ -2029,6 +2989,1073 @@
                   "type": "integer"
                 },
                 "type": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/runs/{run_id}/inputs": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "Supply requested input | permission=conversation:use | auth=required",
+        "operationId": "submitInput",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "run_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "Idempotency-Key",
+            "in": "header"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": [
+                "input_id",
+                "expected_version",
+                "content"
+              ],
+              "properties": {
+                "content": {
+                  "type": "string"
+                },
+                "expected_version": {
+                  "type": "integer"
+                },
+                "input_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "conversation_id",
+                    "status",
+                    "version",
+                    "last_event_seq",
+                    "error_code",
+                    "tool_call_count",
+                    "current_message",
+                    "pending_inputs",
+                    "approvals",
+                    "action_receipts"
+                  ],
+                  "properties": {
+                    "action_receipts": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "action_id",
+                          "tool_name",
+                          "business_object_type",
+                          "business_object_id",
+                          "result",
+                          "executed_at"
+                        ],
+                        "properties": {
+                          "action_id": {
+                            "type": "string"
+                          },
+                          "business_object_id": {
+                            "type": "string"
+                          },
+                          "business_object_type": {
+                            "type": "string"
+                          },
+                          "executed_at": {
+                            "type": "string"
+                          },
+                          "result": {
+                            "type": "object",
+                            "additionalProperties": {}
+                          },
+                          "tool_name": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "approvals": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "run_id",
+                          "action_id",
+                          "status",
+                          "version",
+                          "payload_digest",
+                          "display_snapshot",
+                          "expires_at",
+                          "decision_reason"
+                        ],
+                        "properties": {
+                          "action_id": {
+                            "type": "string"
+                          },
+                          "decision_reason": {
+                            "type": "string"
+                          },
+                          "display_snapshot": {
+                            "type": "object",
+                            "additionalProperties": {}
+                          },
+                          "expires_at": {
+                            "type": "string"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "payload_digest": {
+                            "type": "string"
+                          },
+                          "run_id": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string"
+                          },
+                          "version": {
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    },
+                    "conversation_id": {
+                      "type": "string"
+                    },
+                    "current_message": {
+                      "type": "object",
+                      "required": [
+                        "id",
+                        "run_id",
+                        "role",
+                        "content",
+                        "status",
+                        "generation",
+                        "position",
+                        "citations",
+                        "action_receipts",
+                        "created_at"
+                      ],
+                      "properties": {
+                        "action_receipts": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": {}
+                          }
+                        },
+                        "citations": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": {}
+                          }
+                        },
+                        "content": {
+                          "type": "string"
+                        },
+                        "created_at": {
+                          "type": "string"
+                        },
+                        "generation": {
+                          "type": "integer"
+                        },
+                        "id": {
+                          "type": "string"
+                        },
+                        "position": {
+                          "type": "integer"
+                        },
+                        "role": {
+                          "type": "string"
+                        },
+                        "run_id": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "error_code": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "last_event_seq": {
+                      "type": "integer"
+                    },
+                    "pending_inputs": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "question",
+                          "status",
+                          "version",
+                          "expires_at"
+                        ],
+                        "properties": {
+                          "expires_at": {
+                            "type": "string"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "question": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string"
+                          },
+                          "version": {
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "tool_call_count": {
+                      "type": "integer"
+                    },
+                    "version": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tickets": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "List tenant tickets | permission=ticket:read | auth=required",
+        "operationId": "listTickets",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "cursor",
+            "in": "query",
+            "allowEmptyValue": true
+          },
+          {
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer",
+            "default": 20,
+            "example": 20,
+            "name": "limit",
+            "in": "query",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "order_id",
+            "in": "query",
+            "allowEmptyValue": true
+          },
+          {
+            "type": "string",
+            "name": "status",
+            "in": "query",
+            "allowEmptyValue": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "items",
+                    "next_cursor",
+                    "has_more"
+                  ],
+                  "properties": {
+                    "has_more": {
+                      "type": "boolean"
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "ticket_no",
+                          "order_id",
+                          "title",
+                          "description",
+                          "category",
+                          "priority",
+                          "status",
+                          "assignee_user_id",
+                          "version",
+                          "created_at"
+                        ],
+                        "properties": {
+                          "assignee_user_id": {
+                            "type": "string"
+                          },
+                          "category": {
+                            "type": "string"
+                          },
+                          "created_at": {
+                            "type": "string"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "order_id": {
+                            "type": "string"
+                          },
+                          "priority": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string"
+                          },
+                          "ticket_no": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "version": {
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    },
+                    "next_cursor": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "Create manual ticket | permission=ticket:create | auth=required",
+        "operationId": "createTicket",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "Idempotency-Key",
+            "in": "header"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": [
+                "order_id",
+                "expected_version",
+                "title",
+                "description",
+                "category",
+                "priority"
+              ],
+              "properties": {
+                "category": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "expected_version": {
+                  "type": "integer"
+                },
+                "order_id": {
+                  "type": "string"
+                },
+                "priority": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "ticket_no",
+                    "order_id",
+                    "title",
+                    "description",
+                    "category",
+                    "priority",
+                    "status",
+                    "assignee_user_id",
+                    "version",
+                    "created_at"
+                  ],
+                  "properties": {
+                    "assignee_user_id": {
+                      "type": "string"
+                    },
+                    "category": {
+                      "type": "string"
+                    },
+                    "created_at": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "order_id": {
+                      "type": "string"
+                    },
+                    "priority": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "ticket_no": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "version": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tickets/{ticket_id}": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "Get tenant ticket | permission=ticket:read | auth=required",
+        "operationId": "getTicket",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "ticket_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "ticket_no",
+                    "order_id",
+                    "title",
+                    "description",
+                    "category",
+                    "priority",
+                    "status",
+                    "assignee_user_id",
+                    "version",
+                    "created_at"
+                  ],
+                  "properties": {
+                    "assignee_user_id": {
+                      "type": "string"
+                    },
+                    "category": {
+                      "type": "string"
+                    },
+                    "created_at": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "order_id": {
+                      "type": "string"
+                    },
+                    "priority": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "ticket_no": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "version": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tickets/{ticket_id}/assignment": {
+      "patch": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "Assign ticket | permission=ticket:manage | auth=required",
+        "operationId": "assignTicket",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "ticket_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "Idempotency-Key",
+            "in": "header"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": [
+                "expected_version"
+              ],
+              "properties": {
+                "assignee_user_id": {
+                  "type": "string"
+                },
+                "expected_version": {
+                  "type": "integer"
+                },
+                "status": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "ticket_no",
+                    "order_id",
+                    "title",
+                    "description",
+                    "category",
+                    "priority",
+                    "status",
+                    "assignee_user_id",
+                    "version",
+                    "created_at"
+                  ],
+                  "properties": {
+                    "assignee_user_id": {
+                      "type": "string"
+                    },
+                    "category": {
+                      "type": "string"
+                    },
+                    "created_at": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "order_id": {
+                      "type": "string"
+                    },
+                    "priority": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "ticket_no": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "version": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tickets/{ticket_id}/events": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "Ticket timeline | permission=ticket:read | auth=required",
+        "operationId": "listTicketEvents",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "ticket_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "cursor",
+            "in": "query",
+            "allowEmptyValue": true
+          },
+          {
+            "maximum": 100,
+            "minimum": 1,
+            "type": "integer",
+            "default": 20,
+            "example": 20,
+            "name": "limit",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "items",
+                    "next_cursor",
+                    "has_more"
+                  ],
+                  "properties": {
+                    "has_more": {
+                      "type": "boolean"
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "operation",
+                          "summary",
+                          "actor_user_id",
+                          "object_id",
+                          "source",
+                          "created_at"
+                        ],
+                        "properties": {
+                          "actor_user_id": {
+                            "type": "string"
+                          },
+                          "created_at": {
+                            "type": "string"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "object_id": {
+                            "type": "string"
+                          },
+                          "operation": {
+                            "type": "string"
+                          },
+                          "source": {
+                            "type": "string"
+                          },
+                          "summary": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "next_cursor": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tickets/{ticket_id}/notes": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "Add internal note | permission=ticket:note | auth=required",
+        "operationId": "addTicketNote",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "ticket_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "Idempotency-Key",
+            "in": "header"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": [
+                "expected_version",
+                "content"
+              ],
+              "properties": {
+                "content": {
+                  "type": "string"
+                },
+                "expected_version": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "ticket_no",
+                    "order_id",
+                    "title",
+                    "description",
+                    "category",
+                    "priority",
+                    "status",
+                    "assignee_user_id",
+                    "version",
+                    "created_at"
+                  ],
+                  "properties": {
+                    "assignee_user_id": {
+                      "type": "string"
+                    },
+                    "category": {
+                      "type": "string"
+                    },
+                    "created_at": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "order_id": {
+                      "type": "string"
+                    },
+                    "priority": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "ticket_no": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "version": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tickets/{ticket_id}/status": {
+      "patch": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "Change ticket status | permission=ticket:manage | auth=required",
+        "operationId": "changeTicketStatus",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "ticket_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "Idempotency-Key",
+            "in": "header"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": [
+                "expected_version"
+              ],
+              "properties": {
+                "assignee_user_id": {
+                  "type": "string"
+                },
+                "expected_version": {
+                  "type": "integer"
+                },
+                "status": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "ticket_no",
+                    "order_id",
+                    "title",
+                    "description",
+                    "category",
+                    "priority",
+                    "status",
+                    "assignee_user_id",
+                    "version",
+                    "created_at"
+                  ],
+                  "properties": {
+                    "assignee_user_id": {
+                      "type": "string"
+                    },
+                    "category": {
+                      "type": "string"
+                    },
+                    "created_at": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "order_id": {
+                      "type": "string"
+                    },
+                    "priority": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "ticket_no": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "version": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "request_id": {
                   "type": "string"
                 }
               }
@@ -2255,6 +4282,272 @@
                       "type": "string"
                     },
                     "version_id": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/v1/runs/{run_id}/actions": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "Prepare immutable action | permission=- | auth=run_capability",
+        "operationId": "prepareAction",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "run_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": [
+                "action_id",
+                "tool_name",
+                "arguments",
+                "evidence_ids"
+              ],
+              "properties": {
+                "action_id": {
+                  "type": "string"
+                },
+                "arguments": {
+                  "type": "object",
+                  "additionalProperties": {}
+                },
+                "evidence_ids": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "tool_name": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "run_id",
+                    "action_id",
+                    "status",
+                    "version",
+                    "payload_digest",
+                    "display_snapshot",
+                    "expires_at",
+                    "decision_reason"
+                  ],
+                  "properties": {
+                    "action_id": {
+                      "type": "string"
+                    },
+                    "decision_reason": {
+                      "type": "string"
+                    },
+                    "display_snapshot": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    },
+                    "expires_at": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "payload_digest": {
+                      "type": "string"
+                    },
+                    "run_id": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "version": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/v1/runs/{run_id}/actions/{action_id}/execute": {
+      "post": {
+        "consumes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "Execute approved action | permission=- | auth=run_capability",
+        "operationId": "executeAction",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "run_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "action_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "action_id",
+                    "tool_name",
+                    "business_object_type",
+                    "business_object_id",
+                    "result",
+                    "executed_at"
+                  ],
+                  "properties": {
+                    "action_id": {
+                      "type": "string"
+                    },
+                    "business_object_id": {
+                      "type": "string"
+                    },
+                    "business_object_type": {
+                      "type": "string"
+                    },
+                    "executed_at": {
+                      "type": "string"
+                    },
+                    "result": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    },
+                    "tool_name": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/v1/runs/{run_id}/actions/{action_id}/receipt": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "Read action receipt | permission=- | auth=run_capability",
+        "operationId": "getActionReceipt",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "run_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "action_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "action_id",
+                    "tool_name",
+                    "business_object_type",
+                    "business_object_id",
+                    "result",
+                    "executed_at"
+                  ],
+                  "properties": {
+                    "action_id": {
+                      "type": "string"
+                    },
+                    "business_object_id": {
+                      "type": "string"
+                    },
+                    "business_object_type": {
+                      "type": "string"
+                    },
+                    "executed_at": {
+                      "type": "string"
+                    },
+                    "result": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    },
+                    "tool_name": {
                       "type": "string"
                     }
                   }
@@ -2606,7 +4899,8 @@
                     "content",
                     "message_id",
                     "deadline_at",
-                    "tools"
+                    "tools",
+                    "resume_data"
                   ],
                   "properties": {
                     "actor_user_id": {
@@ -2626,6 +4920,10 @@
                     },
                     "message_id": {
                       "type": "string"
+                    },
+                    "resume_data": {
+                      "type": "object",
+                      "additionalProperties": {}
                     },
                     "run_id": {
                       "type": "string"
@@ -2766,6 +5064,60 @@
                         },
                         "version": {
                           "type": "integer"
+                        }
+                      }
+                    },
+                    "tickets": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "ticket_no",
+                          "order_id",
+                          "title",
+                          "description",
+                          "category",
+                          "priority",
+                          "status",
+                          "assignee_user_id",
+                          "version",
+                          "created_at"
+                        ],
+                        "properties": {
+                          "assignee_user_id": {
+                            "type": "string"
+                          },
+                          "category": {
+                            "type": "string"
+                          },
+                          "created_at": {
+                            "type": "string"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "order_id": {
+                            "type": "string"
+                          },
+                          "priority": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string"
+                          },
+                          "ticket_no": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "version": {
+                            "type": "integer"
+                          }
                         }
                       }
                     }

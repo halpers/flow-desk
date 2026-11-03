@@ -26,6 +26,9 @@ func (c *AgentClient) Dispatch(ctx context.Context, payload string) error {
 func (c *AgentClient) DispatchKnowledge(ctx context.Context, payload string) error {
 	return c.dispatch(ctx, "/internal/v1/knowledge/index", payload)
 }
+func (c *AgentClient) Cancel(ctx context.Context, run, payload string) error {
+	return c.dispatch(ctx, "/internal/v1/executions/"+run+"/cancel", payload)
+}
 func (c *AgentClient) dispatch(ctx context.Context, path, payload string) error {
 	request, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseURL+path, bytes.NewBufferString(payload))
 	if err != nil {

@@ -7,6 +7,7 @@ from datetime import UTC, datetime
 
 import httpx
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
+from langgraph.types import Command
 from psycopg_pool import AsyncConnectionPool
 
 from flowdesk_agent.api.schemas import ExecutionCommand
@@ -108,13 +109,19 @@ class AgentRuntime:
                             return
 
                 try:
-                    await self.commands.own(conn, command, owner)
+                    if not await self.commands.own(conn, command, owner):
+                        raise OwnershipLost
                     heartbeat_task = asyncio.create_task(heartbeat())
                     terminal = await self.callbacks.terminal(command.dispatch_id)
                     if terminal:
                         await self.callbacks.wait(terminal["source_event_id"])
                         status = "completed" if terminal["type"] == "run.succeeded" else "failed"
                         await self.commands.release(command.dispatch_id, owner, status)
+                        return
+                    suspended = await self.callbacks.suspended(command.dispatch_id)
+                    if suspended:
+                        await self.callbacks.wait(suspended["source_event_id"])
+                        await self.commands.release(command.dispatch_id, owner, "waiting")
                         return
                     tools = GoTools(self.http, command, self.callbacks, self.cache, guard)
                     context = await tools.authorize()
@@ -138,14 +145,33 @@ class AgentRuntime:
                         graph = build_graph(tools, saver, model, Retriever(self.pool, tools))
                         config = {
                             "configurable": {"thread_id": f"run:{command.run_id}"},
-                            "recursion_limit": 20,
+                            "recursion_limit": 40,
                         }
                         checkpoint = await graph.aget_state(config)
                         if not checkpoint.values:
                             await graph.ainvoke({"content": context.content}, config)
+                        elif command.command == "resume" and any(
+                            task.interrupts for task in checkpoint.tasks
+                        ):
+                            await graph.ainvoke(Command(resume=context.resume_data), config)
                         elif checkpoint.next:
                             await graph.ainvoke(None, config)
-                    await self.commands.release(command.dispatch_id, owner, "completed")
+                        checkpoint = await graph.aget_state(config)
+                        pending = [item for task in checkpoint.tasks for item in task.interrupts]
+                        if pending:
+                            value = dict(pending[0].value)
+                            kind = value.pop("kind")
+                            if kind not in ("input", "approval"):
+                                raise ToolError("CHECKPOINT_INVALID")
+                            value["checkpoint_ref"] = str(
+                                checkpoint.config["configurable"]["checkpoint_id"]
+                            )
+                            # The saved interrupt precedes its visible wait event.
+                            event = await self.callbacks.emit(command, "run.waiting_" + kind, value)
+                            await self.callbacks.wait(event)
+                            await self.commands.release(command.dispatch_id, owner, "waiting")
+                        else:
+                            await self.commands.release(command.dispatch_id, owner, "completed")
                 finally:
                     if heartbeat_task:
                         heartbeat_task.cancel()

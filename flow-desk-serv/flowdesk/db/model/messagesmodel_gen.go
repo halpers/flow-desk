@@ -30,7 +30,7 @@ type (
 		FindOneByTenantIdConversationIdClientMessageId(ctx context.Context, tenantId string, conversationId string, clientMessageId sql.NullString) (*Messages, error)
 		FindOneByTenantIdConversationIdPosition(ctx context.Context, tenantId string, conversationId string, position int64) (*Messages, error)
 		FindOneByTenantIdId(ctx context.Context, tenantId string, id string) (*Messages, error)
-		FindOneByTenantIdRunIdRole(ctx context.Context, tenantId string, runId string, role string) (*Messages, error)
+		FindOneByTenantIdRunId(ctx context.Context, tenantId string, runId string) (*Messages, error)
 		Update(ctx context.Context, data *Messages) error
 		Delete(ctx context.Context, id string) error
 	}
@@ -128,10 +128,10 @@ func (m *defaultMessagesModel) FindOneByTenantIdId(ctx context.Context, tenantId
 	}
 }
 
-func (m *defaultMessagesModel) FindOneByTenantIdRunIdRole(ctx context.Context, tenantId string, runId string, role string) (*Messages, error) {
+func (m *defaultMessagesModel) FindOneByTenantIdRunId(ctx context.Context, tenantId string, runId string) (*Messages, error) {
 	var resp Messages
-	query := fmt.Sprintf("select %s from %s where tenant_id = $1 and run_id = $2 and role = $3 limit 1", messagesRows, m.table)
-	err := m.conn.QueryRowCtx(ctx, &resp, query, tenantId, runId, role)
+	query := fmt.Sprintf("select %s from %s where tenant_id = $1 and run_id = $2 limit 1", messagesRows, m.table)
+	err := m.conn.QueryRowCtx(ctx, &resp, query, tenantId, runId)
 	switch err {
 	case nil:
 		return &resp, nil

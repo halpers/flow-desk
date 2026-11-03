@@ -66,6 +66,7 @@ export async function watchRun(
       onConnection("实时连接");
       attempts = 0;
       let authExpired = false;
+      let needsSnapshot = false;
       const parser = new SSEParser((frame) => {
         if (frame.event === "auth.expired") {
           authExpired = true;
@@ -76,12 +77,25 @@ export async function watchRun(
         if (next > after) {
           onEvent(event);
           after = next;
+          if (
+            event.type.startsWith("run.") ||
+            [
+              "message.completed",
+              "approval.decided",
+              "action.executed",
+            ].includes(event.type)
+          )
+            needsSnapshot = true;
         }
       });
       const decoder = new TextDecoder();
       while (!signal.aborted) {
         const { done, value } = await reader.read();
         parser.feed(decoder.decode(value, { stream: !done }), done);
+        if (needsSnapshot) {
+          needsSnapshot = false;
+          onSnapshot(await api<Run>(`/runs/${runId}`, { signal }));
+        }
         if (done) break;
       }
       if (authExpired) await refresh();

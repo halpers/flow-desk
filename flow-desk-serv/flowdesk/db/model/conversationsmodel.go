@@ -16,6 +16,7 @@ type ConversationsModel interface {
 	FindOneOwnedForUpdateTx(context.Context, sqlx.Session, string, string, string) (*Conversations, error)
 	ListOwned(context.Context, string, string, time.Time, string, int64) ([]Conversations, error)
 	UpdateMessageCountTx(context.Context, sqlx.Session, string, int64) error
+	UpdateInputCountTx(context.Context, sqlx.Session, string, int64) error
 }
 type customConversationsModel struct{ *defaultConversationsModel }
 
@@ -47,4 +48,7 @@ func (m *customConversationsModel) ListOwned(ctx context.Context, tenant, actor 
 }
 func (m *customConversationsModel) UpdateMessageCountTx(ctx context.Context, tx sqlx.Session, id string, previous int64) error {
 	return requireOne(tx.ExecCtx(ctx, fmt.Sprintf("update %s set message_count=message_count+2,version=version+1,updated_at=now() where id=$1 and message_count=$2", m.table), id, previous))
+}
+func (m *customConversationsModel) UpdateInputCountTx(ctx context.Context, tx sqlx.Session, id string, previous int64) error {
+	return requireOne(tx.ExecCtx(ctx, fmt.Sprintf("update %s set message_count=message_count+1,version=version+1,updated_at=now() where id=$1 and message_count=$2", m.table), id, previous))
 }

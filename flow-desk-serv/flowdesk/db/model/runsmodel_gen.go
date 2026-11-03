@@ -58,6 +58,9 @@ type (
 		ToolCallCount   int64        `db:"tool_call_count"`
 		CreatedAt       time.Time    `db:"created_at"`
 		UpdatedAt       time.Time    `db:"updated_at"`
+		WaitExpiresAt   sql.NullTime `db:"wait_expires_at"`
+		ResumeData      string       `db:"resume_data"`
+		InputCount      int64        `db:"input_count"`
 	}
 )
 
@@ -131,14 +134,14 @@ func (m *defaultRunsModel) FindOneByTenantIdId(ctx context.Context, tenantId str
 }
 
 func (m *defaultRunsModel) Insert(ctx context.Context, data *Runs) (sql.Result, error) {
-	query := fmt.Sprintf("insert into %s (%s) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)", m.table, runsRowsExpectAutoSet)
-	ret, err := m.conn.ExecCtx(ctx, query, data.Id, data.TenantId, data.ConversationId, data.ActorUserId, data.SessionId, data.InputMessageId, data.ResultMessageId, data.DispatchId, data.Status, data.Version, data.LastEventSeq, data.LeaseGeneration, data.LeaseExpiresAt, data.DeadlineAt, data.ErrorCode, data.ToolCallCount)
+	query := fmt.Sprintf("insert into %s (%s) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)", m.table, runsRowsExpectAutoSet)
+	ret, err := m.conn.ExecCtx(ctx, query, data.Id, data.TenantId, data.ConversationId, data.ActorUserId, data.SessionId, data.InputMessageId, data.ResultMessageId, data.DispatchId, data.Status, data.Version, data.LastEventSeq, data.LeaseGeneration, data.LeaseExpiresAt, data.DeadlineAt, data.ErrorCode, data.ToolCallCount, data.WaitExpiresAt, data.ResumeData, data.InputCount)
 	return ret, err
 }
 
 func (m *defaultRunsModel) Update(ctx context.Context, newData *Runs) error {
 	query := fmt.Sprintf("update %s set %s where id = $1", m.table, runsRowsWithPlaceHolder)
-	_, err := m.conn.ExecCtx(ctx, query, newData.Id, newData.TenantId, newData.ConversationId, newData.ActorUserId, newData.SessionId, newData.InputMessageId, newData.ResultMessageId, newData.DispatchId, newData.Status, newData.Version, newData.LastEventSeq, newData.LeaseGeneration, newData.LeaseExpiresAt, newData.DeadlineAt, newData.ErrorCode, newData.ToolCallCount)
+	_, err := m.conn.ExecCtx(ctx, query, newData.Id, newData.TenantId, newData.ConversationId, newData.ActorUserId, newData.SessionId, newData.InputMessageId, newData.ResultMessageId, newData.DispatchId, newData.Status, newData.Version, newData.LastEventSeq, newData.LeaseGeneration, newData.LeaseExpiresAt, newData.DeadlineAt, newData.ErrorCode, newData.ToolCallCount, newData.WaitExpiresAt, newData.ResumeData, newData.InputCount)
 	return err
 }
 

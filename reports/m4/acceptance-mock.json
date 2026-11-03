@@ -1,0 +1,30 @@
+{
+  "phase": "M4",
+  "profile": "mock",
+  "started_at": "2026-11-03T03:46:38.003712+00:00",
+  "cases": [
+    {
+      "name": "input, restart, approval and create",
+      "passed": true,
+      "run_id": "903a1b50-21c7-44f3-8432-10cbcf01bb34",
+      "action_id": "cdbbda34-f0aa-57cc-b24e-6c0a4b9a5463"
+    },
+    {
+      "name": "approved note",
+      "passed": true,
+      "run_id": "b0d05c48-20b2-47f7-b4ff-685eba4cfd31"
+    },
+    {
+      "name": "rejection has no effect",
+      "passed": true,
+      "run_id": "d819657c-71d6-499a-8811-81770e932de5"
+    },
+    {
+      "name": "cancel invalidates pending approval",
+      "passed": true,
+      "run_id": "030f1c5a-a93d-4e86-9138-92f07b9c472c"
+    }
+  ],
+  "restart_verified": true,
+  "completed_at": "2026-11-03T03:46:59.237703+00:00"
+}

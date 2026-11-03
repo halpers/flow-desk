@@ -16,6 +16,8 @@ type MessagesModel interface {
 	ListByConversation(context.Context, string, string, int64, int64) ([]Messages, error)
 	UpdateFinalTx(context.Context, sqlx.Session, string, string, string, string) error
 	UpdateAbortedTx(context.Context, sqlx.Session, string) error
+	UpdateReceiptsTx(context.Context, sqlx.Session, string, string) error
+	UpdateInputPositionTx(context.Context, sqlx.Session, string, int64, int64) error
 }
 
 func (m *customMessagesModel) FindOneByClientMessageTx(ctx context.Context, tx sqlx.Session, tenant, conversation, clientID string) (*Messages, error) {
@@ -53,4 +55,10 @@ func (m *customMessagesModel) UpdateFinalTx(ctx context.Context, tx sqlx.Session
 func (m *customMessagesModel) UpdateAbortedTx(ctx context.Context, tx sqlx.Session, id string) error {
 	_, err := tx.ExecCtx(ctx, fmt.Sprintf("update %s set status='aborted',updated_at=now() where id=$1 and status='streaming'", m.table), id)
 	return err
+}
+func (m *customMessagesModel) UpdateReceiptsTx(ctx context.Context, tx sqlx.Session, id, receipts string) error {
+	return requireOne(tx.ExecCtx(ctx, fmt.Sprintf("update %s set action_receipts=$2,updated_at=now() where id=$1", m.table), id, receipts))
+}
+func (m *customMessagesModel) UpdateInputPositionTx(ctx context.Context, tx sqlx.Session, id string, previous, next int64) error {
+	return requireOne(tx.ExecCtx(ctx, fmt.Sprintf("update %s set position=$3 where id=$1 and position=$2 and role='assistant' and status='streaming'", m.table), id, previous, next))
 }

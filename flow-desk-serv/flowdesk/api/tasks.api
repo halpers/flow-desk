@@ -80,6 +80,9 @@ type RunData {
     ErrorCode string `json:"error_code"`
     ToolCallCount int64 `json:"tool_call_count"`
     CurrentMessage MessageData `json:"current_message"`
+    PendingInputs []PendingInputData `json:"pending_inputs"`
+    Approvals []ApprovalData `json:"approvals"`
+    ActionReceipts []ReceiptData `json:"action_receipts"`
 }
 type RunResp {
     Code string `json:"code"`
@@ -161,6 +164,7 @@ type ExecutionContext {
     MessageId string `json:"message_id"`
     DeadlineAt string `json:"deadline_at"`
     Tools []string `json:"tools"`
+    ResumeData map[string]interface{} `json:"resume_data"`
 }
 type LeaseResp {
     Code string `json:"code"`
@@ -190,6 +194,7 @@ type ToolReq {
 type ToolResult {
     Order OrderData `json:"order,optional"`
     Logistics []LogisticsData `json:"logistics,optional"`
+    Tickets []TicketData `json:"tickets,optional"`
 }
 type ToolResp {
     Code string `json:"code"`

@@ -12,7 +12,7 @@ from psycopg.rows import dict_row
 from psycopg_pool import AsyncConnectionPool
 from pydantic import BaseModel
 
-from flowdesk_agent.api.schemas import CommandReceipt, ExecutionCommand, IndexCommand
+from flowdesk_agent.api.schemas import CancelCommand, CommandReceipt, ExecutionCommand, IndexCommand
 from flowdesk_agent.retrieval import KnowledgeIndex
 from flowdesk_agent.runtime import AgentRuntime
 from flowdesk_agent.storage.commands import CommandConflict
@@ -106,6 +106,16 @@ async def get_execution(dispatch_id: UUID):
     if row is None:
         raise HTTPException(404, "execution not found")
     return {"dispatch_id": row["dispatch_id"], "status": row["status"]}
+
+
+@app.post(
+    "/internal/v1/executions/{run_id}/cancel", status_code=202, dependencies=[Depends(service_auth)]
+)
+async def cancel_execution(run_id: UUID, command: CancelCommand):
+    if run_id != command.run_id:
+        raise HTTPException(400, "run mismatch")
+    await app.state.runtime.commands.cancel(command)
+    return {"dispatch_id": str(command.dispatch_id), "status": "cancelled"}
 
 
 @app.get("/health/live", response_model=Health)

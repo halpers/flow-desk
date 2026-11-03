@@ -21,6 +21,8 @@ type RunsModel interface {
 	UpdateLeaseTx(context.Context, sqlx.Session, string, int64) error
 	UpdateToolCountTx(context.Context, sqlx.Session, string) error
 	ListOverdue(context.Context, int64) ([]Runs, error)
+	UpdateWaitingTx(context.Context, sqlx.Session, *Runs) error
+	UpdateResumeTx(context.Context, sqlx.Session, *Runs) error
 }
 
 func (m *customRunsModel) LockTenantQuotaTx(ctx context.Context, tx sqlx.Session, tenant string) error {
@@ -77,6 +79,13 @@ func (m *customRunsModel) UpdateToolCountTx(ctx context.Context, tx sqlx.Session
 }
 func (m *customRunsModel) ListOverdue(ctx context.Context, limit int64) ([]Runs, error) {
 	rows := []Runs{}
-	err := m.conn.QueryRowsCtx(ctx, &rows, fmt.Sprintf("select %s from %s where status in ('queued','running') and deadline_at<now() order by deadline_at,id limit $1", runsRows, m.table), limit)
+	err := m.conn.QueryRowsCtx(ctx, &rows, fmt.Sprintf("select %s from %s where (status in ('queued','running') and deadline_at<now()) or (status in ('waiting_input','waiting_approval') and wait_expires_at<now()) order by deadline_at,id limit $1", runsRows, m.table), limit)
 	return rows, err
+}
+
+func (m *customRunsModel) UpdateWaitingTx(ctx context.Context, tx sqlx.Session, row *Runs) error {
+	return requireOne(tx.ExecCtx(ctx, fmt.Sprintf("update %s set wait_expires_at=$2,lease_expires_at=null where id=$1 and version=$3", m.table), row.Id, row.WaitExpiresAt, row.Version))
+}
+func (m *customRunsModel) UpdateResumeTx(ctx context.Context, tx sqlx.Session, row *Runs) error {
+	return requireOne(tx.ExecCtx(ctx, fmt.Sprintf("update %s set dispatch_id=$2,lease_generation=$3,lease_expires_at=null,deadline_at=$4,wait_expires_at=null,resume_data=$5,input_count=$6 where id=$1 and version=$7", m.table), row.Id, row.DispatchId, row.LeaseGeneration, row.DeadlineAt, row.ResumeData, row.InputCount, row.Version))
 }

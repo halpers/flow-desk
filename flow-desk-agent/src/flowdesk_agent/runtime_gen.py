@@ -24,8 +24,16 @@ class EventType(StrEnum):
     RUN_SUCCEEDED = "run.succeeded"
     RUN_FAILED = "run.failed"
     RUN_EXPIRED = "run.expired"
+    RUN_WAITING_INPUT = "run.waiting_input"
+    RUN_WAITING_APPROVAL = "run.waiting_approval"
+    APPROVAL_DECIDED = "approval.decided"
+    ACTION_EXECUTED = "action.executed"
+    RUN_CANCELLED = "run.cancelled"
 
 
 class ToolName(StrEnum):
     ORDER_LOOKUP = "order.lookup"
     LOGISTICS_TRACK = "logistics.track"
+    TICKET_SEARCH = "ticket.search"
+    TICKET_CREATE = "ticket.create"
+    TICKET_ADD_NOTE = "ticket.add_note"

@@ -14,6 +14,7 @@ def test_ownership_query_waits_for_checkpoint_pipeline():
             item = command()
             await commands.accept(item)
             row = await commands.claim()
+            await commands.own(conn, item, row["lease_owner"])
             saver = AsyncPostgresSaver(conn)
             guard = execution_guard(commands, conn, saver, item, row["lease_owner"])
             entered = asyncio.Event()

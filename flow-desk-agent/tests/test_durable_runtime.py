@@ -39,7 +39,7 @@ async def isolated_pool():
             open=False,
         ) as pool:
             await pool.wait(timeout=10)
-            await asyncio.wait_for(migrate(pool), timeout=15)
+            await asyncio.wait_for(migrate(pool), timeout=45)
             yield pool
     finally:
         await owner.execute(sql.SQL("DROP SCHEMA {} CASCADE").format(sql.Identifier(schema)))

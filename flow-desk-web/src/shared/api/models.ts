@@ -8,6 +8,9 @@ type JsonResponse<T> = T extends {
 type Data<T> =
   JsonResponse<T> extends { data?: infer Body } ? NonNullable<Body> : never;
 export type Models = {
+  TicketData: Data<paths["/api/v1/tickets/{ticket_id}"]["get"]>;
+  TicketPage: Data<paths["/api/v1/tickets"]["get"]>;
+  TimelinePage: Data<paths["/api/v1/tickets/{ticket_id}/events"]["get"]>;
   KnowledgeBasePage: Data<paths["/api/v1/knowledge-bases"]["get"]>;
   DocumentPage: Data<
     paths["/api/v1/knowledge-bases/{knowledge_base_id}/documents"]["get"]

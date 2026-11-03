@@ -16,6 +16,7 @@ from flowdesk_agent.storage.tool_cache import ToolCache
 
 directory = Path(__file__).resolve().parent
 argument_validator = Draft202012Validator(json.loads((directory / "read.schema.json").read_text()))
+action_validator = Draft202012Validator(json.loads((directory / "actions.schema.json").read_text()))
 go_contract = json.loads((directory / "go.openapi.json").read_text())
 result_validator = Draft202012Validator(
     go_contract["paths"]["/internal/v1/tools/{tool_name}"]["post"]["responses"]["200"]["content"][
@@ -127,4 +128,52 @@ class GoTools:
             str(call_id),
         )
         await self.callbacks.wait(completed)
+        return result
+
+    async def action_request(self, path: str, body: dict | None = None, method: str = "POST"):
+        context = await self.authorize()
+        for attempt in range(3):
+            await self.guard()
+            try:
+                response = await self.http.request(
+                    method,
+                    f"/internal/v1/runs/{self.command.run_id}{path}",
+                    json=body,
+                    headers={"X-Run-Capability": context.capability},
+                )
+                if response.status_code >= 500:
+                    raise httpx.TransportError("action upstream unavailable")
+                if response.status_code != 200:
+                    raise ToolError(response.json().get("code", "ACTION_FAILED"))
+                return response.json()["data"]
+            except (httpx.TransportError, httpx.TimeoutException):
+                if attempt == 2:
+                    raise ToolError("WRITE_RESULT_UNKNOWN") from None
+                await asyncio.sleep(0.25 * (2**attempt))
+
+    async def prepare_action(
+        self, action_id: str, tool: str, arguments: dict, evidence_ids: list[str]
+    ):
+        action_validator.validate({"tool_name": tool, "arguments": arguments})
+        return await self.action_request(
+            "/actions",
+            {
+                "action_id": action_id,
+                "tool_name": tool,
+                "arguments": arguments,
+                "evidence_ids": evidence_ids,
+            },
+        )
+
+    async def execute_action(self, action_id: str):
+        # A response lost after COMMIT is safely replayed with this exact ID.
+        result = await self.action_request(f"/actions/{action_id}/execute", {})
+        contract = go_contract["paths"]["/internal/v1/runs/{run_id}/actions/{action_id}/execute"][
+            "post"
+        ]["responses"]["200"]["content"]["application/json"]["schema"]
+        Draft202012Validator(contract).validate(
+            {"code": "OK", "request_id": "validated", "data": result}
+        )
+        if result["action_id"] != action_id or result["business_object_type"] != "ticket":
+            raise ToolError("RECEIPT_MISMATCH")
         return result

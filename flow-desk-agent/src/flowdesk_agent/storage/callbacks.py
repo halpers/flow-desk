@@ -74,7 +74,8 @@ class CallbackStore:
                     "SELECT 1 FROM callback_outbox earlier WHERE earlier.run_id=current.run_id AND "
                     "(earlier.lease_generation,earlier.position)<(current.lease_generation,current.position)"
                     " "
-                    "AND earlier.status<>'acked') ORDER BY current.created_at,current.position "
+                    "AND earlier.status IN ('pending','delivering')) "
+                    "ORDER BY current.created_at,current.position "
                     "LIMIT 1 FOR UPDATE OF current SKIP LOCKED"
                 )
             ).fetchone()
@@ -119,6 +120,17 @@ class CallbackStore:
                     "SELECT * FROM callback_outbox WHERE dispatch_id=%s AND type "
                     "IN ('run.succeeded','run.failed') ORDER BY position DESC "
                     "LIMIT 1",
+                    (dispatch_id,),
+                )
+            ).fetchone()
+
+    async def suspended(self, dispatch_id: UUID):
+        async with self.pool.connection() as conn:
+            return await (
+                await conn.execute(
+                    "SELECT * FROM callback_outbox WHERE dispatch_id=%s "
+                    "AND type IN ('run.waiting_input','run.waiting_approval') "
+                    "ORDER BY position DESC LIMIT 1",
                     (dispatch_id,),
                 )
             ).fetchone()

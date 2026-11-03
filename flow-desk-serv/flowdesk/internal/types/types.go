@@ -3,10 +3,22 @@
 
 package types
 
+type ActionReq struct {
+	RunId    string `path:"run_id"`
+	ActionId string `path:"action_id"`
+}
+
 type ActivateDocumentReq struct {
 	DocumentId      string `path:"document_id"`
 	VersionId       string `json:"version_id"`
 	ExpectedVersion int64  `json:"expected_version"`
+}
+
+type AddNoteReq struct {
+	TicketId        string `path:"ticket_id"`
+	IdempotencyKey  string `header:"Idempotency-Key"`
+	ExpectedVersion int64  `json:"expected_version"`
+	Content         string `json:"content"`
 }
 
 type AgentEventReq struct {
@@ -16,6 +28,40 @@ type AgentEventReq struct {
 	Type            string                 `json:"type"`
 	OccurredAt      string                 `json:"occurred_at"`
 	Payload         map[string]interface{} `json:"payload"`
+}
+
+type ApprovalData struct {
+	Id              string                 `json:"id"`
+	RunId           string                 `json:"run_id"`
+	ActionId        string                 `json:"action_id"`
+	Status          string                 `json:"status"`
+	Version         int64                  `json:"version"`
+	PayloadDigest   string                 `json:"payload_digest"`
+	DisplaySnapshot map[string]interface{} `json:"display_snapshot"`
+	ExpiresAt       string                 `json:"expires_at"`
+	DecisionReason  string                 `json:"decision_reason"`
+}
+
+type ApprovalPage struct {
+	Items []ApprovalData `json:"items"`
+}
+
+type ApprovalResp struct {
+	Code      string       `json:"code"`
+	RequestId string       `json:"request_id"`
+	Data      ApprovalData `json:"data"`
+}
+
+type ApprovalsResp struct {
+	Code      string       `json:"code"`
+	RequestId string       `json:"request_id"`
+	Data      ApprovalPage `json:"data"`
+}
+
+type CancelRunReq struct {
+	RunId           string `path:"run_id"`
+	IdempotencyKey  string `header:"Idempotency-Key"`
+	ExpectedVersion int64  `json:"expected_version"`
 }
 
 type CitationReq struct {
@@ -62,6 +108,24 @@ type ConversationsResp struct {
 type CreateConversationReq struct {
 	Title          string `json:"title"`
 	IdempotencyKey string `header:"Idempotency-Key"`
+}
+
+type CreateTicketReq struct {
+	IdempotencyKey  string `header:"Idempotency-Key"`
+	OrderId         string `json:"order_id"`
+	ExpectedVersion int64  `json:"expected_version"`
+	Title           string `json:"title"`
+	Description     string `json:"description"`
+	Category        string `json:"category"`
+	Priority        string `json:"priority"`
+}
+
+type DecisionReq struct {
+	ApprovalId      string `path:"approval_id"`
+	IdempotencyKey  string `header:"Idempotency-Key"`
+	ExpectedVersion int64  `json:"expected_version"`
+	Decision        string `json:"decision"`
+	Reason          string `json:"reason,optional"`
 }
 
 type DocumentData struct {
@@ -154,15 +218,16 @@ type EvidenceResp struct {
 }
 
 type ExecutionContext struct {
-	RunId           string   `json:"run_id"`
-	TenantId        string   `json:"tenant_id"`
-	ActorUserId     string   `json:"actor_user_id"`
-	LeaseGeneration int64    `json:"lease_generation"`
-	Capability      string   `json:"capability"`
-	Content         string   `json:"content"`
-	MessageId       string   `json:"message_id"`
-	DeadlineAt      string   `json:"deadline_at"`
-	Tools           []string `json:"tools"`
+	RunId           string                 `json:"run_id"`
+	TenantId        string                 `json:"tenant_id"`
+	ActorUserId     string                 `json:"actor_user_id"`
+	LeaseGeneration int64                  `json:"lease_generation"`
+	Capability      string                 `json:"capability"`
+	Content         string                 `json:"content"`
+	MessageId       string                 `json:"message_id"`
+	DeadlineAt      string                 `json:"deadline_at"`
+	Tools           []string               `json:"tools"`
+	ResumeData      map[string]interface{} `json:"resume_data"`
 }
 
 type HealthResp struct {
@@ -358,15 +423,49 @@ type PageReq struct {
 	Limit  int64  `form:"limit,default=20,range=[1:100]"`
 }
 
+type PendingInputData struct {
+	Id        string `json:"id"`
+	Question  string `json:"question"`
+	Status    string `json:"status"`
+	Version   int64  `json:"version"`
+	ExpiresAt string `json:"expires_at"`
+}
+
+type PrepareActionReq struct {
+	RunId       string                 `path:"run_id"`
+	ActionId    string                 `json:"action_id"`
+	ToolName    string                 `json:"tool_name"`
+	Arguments   map[string]interface{} `json:"arguments"`
+	EvidenceIds []string               `json:"evidence_ids"`
+}
+
+type ReceiptData struct {
+	ActionId           string                 `json:"action_id"`
+	ToolName           string                 `json:"tool_name"`
+	BusinessObjectType string                 `json:"business_object_type"`
+	BusinessObjectId   string                 `json:"business_object_id"`
+	Result             map[string]interface{} `json:"result"`
+	ExecutedAt         string                 `json:"executed_at"`
+}
+
+type ReceiptResp struct {
+	Code      string      `json:"code"`
+	RequestId string      `json:"request_id"`
+	Data      ReceiptData `json:"data"`
+}
+
 type RunData struct {
-	Id             string      `json:"id"`
-	ConversationId string      `json:"conversation_id"`
-	Status         string      `json:"status"`
-	Version        int64       `json:"version"`
-	LastEventSeq   int64       `json:"last_event_seq"`
-	ErrorCode      string      `json:"error_code"`
-	ToolCallCount  int64       `json:"tool_call_count"`
-	CurrentMessage MessageData `json:"current_message"`
+	Id             string             `json:"id"`
+	ConversationId string             `json:"conversation_id"`
+	Status         string             `json:"status"`
+	Version        int64              `json:"version"`
+	LastEventSeq   int64              `json:"last_event_seq"`
+	ErrorCode      string             `json:"error_code"`
+	ToolCallCount  int64              `json:"tool_call_count"`
+	CurrentMessage MessageData        `json:"current_message"`
+	PendingInputs  []PendingInputData `json:"pending_inputs"`
+	Approvals      []ApprovalData     `json:"approvals"`
+	ActionReceipts []ReceiptData      `json:"action_receipts"`
 }
 
 type RunReq struct {
@@ -395,6 +494,93 @@ type SendMessageReq struct {
 	Attachments     []string `json:"attachments,optional"`
 }
 
+type SubmitInputReq struct {
+	RunId           string `path:"run_id"`
+	IdempotencyKey  string `header:"Idempotency-Key"`
+	InputId         string `json:"input_id"`
+	ExpectedVersion int64  `json:"expected_version"`
+	Content         string `json:"content"`
+}
+
+type TicketChangeReq struct {
+	TicketId        string `path:"ticket_id"`
+	IdempotencyKey  string `header:"Idempotency-Key"`
+	ExpectedVersion int64  `json:"expected_version"`
+	Status          string `json:"status,optional"`
+	AssigneeUserId  string `json:"assignee_user_id,optional"`
+}
+
+type TicketData struct {
+	Id             string `json:"id"`
+	TicketNo       string `json:"ticket_no"`
+	OrderId        string `json:"order_id"`
+	Title          string `json:"title"`
+	Description    string `json:"description"`
+	Category       string `json:"category"`
+	Priority       string `json:"priority"`
+	Status         string `json:"status"`
+	AssigneeUserId string `json:"assignee_user_id"`
+	Version        int64  `json:"version"`
+	CreatedAt      string `json:"created_at"`
+}
+
+type TicketPage struct {
+	Items      []TicketData `json:"items"`
+	NextCursor string       `json:"next_cursor"`
+	HasMore    bool         `json:"has_more"`
+}
+
+type TicketReq struct {
+	TicketId string `path:"ticket_id"`
+}
+
+type TicketResp struct {
+	Code      string     `json:"code"`
+	RequestId string     `json:"request_id"`
+	Data      TicketData `json:"data"`
+}
+
+type TicketsReq struct {
+	Cursor  string `form:"cursor,optional"`
+	Limit   int64  `form:"limit,default=20,range=[1:100]"`
+	OrderId string `form:"order_id,optional"`
+	Status  string `form:"status,optional"`
+}
+
+type TicketsResp struct {
+	Code      string     `json:"code"`
+	RequestId string     `json:"request_id"`
+	Data      TicketPage `json:"data"`
+}
+
+type TimelineData struct {
+	Id          string `json:"id"`
+	Operation   string `json:"operation"`
+	Summary     string `json:"summary"`
+	ActorUserId string `json:"actor_user_id"`
+	ObjectId    string `json:"object_id"`
+	Source      string `json:"source"`
+	CreatedAt   string `json:"created_at"`
+}
+
+type TimelinePage struct {
+	Items      []TimelineData `json:"items"`
+	NextCursor string         `json:"next_cursor"`
+	HasMore    bool           `json:"has_more"`
+}
+
+type TimelineReq struct {
+	TicketId string `path:"ticket_id"`
+	Cursor   string `form:"cursor,optional"`
+	Limit    int64  `form:"limit,default=20,range=[1:100]"`
+}
+
+type TimelineResp struct {
+	Code      string       `json:"code"`
+	RequestId string       `json:"request_id"`
+	Data      TimelinePage `json:"data"`
+}
+
 type TokenData struct {
 	AccessToken string `json:"access_token"`
 	ExpiresIn   int64  `json:"expires_in"`
@@ -421,6 +607,7 @@ type ToolResp struct {
 type ToolResult struct {
 	Order     OrderData       `json:"order,optional"`
 	Logistics []LogisticsData `json:"logistics,optional"`
+	Tickets   []TicketData    `json:"tickets,optional"`
 }
 
 type UploadDocumentReq struct {

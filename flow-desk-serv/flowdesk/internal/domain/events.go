@@ -15,6 +15,9 @@ var eventSchema string
 //go:embed read.schema.json
 var toolSchema string
 
+//go:embed actions.schema.json
+var actionSchema string
+
 var compiledEventSchema = sync.OnceValues(func() (*jsonschema.Schema, error) {
 	compiler := jsonschema.NewCompiler()
 	var document any
@@ -53,6 +56,26 @@ var compiledToolSchema = sync.OnceValues(func() (*jsonschema.Schema, error) {
 
 func ValidateTool(request any) error {
 	schema, err := compiledToolSchema()
+	if err != nil {
+		return err
+	}
+	return schema.Validate(request)
+}
+
+var compiledActionSchema = sync.OnceValues(func() (*jsonschema.Schema, error) {
+	compiler := jsonschema.NewCompiler()
+	var document any
+	if err := json.NewDecoder(strings.NewReader(actionSchema)).Decode(&document); err != nil {
+		return nil, err
+	}
+	if err := compiler.AddResource("urn:flowdesk:actions:v1", document); err != nil {
+		return nil, err
+	}
+	return compiler.Compile("urn:flowdesk:actions:v1")
+})
+
+func ValidateAction(request any) error {
+	schema, err := compiledActionSchema()
 	if err != nil {
 		return err
 	}

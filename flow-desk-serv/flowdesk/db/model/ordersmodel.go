@@ -12,6 +12,7 @@ type OrdersModel interface {
 
 	FindOneByTenant(context.Context, string, string) (*Orders, error)
 	FindOneByOrderNoTx(context.Context, sqlx.Session, string, string) (*Orders, error)
+	FindOneForShareTx(context.Context, sqlx.Session, string, string) (*Orders, error)
 	ListByTenant(context.Context, string, string, string, int64) ([]Orders, error)
 }
 type customOrdersModel struct{ *defaultOrdersModel }
@@ -35,4 +36,9 @@ func (m *customOrdersModel) ListByTenant(ctx context.Context, tenant, filter, af
 	rows := []Orders{}
 	err := m.conn.QueryRowsCtx(ctx, &rows, fmt.Sprintf("select %s from %s where tenant_id=$1 and ($2='' or order_no=$2) and order_no>$3 order by order_no limit $4", ordersRows, m.table), tenant, filter, after, limit)
 	return rows, err
+}
+func (m *customOrdersModel) FindOneForShareTx(ctx context.Context, tx sqlx.Session, tenant, id string) (*Orders, error) {
+	var row Orders
+	err := tx.QueryRowCtx(ctx, &row, fmt.Sprintf("select %s from %s where tenant_id=$1 and id=$2 for share", ordersRows, m.table), tenant, id)
+	return &row, err
 }

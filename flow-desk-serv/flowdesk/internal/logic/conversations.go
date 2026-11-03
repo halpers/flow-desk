@@ -37,7 +37,11 @@ func runDataTx(ctx context.Context, s *svc.ServiceContext, tx sqlx.Session, row 
 	if err = redactMessageTx(ctx, s, tx, row, &visible); err != nil {
 		return types.RunData{}, err
 	}
-	return types.RunData{Id: row.Id, ConversationId: row.ConversationId, Status: row.Status, Version: row.Version, LastEventSeq: row.LastEventSeq, ErrorCode: row.ErrorCode, ToolCallCount: row.ToolCallCount, CurrentMessage: visible}, nil
+	result := types.RunData{Id: row.Id, ConversationId: row.ConversationId, Status: row.Status, Version: row.Version, LastEventSeq: row.LastEventSeq, ErrorCode: row.ErrorCode, ToolCallCount: row.ToolCallCount, CurrentMessage: visible}
+	if err = addRunControlsTx(ctx, s, tx, row, &result); err != nil {
+		return types.RunData{}, err
+	}
+	return result, nil
 }
 
 func CreateConversation(ctx context.Context, s *svc.ServiceContext, req *types.CreateConversationReq) (types.ConversationData, error) {
@@ -259,7 +263,7 @@ func SendMessage(ctx context.Context, s *svc.ServiceContext, req *types.SendMess
 		if tenantCount >= maxTenantActiveRuns || actorCount >= maxActorActiveRuns {
 			return types.RunData{}, failure(429, "QUEUE_FULL", "当前正在处理的任务较多，请稍后重试")
 		}
-		run := &model.Runs{Id: uuid.NewString(), TenantId: actor.TenantId, ConversationId: conversation.Id, ActorUserId: actor.Id, SessionId: Current(ctx).Session.Id, InputMessageId: uuid.NewString(), ResultMessageId: uuid.NewString(), DispatchId: uuid.NewString(), Status: domain.RunQueued, Version: 1, LeaseGeneration: 1, DeadlineAt: now.Add(runDeadline)}
+		run := &model.Runs{Id: uuid.NewString(), TenantId: actor.TenantId, ConversationId: conversation.Id, ActorUserId: actor.Id, SessionId: Current(ctx).Session.Id, InputMessageId: uuid.NewString(), ResultMessageId: uuid.NewString(), DispatchId: uuid.NewString(), Status: domain.RunQueued, Version: 1, LeaseGeneration: 1, DeadlineAt: now.Add(runDeadline), ResumeData: "{}"}
 		if err = s.RunsModel.InsertTx(ctx, tx, run); err != nil {
 			return types.RunData{}, err
 		}
@@ -278,7 +282,7 @@ func SendMessage(ctx context.Context, s *svc.ServiceContext, req *types.SendMess
 		if _, err = appendEventTx(ctx, s, tx, run, uuid.NewSHA1(uuid.NameSpaceURL, []byte(run.Id+":queued")).String(), domain.EventRunQueued, payload, now, ""); err != nil {
 			return types.RunData{}, err
 		}
-		command := map[string]any{"dispatch_id": run.DispatchId, "run_id": run.Id, "lease_generation": run.LeaseGeneration, "command": "execute", "graph_version": "read-v1"}
+		command := map[string]any{"dispatch_id": run.DispatchId, "run_id": run.Id, "lease_generation": run.LeaseGeneration, "command": "execute", "graph_version": "ticket-v1"}
 		if err = s.OutboxEventsModel.InsertTx(ctx, tx, &model.OutboxEvents{Id: uuid.NewString(), TenantId: actor.TenantId, AggregateId: run.Id, DispatchId: run.DispatchId, Topic: "run.execute", Payload: marshal(command), Status: "pending", AvailableAt: now}); err != nil {
 			return types.RunData{}, err
 		}

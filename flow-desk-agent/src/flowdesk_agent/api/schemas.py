@@ -11,13 +11,20 @@ class ExecutionCommand(BaseModel):
     dispatch_id: UUID
     run_id: UUID
     lease_generation: int = Field(ge=1)
-    command: Literal["execute"]
-    graph_version: Literal["read-v1"]
+    command: Literal["execute", "resume"]
+    graph_version: Literal["read-v1", "ticket-v1"]
 
 
 class CommandReceipt(BaseModel):
     dispatch_id: UUID
     status: str
+
+
+class CancelCommand(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    dispatch_id: UUID
+    run_id: UUID
+    lease_generation: int = Field(ge=1)
 
 
 class IndexCommand(BaseModel):
@@ -37,3 +44,4 @@ class TrustedContext(BaseModel):
     message_id: UUID
     deadline_at: str
     tools: list[str]
+    resume_data: dict = Field(default_factory=dict)

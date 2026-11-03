@@ -6,7 +6,7 @@
   "additionalProperties": false,
   "required": ["tool_name", "arguments"],
   "properties": {
-    "tool_name": {"enum": ["order.lookup", "logistics.track"]},
+    "tool_name": {"enum": ["order.lookup", "logistics.track", "ticket.search"]},
     "arguments": {
       "type": "object", "additionalProperties": false, "required": ["order_no"],
       "properties": {"order_no": {"type": "string", "pattern": "^[A-Za-z0-9-]{4,50}$"}}

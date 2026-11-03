@@ -18,6 +18,15 @@ const loginRequestsPerSecond = 2
 const loginBurst = 10
 
 type ServiceContext struct {
+	ActionsModel        model.ActionsModel
+	ApprovalsModel      model.ApprovalsModel
+	PendingInputsModel  model.PendingInputsModel
+	TicketsModel        model.TicketsModel
+	TicketNotesModel    model.TicketNotesModel
+	TicketEventsModel   model.TicketEventsModel
+	ActionReceiptsModel model.ActionReceiptsModel
+	AuditEventsModel    model.AuditEventsModel
+
 	Config                config.Config
 	Conn                  sqlx.SqlConn
 	UsersModel            model.UsersModel
@@ -46,6 +55,15 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	sqlx.DisableLog()
 	conn := sqlx.NewSqlConn("postgres", c.DatabaseUrl)
 	return &ServiceContext{
+		ActionsModel:        model.NewActionsModel(conn),
+		ApprovalsModel:      model.NewApprovalsModel(conn),
+		PendingInputsModel:  model.NewPendingInputsModel(conn),
+		TicketsModel:        model.NewTicketsModel(conn),
+		TicketNotesModel:    model.NewTicketNotesModel(conn),
+		TicketEventsModel:   model.NewTicketEventsModel(conn),
+		ActionReceiptsModel: model.NewActionReceiptsModel(conn),
+		AuditEventsModel:    model.NewAuditEventsModel(conn),
+
 		Config:                c,
 		Conn:                  conn,
 		UsersModel:            model.NewUsersModel(conn),

@@ -1,0 +1,208 @@
+type ApprovalData {
+    Id string `json:"id"`
+    RunId string `json:"run_id"`
+    ActionId string `json:"action_id"`
+    Status string `json:"status"`
+    Version int64 `json:"version"`
+    PayloadDigest string `json:"payload_digest"`
+    DisplaySnapshot map[string]interface{} `json:"display_snapshot"`
+    ExpiresAt string `json:"expires_at"`
+    DecisionReason string `json:"decision_reason"`
+}
+type ApprovalPage {
+    Items []ApprovalData `json:"items"`
+}
+type ApprovalsResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data ApprovalPage `json:"data"`
+}
+type ApprovalResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data ApprovalData `json:"data"`
+}
+type PendingInputData {
+    Id string `json:"id"`
+    Question string `json:"question"`
+    Status string `json:"status"`
+    Version int64 `json:"version"`
+    ExpiresAt string `json:"expires_at"`
+}
+type DecisionReq {
+    ApprovalId string `path:"approval_id"`
+    IdempotencyKey string `header:"Idempotency-Key"`
+    ExpectedVersion int64 `json:"expected_version"`
+    Decision string `json:"decision"`
+    Reason string `json:"reason,optional"`
+}
+type CancelRunReq {
+    RunId string `path:"run_id"`
+    IdempotencyKey string `header:"Idempotency-Key"`
+    ExpectedVersion int64 `json:"expected_version"`
+}
+type SubmitInputReq {
+    RunId string `path:"run_id"`
+    IdempotencyKey string `header:"Idempotency-Key"`
+    InputId string `json:"input_id"`
+    ExpectedVersion int64 `json:"expected_version"`
+    Content string `json:"content"`
+}
+type PrepareActionReq {
+    RunId string `path:"run_id"`
+    ActionId string `json:"action_id"`
+    ToolName string `json:"tool_name"`
+    Arguments map[string]interface{} `json:"arguments"`
+    EvidenceIds []string `json:"evidence_ids"`
+}
+type ActionReq {
+    RunId string `path:"run_id"`
+    ActionId string `path:"action_id"`
+}
+type ReceiptData {
+    ActionId string `json:"action_id"`
+    ToolName string `json:"tool_name"`
+    BusinessObjectType string `json:"business_object_type"`
+    BusinessObjectId string `json:"business_object_id"`
+    Result map[string]interface{} `json:"result"`
+    ExecutedAt string `json:"executed_at"`
+}
+type ReceiptResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data ReceiptData `json:"data"`
+}
+type TicketData {
+    Id string `json:"id"`
+    TicketNo string `json:"ticket_no"`
+    OrderId string `json:"order_id"`
+    Title string `json:"title"`
+    Description string `json:"description"`
+    Category string `json:"category"`
+    Priority string `json:"priority"`
+    Status string `json:"status"`
+    AssigneeUserId string `json:"assignee_user_id"`
+    Version int64 `json:"version"`
+    CreatedAt string `json:"created_at"`
+}
+type TicketReq {
+    TicketId string `path:"ticket_id"`
+}
+type TicketsReq {
+    Cursor string `form:"cursor,optional"`
+    Limit int64 `form:"limit,default=20,range=[1:100]"`
+    OrderId string `form:"order_id,optional"`
+    Status string `form:"status,optional"`
+}
+type TicketPage {
+    Items []TicketData `json:"items"`
+    NextCursor string `json:"next_cursor"`
+    HasMore bool `json:"has_more"`
+}
+type TicketsResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data TicketPage `json:"data"`
+}
+type TicketResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data TicketData `json:"data"`
+}
+type CreateTicketReq {
+    IdempotencyKey string `header:"Idempotency-Key"`
+    OrderId string `json:"order_id"`
+    ExpectedVersion int64 `json:"expected_version"`
+    Title string `json:"title"`
+    Description string `json:"description"`
+    Category string `json:"category"`
+    Priority string `json:"priority"`
+}
+type AddNoteReq {
+    TicketId string `path:"ticket_id"`
+    IdempotencyKey string `header:"Idempotency-Key"`
+    ExpectedVersion int64 `json:"expected_version"`
+    Content string `json:"content"`
+}
+type TicketChangeReq {
+    TicketId string `path:"ticket_id"`
+    IdempotencyKey string `header:"Idempotency-Key"`
+    ExpectedVersion int64 `json:"expected_version"`
+    Status string `json:"status,optional"`
+    AssigneeUserId string `json:"assignee_user_id,optional"`
+}
+type TimelineReq {
+    TicketId string `path:"ticket_id"`
+    Cursor string `form:"cursor,optional"`
+    Limit int64 `form:"limit,default=20,range=[1:100]"`
+}
+type TimelineData {
+    Id string `json:"id"`
+    Operation string `json:"operation"`
+    Summary string `json:"summary"`
+    ActorUserId string `json:"actor_user_id"`
+    ObjectId string `json:"object_id"`
+    Source string `json:"source"`
+    CreatedAt string `json:"created_at"`
+}
+type TimelinePage {
+    Items []TimelineData `json:"items"`
+    NextCursor string `json:"next_cursor"`
+    HasMore bool `json:"has_more"`
+}
+type TimelineResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data TimelinePage `json:"data"`
+}
+@server(prefix: /api/v1 middleware: SessionAuth)
+service flowdesk-api {
+    @doc "List own run approvals | permission=conversation:use | auth=required"
+    @handler ListApprovals
+    get /runs/:run_id/approvals (RunReq) returns (ApprovalsResp)
+    @doc "Decide immutable action | permission=conversation:use | auth=required"
+    @handler DecideApproval
+    post /approvals/:approval_id/decision (DecisionReq) returns (RunResp)
+    @doc "Cancel own run | permission=conversation:use | auth=required"
+    @handler CancelRun
+    post /runs/:run_id/cancel (CancelRunReq) returns (RunResp)
+    @doc "Supply requested input | permission=conversation:use | auth=required"
+    @handler SubmitInput
+    post /runs/:run_id/inputs (SubmitInputReq) returns (RunResp)
+    @doc "List tenant tickets | permission=ticket:read | auth=required"
+    @handler ListTickets
+    get /tickets (TicketsReq) returns (TicketsResp)
+    @doc "Get tenant ticket | permission=ticket:read | auth=required"
+    @handler GetTicket
+    get /tickets/:ticket_id (TicketReq) returns (TicketResp)
+    @doc "Create manual ticket | permission=ticket:create | auth=required"
+    @handler CreateTicket
+    post /tickets (CreateTicketReq) returns (TicketResp)
+    @doc "Add internal note | permission=ticket:note | auth=required"
+    @handler AddTicketNote
+    post /tickets/:ticket_id/notes (AddNoteReq) returns (TicketResp)
+    @doc "Assign ticket | permission=ticket:manage | auth=required"
+    @handler AssignTicket
+    patch /tickets/:ticket_id/assignment (TicketChangeReq) returns (TicketResp)
+    @doc "Change ticket status | permission=ticket:manage | auth=required"
+    @handler ChangeTicketStatus
+    patch /tickets/:ticket_id/status (TicketChangeReq) returns (TicketResp)
+    @doc "Ticket timeline | permission=ticket:read | auth=required"
+    @handler ListTicketEvents
+    get /tickets/:ticket_id/events (TimelineReq) returns (TimelineResp)
+    @doc "Tenant audit | permission=audit:read | auth=required"
+    @handler ListAuditEvents
+    get /audit-events (PageReq) returns (TimelineResp)
+}
+@server(prefix: /internal/v1 middleware: ServiceAuth)
+service flowdesk-api {
+    @doc "Prepare immutable action | permission=- | auth=run_capability"
+    @handler PrepareAction
+    post /runs/:run_id/actions (PrepareActionReq) returns (ApprovalResp)
+    @doc "Execute approved action | permission=- | auth=run_capability"
+    @handler ExecuteAction
+    post /runs/:run_id/actions/:action_id/execute (ActionReq) returns (ReceiptResp)
+    @doc "Read action receipt | permission=- | auth=run_capability"
+    @handler GetActionReceipt
+    get /runs/:run_id/actions/:action_id/receipt (ActionReq) returns (ReceiptResp)
+}

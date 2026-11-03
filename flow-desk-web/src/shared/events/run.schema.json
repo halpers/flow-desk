@@ -4,62 +4,442 @@
   "title": "Persisted FlowDesk event v1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "run_id", "seq", "type", "occurred_at", "payload"],
+  "required": [
+    "schema_version",
+    "run_id",
+    "seq",
+    "type",
+    "occurred_at",
+    "payload"
+  ],
   "properties": {
-    "schema_version": {"const": "1"},
-    "run_id": {"type": "string", "pattern": "^[0-9a-fA-F-]{36}$"},
-    "seq": {"type": "integer", "minimum": 1, "maximum": 50000},
-    "type": {"$ref": "#/$defs/eventType"},
-    "occurred_at": {"type": "string", "format": "date-time"},
-    "payload": {"type": "object"}
+    "schema_version": {
+      "const": "1"
+    },
+    "run_id": {
+      "type": "string",
+      "pattern": "^[0-9a-fA-F-]{36}$"
+    },
+    "seq": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 50000
+    },
+    "type": {
+      "$ref": "#/$defs/eventType"
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "payload": {
+      "type": "object"
+    }
   },
   "$defs": {
-    "runStatus": {"enum": ["queued", "running", "waiting_input", "waiting_approval", "cancelling", "succeeded", "failed", "cancelled", "expired"]},
-    "eventType": {"enum": ["run.queued", "run.started", "tool.started", "tool.completed", "message.completed", "run.succeeded", "run.failed", "run.expired"]},
-    "toolName": {"enum": ["order.lookup", "logistics.track"]},
+    "runStatus": {
+      "enum": [
+        "queued",
+        "running",
+        "waiting_input",
+        "waiting_approval",
+        "cancelling",
+        "succeeded",
+        "failed",
+        "cancelled",
+        "expired"
+      ]
+    },
+    "eventType": {
+      "enum": [
+        "run.queued",
+        "run.started",
+        "tool.started",
+        "tool.completed",
+        "message.completed",
+        "run.succeeded",
+        "run.failed",
+        "run.expired",
+        "run.waiting_input",
+        "run.waiting_approval",
+        "approval.decided",
+        "action.executed",
+        "run.cancelled"
+      ]
+    },
+    "toolName": {
+      "enum": [
+        "order.lookup",
+        "logistics.track",
+        "ticket.search",
+        "ticket.create",
+        "ticket.add_note"
+      ]
+    },
     "statusPayload": {
-      "type": "object", "additionalProperties": false,
-      "required": ["status", "run_version"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "run_version"
+      ],
       "properties": {
-        "status": {"$ref": "#/$defs/runStatus"},
-        "run_version": {"type": "integer", "minimum": 1},
-        "error_code": {"type": "string", "maxLength": 100}
+        "status": {
+          "$ref": "#/$defs/runStatus"
+        },
+        "run_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "error_code": {
+          "type": "string",
+          "maxLength": 100
+        }
       }
     },
     "toolPayload": {
-      "type": "object", "additionalProperties": false,
-      "required": ["tool_call_id", "tool_name", "summary"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tool_call_id",
+        "tool_name",
+        "summary"
+      ],
       "properties": {
-        "tool_call_id": {"type": "string", "maxLength": 100},
-        "tool_name": {"$ref": "#/$defs/toolName"},
-        "summary": {"type": "string", "maxLength": 500},
-        "duration_ms": {"type": "integer", "minimum": 0, "maximum": 120000}
+        "tool_call_id": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "tool_name": {
+          "$ref": "#/$defs/toolName"
+        },
+        "summary": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "duration_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 120000
+        }
       }
     },
     "citation": {
-      "type":"object", "additionalProperties":false,
-      "required":["id","version_id","chunk_id","title"],
-      "properties":{
-        "id":{"type":"string","format":"uuid"},
-        "version_id":{"type":"string","format":"uuid"},
-        "chunk_id":{"type":"string","format":"uuid"},
-        "title":{"type":"string","minLength":1,"maxLength":120}
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "version_id",
+        "chunk_id",
+        "title"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "version_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "chunk_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        }
       }
     },
     "messagePayload": {
-      "type": "object", "additionalProperties": false,
-      "required": ["message_id", "content", "citations", "action_receipts"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "message_id",
+        "content",
+        "citations",
+        "action_receipts"
+      ],
       "properties": {
-        "message_id": {"type": "string", "pattern": "^[0-9a-fA-F-]{36}$"},
-        "content": {"type": "string", "minLength": 1, "maxLength": 32000},
-        "citations": {"type": "array", "maxItems": 5, "items": {"$ref": "#/$defs/citation"}},
-        "action_receipts": {"type": "array", "maxItems": 20, "items": {"type": "object"}}
+        "message_id": {
+          "type": "string",
+          "pattern": "^[0-9a-fA-F-]{36}$"
+        },
+        "content": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32000
+        },
+        "citations": {
+          "type": "array",
+          "maxItems": 5,
+          "items": {
+            "$ref": "#/$defs/citation"
+          }
+        },
+        "action_receipts": {
+          "type": "array",
+          "maxItems": 20,
+          "items": {
+            "$ref": "#/$defs/receipt"
+          }
+        }
+      }
+    },
+    "receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "action_id",
+        "tool_name",
+        "business_object_type",
+        "business_object_id",
+        "result",
+        "executed_at"
+      ],
+      "properties": {
+        "action_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "tool_name": {
+          "enum": [
+            "ticket.create",
+            "ticket.add_note"
+          ]
+        },
+        "business_object_type": {
+          "const": "ticket"
+        },
+        "business_object_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "executed_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "result": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "ticket_id",
+            "ticket_no",
+            "ticket_version"
+          ],
+          "properties": {
+            "ticket_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "ticket_no": {
+              "type": "string",
+              "maxLength": 50
+            },
+            "ticket_version": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "note_id": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        }
+      }
+    },
+    "waitPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "run_version",
+        "checkpoint_ref"
+      ],
+      "properties": {
+        "status": {
+          "$ref": "#/$defs/runStatus"
+        },
+        "run_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "error_code": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "action_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "approval_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "input_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "question": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "checkpoint_ref": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        }
+      }
+    },
+    "approvalPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "approval_id",
+        "status"
+      ],
+      "properties": {
+        "approval_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "status": {
+          "enum": [
+            "approved",
+            "rejected"
+          ]
+        }
+      }
+    },
+    "actionPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "receipt"
+      ],
+      "properties": {
+        "receipt": {
+          "$ref": "#/$defs/receipt"
+        }
       }
     }
   },
   "allOf": [
-    {"if": {"properties": {"type": {"enum": ["run.queued", "run.started", "run.succeeded", "run.failed", "run.expired"]}}}, "then": {"properties": {"payload": {"$ref": "#/$defs/statusPayload"}}}},
-    {"if": {"properties": {"type": {"enum": ["tool.started", "tool.completed"]}}}, "then": {"properties": {"payload": {"$ref": "#/$defs/toolPayload"}}}},
-    {"if": {"properties": {"type": {"const": "message.completed"}}}, "then": {"properties": {"payload": {"$ref": "#/$defs/messagePayload"}}}}
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "enum": [
+              "run.queued",
+              "run.started",
+              "run.succeeded",
+              "run.failed",
+              "run.expired",
+              "run.cancelled"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "#/$defs/statusPayload"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "enum": [
+              "tool.started",
+              "tool.completed"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "#/$defs/toolPayload"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "message.completed"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "#/$defs/messagePayload"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "enum": [
+              "run.waiting_input",
+              "run.waiting_approval"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "#/$defs/waitPayload"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "enum": [
+              "approval.decided"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "#/$defs/approvalPayload"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "enum": [
+              "action.executed"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "#/$defs/actionPayload"
+          }
+        }
+      }
+    }
   ]
 }
