@@ -13,6 +13,19 @@
 
 启动脚本只在 `.env` 不存在时创建随机凭据，不覆盖已有设置。默认页面 `http://localhost:13000`，Go API `http://localhost:18080`，数据库仅绑定本机 `55432`。Python 不发布宿主机端口。已有 `.env` 可修改端口；不要提交它。
 
+统一配置为根目录 [docker-compose.yaml](../docker-compose.yaml)。`compose.ps1` 显式加载该文件，并在 Windows 没有 Docker 命令时转发给 WSL。`start.ps1` 构建镜像，最多等待 180 秒使服务健康；失败时检查 `compose.ps1 ps --all` 和 `compose.ps1 logs --tail 100`。
+
+已有 `.env` 且 Docker 可直接使用时，在根目录也可执行：
+
+```sh
+docker compose config --quiet
+docker compose up --detach --build --wait --wait-timeout 180
+docker compose ps --all
+docker compose stop
+```
+
+配置检查使用 `--quiet`，避免把展开后的凭据打印到终端。PostgreSQL 数据保存到 `flowdesk_pgdata` 命名卷，PG18 挂载路径为 `/var/lib/postgresql`；数据库角色初始化脚本仅在空数据卷首次启动时执行。修改 `.env` 的数据库密码不会自动更新已有角色。
+
 登录账号为 `demo.operator`、`demo.supervisor`、`demo.admin`；第二个合成租户使用 `other.` 前缀。密码是本地 `.env` 中的 `DEMO_PASSWORD`。不存在通用默认密码。迁移重复运行不重置已有账号密码。
 
 迁移使用 owner，Go 使用 `fd_business`（业务 DML），Python 使用 `fd_agent`（agent/knowledge）。一期 Python 账号负责自己 schema 的建表；正式部署应将迁移账号和只读/写运行账号进一步拆开。
@@ -52,6 +65,6 @@ pnpm.cmd --dir flow-desk-web test:e2e
 
 ## 当前边界
 
-阶段状态以 [实施记录](progress.md) 为准。M1 提供工程与身份；M2 已能查询订单/物流并恢复任务进度，当前图使用假模型。知识、真实模型和办理按后续阶段接入。当前使用三个固定角色，`users.role` 保存单一角色；多角色关联表属于后续团队权限扩展。
+阶段状态以 [实施记录](progress.md) 为准。M1–M5 已交付身份、持久化任务、知识检索、兼容模型、经批准的工单办理和固定评测。当前使用三个固定角色，`users.role` 保存单一角色；多角色关联表属于后续团队权限扩展。
 
-本地 HTTP Cookie 为 HttpOnly、SameSite=Strict。生产接入 TLS 反向代理时设置 `COOKIE_SECURE=true`、调整可信 Origin 并使用非 dev 模式；非 dev 模式会拒绝关闭 Secure Cookie 的配置。模型配置默认为 mock，不会在 M1 启动时调用外部模型。
+本地 HTTP Cookie 为 HttpOnly、SameSite=Strict。生产接入 TLS 反向代理时设置 `COOKIE_SECURE=true`、调整可信 Origin 并使用非 dev 模式；非 dev 模式会拒绝关闭 Secure Cookie 的配置。新建本地配置默认 `MODEL_PROVIDER=mock`；真实模型需在 `.env` 设置 `MODEL_PROVIDER=openai-compatible`、`MODEL_BASE_URL`、`MODEL_NAME` 和 `MODEL_API_KEY`。

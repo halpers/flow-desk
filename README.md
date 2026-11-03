@@ -16,7 +16,7 @@ M1–M4 已交付：登录与租户权限、持久化任务/SSE、版本化知�
 | [flow-desk-serv](flow-desk-serv/README.md) | go-zero API、身份权限、业务数据、任务调度、审批、业务工具与事件流 | 8080 |
 | [flow-desk-agent](flow-desk-agent/README.md) | FastAPI + LangGraph、模型调用、RAG、工具编排、持久化执行 | 8000（内网） |
 | [shared/contracts](shared/contracts/README.md) | 跨服务协议与生成产物的归档位置 | — |
-| [deploy](deploy/README.md) | 本地及部署拓扑说明，后续存放 Compose 和代理配置 | — |
+| [deploy](deploy/README.md) | 部署拓扑说明、PostgreSQL 初始化和镜像发布说明 | — |
 
 浏览器统一访问 Go；Python 通过受控的内部工具 API 使用业务能力。Go 拥有业务事务和对外任务状态，Python 拥有图执行检查点和检索索引。
 
@@ -35,6 +35,10 @@ M1–M4 已交付：登录与租户权限、持久化任务/SSE、版本化知�
 ## 本地启动
 
 在 PowerShell 执行 `.\scripts\start.ps1`。默认打开 `http://localhost:13000`，账号 `demo.operator`，密码读取本地 `.env` 的 `DEMO_PASSWORD`。凭据由启动脚本随机生成，不会提交 Git。
+
+根目录 [docker-compose.yaml](docker-compose.yaml) 编排 PostgreSQL/pgvector、一次性迁移、Python Agent、Go API 和 Web；启动脚本等待服务健康后返回。已有 `.env` 且本机可使用 Docker 时，也可执行 `docker compose up --detach --build --wait`。各服务默认端口及操作见 [部署说明](deploy/README.md)。
+
+[CI/CD](deploy/ci-cd.md) 使用 GitHub Actions 执行测试与 Compose 启动检查，成功后将三个服务镜像推送到 GHCR 和阿里云 ACR。启用阿里云推送前，在仓库 Secrets 设置 `ACR_USERNAME`、`ACR_PASSWORD`；公网地址和命名空间已配置默认值。
 
 运行、生成、测试和故障排查见 [本地运行说明](docs/runtime.md)。每阶段验收通过后提交并推送一次，M6 为可选扩展。设计文档包含完整目标范围，尚未实现的内容不代表当前功能。
 
