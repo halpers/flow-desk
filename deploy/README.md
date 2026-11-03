@@ -23,7 +23,7 @@ M1 已提供根目录 Compose、各服务 Dockerfile、PostgreSQL 角色初始�
 5. 启动 Go API/调度，readiness 通过后开放入口。
 6. 启动前端或静态代理，执行小规模 smoke test。
 
-未来 Compose 利用 healthcheck 和一次性 migration job 依赖，而非只凭容器“已启动”判断就绪。Go/Python 的 schema 迁移分别使用有权限的迁移账号，运行账号无 DDL 权限。
+当前 Compose 利用 healthcheck 和一次性 Go migration job 依赖。Go 使用独立业务运行账号；Python 当前在启动时以 Agent 角色迁移自身 schema。生产应将 Python 迁移拆为独立作业，收回运行角色 DDL 权限。
 
 ## 3. 配置与密钥
 

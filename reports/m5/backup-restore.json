@@ -1,0 +1,66 @@
+{
+  "started_at": "2026-11-03T05:41:24.552097+00:00",
+  "method": "pg_dump exported consistent snapshot; pg_restore into fresh disposable database",
+  "scope": "local synthetic database; includes business receipts, Agent/checkpoints and knowledge chunks",
+  "tables": {
+    "business.orders": {
+      "rows": 100,
+      "content_digest": "c14165e2ece0cc1ac55747752372e688"
+    },
+    "business.tickets": {
+      "rows": 30,
+      "content_digest": "7411984a30fbfed4f5cbdde9e7d6db50"
+    },
+    "business.ticket_notes": {
+      "rows": 11,
+      "content_digest": "b49b52abd6933165d0712ba564e40cdd"
+    },
+    "business.runs": {
+      "rows": 189,
+      "content_digest": "d38ff0ba1c83a9369be2df46a81c7a00"
+    },
+    "business.actions": {
+      "rows": 51,
+      "content_digest": "9430218760ad0c69f15cdb246b583fbe"
+    },
+    "business.action_receipts": {
+      "rows": 35,
+      "content_digest": "dc9e0ab86557a790c211fcc053b077f1"
+    },
+    "business.audit_events": {
+      "rows": 41,
+      "content_digest": "dd9363b53d8bf44b280d845318d2dee8"
+    },
+    "agent.execution_commands": {
+      "rows": 247,
+      "content_digest": "24eb8ab5bc93a147182eff62a418c166"
+    },
+    "agent.model_calls": {
+      "rows": 20,
+      "content_digest": "c25a19573f36c3a6c9139d110e0b36b5"
+    },
+    "agent.tool_results": {
+      "rows": 323,
+      "content_digest": "91a153b99ffe6ba595b6ea96f69b9e3c"
+    },
+    "agent.checkpoints": {
+      "rows": 1285,
+      "content_digest": "231935cf83b39f6893a5f2347bc9c66f"
+    },
+    "agent.knowledge_manifests": {
+      "rows": 26,
+      "content_digest": "99f848ed66bcdb9ff681148eae8c37cd"
+    },
+    "agent.knowledge_chunks": {
+      "rows": 26,
+      "content_digest": "44048646fabcb5aa80076d1d718520f2"
+    }
+  },
+  "dump_ms": 985,
+  "restore_ms": 1281,
+  "content_verified": true,
+  "local_backup": "storage/backups/synthetic-7c1697010216.dump",
+  "backup_bytes": 1181478,
+  "temporary_database_cleaned": true,
+  "completed_at": "2026-11-03T05:41:27.752136+00:00"
+}

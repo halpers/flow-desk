@@ -1,4 +1,4 @@
-"""Deterministic M2 graph. Trusted authority lives in the client, outside checkpoint state."""
+"""Durable task graph. Trusted authority lives outside checkpoint state."""
 
 import re
 from typing import TypedDict
@@ -62,10 +62,10 @@ class FakeModel:
         if plan.knowledge_query:
             evidence = state.get("evidence", [])
             return Answer(
-                content="\n".join(item["excerpt"] for item in evidence)
+                content=evidence[0]["excerpt"].split("。", 1)[0] + "。"
                 if evidence
                 else "当前授权知识库中没有足够依据，请联系主管核实。",
-                evidence_ids=[item["id"] for item in evidence],
+                evidence_ids=[evidence[0]["id"]] if evidence else [],
             )
         if not plan.order_no:
             return "请提供以 FD 开头的完整订单号，例如 FD202611020001。"
@@ -88,10 +88,27 @@ class FakeModel:
             )
         else:
             result += "\n当前没有物流记录。"
+        if "工单" in state["content"]:
+            tickets = state.get("tickets", [])
+            ticket_labels = {
+                "open": "待处理",
+                "in_progress": "处理中",
+                "resolved": "已解决",
+                "closed": "已关闭",
+            }
+            result += "\n关联工单：" + (
+                "；".join(
+                    f"{ticket['ticket_no']}"
+                    f"（{ticket_labels.get(ticket['status'], ticket['status'])}）"
+                    for ticket in tickets
+                )
+                if tickets
+                else "当前没有可访问的工单。"
+            )
         return result
 
 
-def build_graph(tools: GoTools, checkpointer, model=None, retriever=None):
+def build_graph(tools: GoTools, checkpointer, model=None, retriever=None, recorder=None):
     model = model or FakeModel()
 
     async def route(state: TaskState):
@@ -254,17 +271,21 @@ def build_graph(tools: GoTools, checkpointer, model=None, retriever=None):
         return {"receipt": await tools.execute_action(state["action_id"])}
 
     builder = StateGraph(TaskState)
-    builder.add_node("understand_and_route", route)
-    builder.add_node("read_business_tools", read)
-    builder.add_node("finalize", finalize)
-    builder.add_node("retrieve_knowledge", retrieve)
-    builder.add_node("allocate_input", allocate_input)
-    builder.add_node("wait_input", wait_input)
-    builder.add_node("blocked", blocked)
-    builder.add_node("allocate_action", allocate_action)
-    builder.add_node("prepare_action", prepare_action)
-    builder.add_node("wait_approval", wait_approval)
-    builder.add_node("execute_action", execute_action)
+    nodes = {
+        "understand_and_route": route,
+        "read_business_tools": read,
+        "finalize": finalize,
+        "retrieve_knowledge": retrieve,
+        "allocate_input": allocate_input,
+        "wait_input": wait_input,
+        "blocked": blocked,
+        "allocate_action": allocate_action,
+        "prepare_action": prepare_action,
+        "wait_approval": wait_approval,
+        "execute_action": execute_action,
+    }
+    for node_name, function in nodes.items():
+        builder.add_node(node_name, recorder.wrap(node_name, function) if recorder else function)
     builder.add_edge(START, "understand_and_route")
     builder.add_conditional_edges(
         "understand_and_route",

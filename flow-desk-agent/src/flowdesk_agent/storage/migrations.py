@@ -84,6 +84,18 @@ MIGRATIONS = [
         lease_generation BIGINT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
     """,
+    """
+    CREATE TABLE execution_spans (
+        span_id UUID PRIMARY KEY, run_id UUID NOT NULL, dispatch_id UUID NOT NULL,
+        lease_generation BIGINT NOT NULL, node_name TEXT NOT NULL,
+        status TEXT NOT NULL CHECK(status IN ('completed','failed','interrupted','cancelled')),
+        duration_ms BIGINT NOT NULL CHECK(duration_ms>=0),
+        completed_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    CREATE INDEX execution_span_run ON execution_spans(run_id,completed_at);
+    ALTER TABLE model_calls ADD COLUMN duration_ms BIGINT;
+    ALTER TABLE model_calls ADD COLUMN completed_at TIMESTAMPTZ;
+    """,
 ]
 
 

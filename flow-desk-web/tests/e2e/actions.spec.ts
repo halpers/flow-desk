@@ -23,7 +23,7 @@ test("input and exact approval survive reload and a lost decision response", asy
   }
   async function send(content: string) {
     await page.getByLabel("服务问题").fill(content);
-    await page.getByRole("button", { name: "发送查询" }).click();
+    await page.getByRole("button", { name: "发送任务" }).click();
   }
   await newConversation();
   await send("请创建工单，登记合成配送问题");

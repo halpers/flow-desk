@@ -1,6 +1,6 @@
 # 前端详细设计
 
-技术路线：React + TypeScript + Vite + Ant Design + React Router + TanStack Query。该选择沿用参考项目的通用前端技术，不引入钱包或链上依赖。当前尚未创建 package.json/锁文件及页面代码。
+技术路线：React + TypeScript + Vite + Ant Design + React Router + TanStack Query。该选择沿用参考项目的通用前端技术，不引入钱包或链上依赖。本文包含完整页面目标；当前已提供身份、工作台、知识管理、审批/输入与工单抽屉，具体实现及浏览器证据见[实施记录](../../docs/progress.md)，下文规划路由不表示均已单独实现。
 
 ## 1. 信息架构与页面
 

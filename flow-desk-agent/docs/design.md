@@ -1,6 +1,6 @@
 # Python Agent 服务详细设计
 
-选型：FastAPI + Pydantic + LangGraph；代码采用 `src/flowdesk_agent/`。当前为待实现设计，不包含已运行的图或依赖锁文件。
+选型：FastAPI + Pydantic + LangGraph；代码采用 `src/flowdesk_agent/`。本文保留完整目标设计；M1–M4 的已运行图、锁文件及当前接口见[实施记录](../../docs/progress.md)，M5 评测见[复跑说明](../../docs/m5-evaluation.md)。
 
 ## 1. 包结构与依赖边界
 

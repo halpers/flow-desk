@@ -49,7 +49,7 @@ test("administrator uploads, activates and withdraws a policy with readable cita
     page.getByRole("button", { name: "新建会话" }).click(),
   ]);
   await page.getByLabel("服务问题").fill(title + "规定保修多久？");
-  await page.getByRole("button", { name: "发送查询" }).click();
+  await page.getByRole("button", { name: "发送任务" }).click();
   await expect(page.locator(".message.assistant")).toContainText("三十六个月", {
     timeout: 45000,
   });

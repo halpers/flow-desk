@@ -71,9 +71,12 @@ def main():
             snapshot = call(client, "GET", f"/runs/{run['id']}")
             if snapshot["status"] == status:
                 return snapshot
-            assert snapshot["status"] not in ("succeeded", "failed", "expired", "cancelled"), (
-                f"run: {snapshot['status']} {snapshot['error_code']}"
-            )
+            assert snapshot["status"] not in (
+                "succeeded",
+                "failed",
+                "expired",
+                "cancelled",
+            ), f"run: {snapshot['status']} {snapshot['error_code']}"
             time.sleep(0.2)
         raise AssertionError(f"run did not reach {status}")
 
@@ -129,6 +132,7 @@ def main():
             waiting = wait(client, run, "waiting_approval")
             assert len(tickets()) == before, "write happened before approval"
             if args.restart_agent:
+                restart_started = time.monotonic()
                 shell = shutil.which("pwsh") or shutil.which("powershell")
                 assert shell, "PowerShell is required for the Compose restart check"
                 subprocess.run(
@@ -150,6 +154,13 @@ def main():
                 report["restart_verified"] = True
             decide(client, waiting, "approve")
             final = wait(client, run, "succeeded")
+            if args.restart_agent:
+                report["restart_to_completed_ms"] = round(
+                    (time.monotonic() - restart_started) * 1000
+                )
+                assert report["restart_to_completed_ms"] < 60000, (
+                    "restart recovery exceeded 60 seconds"
+                )
             receipt = final["action_receipts"][0]
             assert len(tickets()) == before + 1
             assert receipt["result"]["ticket_no"] in final["current_message"]["content"]

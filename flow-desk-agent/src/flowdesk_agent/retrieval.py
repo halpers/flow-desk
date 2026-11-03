@@ -201,46 +201,7 @@ class Retriever:
         versions = [UUID(item["version_id"]) for item in scope["versions"]]
         if not versions:
             return []
-        query_terms = list(dict.fromkeys(terms(query)))[:200]
-        if not query_terms:
-            return []
-        async with self.pool.connection() as conn:
-            # Access filters are applied before either candidate list is ranked.
-            lexical = await (
-                await conn.execute(
-                    "SELECT c.*,ts_rank(c.lexical,to_tsquery('simple',%s)) AS rank "
-                    "FROM knowledge_chunks c JOIN knowledge_manifests m USING(version_id) "
-                    "WHERE c.tenant_id=%s AND c.version_id=ANY(%s) AND m.profile=%s "
-                    "AND c.lexical @@ to_tsquery('simple',%s) "
-                    "ORDER BY rank DESC,c.chunk_id LIMIT 20",
-                    (
-                        " | ".join(query_terms),
-                        context.tenant_id,
-                        versions,
-                        PROFILE,
-                        " | ".join(query_terms),
-                    ),
-                )
-            ).fetchall()
-            semantic = await (
-                await conn.execute(
-                    "SELECT c.*,1-(embedding OPERATOR(knowledge.<=>) %s::knowledge.vector) AS rank "
-                    "FROM knowledge_chunks c JOIN knowledge_manifests m USING(version_id) "
-                    "WHERE c.tenant_id=%s AND c.version_id=ANY(%s) AND m.profile=%s "
-                    "ORDER BY embedding OPERATOR(knowledge.<=>) %s::knowledge.vector,"
-                    "c.chunk_id LIMIT 20",
-                    (vector(query), context.tenant_id, versions, PROFILE, vector(query)),
-                )
-            ).fetchall()
-        candidates, scores = {}, {}
-        for ranking in (lexical, [item for item in semantic if item["rank"] >= 0.15]):
-            for rank, item in enumerate(ranking, start=1):
-                chunk = str(item["chunk_id"])
-                candidates[chunk] = item
-                scores[chunk] = scores.get(chunk, 0) + 1 / (60 + rank)
-        chosen = [
-            candidates[key] for key in sorted(scores, key=lambda key: (-scores[key], key))[:top_k]
-        ]
+        chosen = await self.rank(query, context.tenant_id, versions, top_k)
         context = await self.tools.authorize()
         checked = await self.tools.http.post(
             f"/internal/v1/runs/{context.run_id}/knowledge/validate",
@@ -260,3 +221,48 @@ class Retriever:
         if checked.status_code != 200:
             raise ToolError("EVIDENCE_REJECTED")
         return checked.json()["data"]["items"]
+
+    async def rank(self, query, tenant_id, versions, top_k=5, mode="hybrid"):
+        query_terms = list(dict.fromkeys(terms(query)))[:200]
+        if not query_terms:
+            return []
+        async with self.pool.connection() as conn:
+            # Access filters are applied before either candidate list is ranked.
+            lexical = await (
+                await conn.execute(
+                    "SELECT c.*,ts_rank(c.lexical,to_tsquery('simple',%s)) AS rank "
+                    "FROM knowledge_chunks c JOIN knowledge_manifests m USING(version_id) "
+                    "WHERE c.tenant_id=%s AND c.version_id=ANY(%s) AND m.profile=%s "
+                    "AND c.lexical @@ to_tsquery('simple',%s) "
+                    "ORDER BY rank DESC,c.chunk_id LIMIT 20",
+                    (
+                        " | ".join(query_terms),
+                        tenant_id,
+                        versions,
+                        PROFILE,
+                        " | ".join(query_terms),
+                    ),
+                )
+            ).fetchall()
+            if mode == "lexical":
+                return lexical[:top_k]
+            semantic = await (
+                await conn.execute(
+                    "SELECT c.*,1-(embedding OPERATOR(knowledge.<=>) %s::knowledge.vector) AS rank "
+                    "FROM knowledge_chunks c JOIN knowledge_manifests m USING(version_id) "
+                    "WHERE c.tenant_id=%s AND c.version_id=ANY(%s) AND m.profile=%s "
+                    "ORDER BY embedding OPERATOR(knowledge.<=>) %s::knowledge.vector,"
+                    "c.chunk_id LIMIT 20",
+                    (vector(query), tenant_id, versions, PROFILE, vector(query)),
+                )
+            ).fetchall()
+        candidates, scores = {}, {}
+        for ranking in (lexical, [item for item in semantic if item["rank"] >= 0.15]):
+            for rank, item in enumerate(ranking, start=1):
+                chunk = str(item["chunk_id"])
+                candidates[chunk] = item
+                scores[chunk] = scores.get(chunk, 0) + 1 / (60 + rank)
+        chosen = [
+            candidates[key] for key in sorted(scores, key=lambda key: (-scores[key], key))[:top_k]
+        ]
+        return chosen

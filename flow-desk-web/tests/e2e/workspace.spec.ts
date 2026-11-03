@@ -27,7 +27,7 @@ test("query survives a broken progress stream, reload and logout", async ({
   await expect(page.getByLabel("服务问题")).toHaveValue(
     "查询 FD202611020002 的订单状态和物流",
   );
-  await expect(page.getByRole("button", { name: "发送查询" })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "发送任务" })).toBeEnabled();
   let disconnected = false;
   await page.route("**/api/v1/runs/*/events", async (route) => {
     if (!disconnected) {
@@ -35,7 +35,7 @@ test("query survives a broken progress stream, reload and logout", async ({
       await route.abort();
     } else await route.continue();
   });
-  await page.getByRole("button", { name: "发送查询" }).click();
+  await page.getByRole("button", { name: "发送任务" }).click();
   await expect(page.locator(".message.assistant")).toContainText("102.90", {
     timeout: 45000,
   });

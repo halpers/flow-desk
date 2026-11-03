@@ -84,7 +84,11 @@ class GoTools:
             {
                 "tool_call_id": str(call_id),
                 "tool_name": tool,
-                "summary": "查询订单" if tool == "order.lookup" else "查询物流",
+                "summary": {
+                    "order.lookup": "查询订单",
+                    "logistics.track": "查询物流",
+                    "ticket.search": "查询工单",
+                }[tool],
             },
             str(call_id),
         )

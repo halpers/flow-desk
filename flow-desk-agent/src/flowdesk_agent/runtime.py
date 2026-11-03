@@ -13,6 +13,7 @@ from psycopg_pool import AsyncConnectionPool
 from flowdesk_agent.api.schemas import ExecutionCommand
 from flowdesk_agent.graph.read_graph import build_graph
 from flowdesk_agent.models import CompatibleModel
+from flowdesk_agent.observability.spans import SpanRecorder
 from flowdesk_agent.retrieval import Retriever
 from flowdesk_agent.storage.callbacks import CallbackStore, DeliveryFailed
 from flowdesk_agent.storage.commands import CommandStore
@@ -142,7 +143,13 @@ class AgentRuntime:
                         if provider not in ("mock", "openai-compatible"):
                             raise ToolError("MODEL_CONFIG_INVALID")
                         model = CompatibleModel(self.pool, command) if provider != "mock" else None
-                        graph = build_graph(tools, saver, model, Retriever(self.pool, tools))
+                        graph = build_graph(
+                            tools,
+                            saver,
+                            model,
+                            Retriever(self.pool, tools),
+                            SpanRecorder(self.pool, command),
+                        )
                         config = {
                             "configurable": {"thread_id": f"run:{command.run_id}"},
                             "recursion_limit": 40,

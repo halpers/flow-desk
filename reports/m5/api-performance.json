@@ -1,0 +1,5029 @@
+{
+  "started_at": "2026-11-03T04:52:38.106722+00:00",
+  "isolation": "fresh disposable database and separate native Go API process",
+  "environment": {
+    "platform": "Windows-11-10.0.26200-SP0",
+    "cpu": "AMD64 Family 25 Model 117 Stepping 2, AuthenticAMD",
+    "logical_cpus": 16,
+    "go": "go version go1.27.1 windows/amd64",
+    "database": "PostgreSQL 18 in local Docker/WSL",
+    "model": "excluded",
+    "api_runtime": "native Windows",
+    "memory_limit": "No explicit local process/container memory limit; no capacity guarantee",
+    "timer_resolution_seconds": 0.015625
+  },
+  "concurrency": 20,
+  "requests": 1000,
+  "target_p95_ms": 300,
+  "samples": [
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 0.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 0.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 0.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 47.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 47.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 47.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 0.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 0.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 47.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 47.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 0.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 46.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 46.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 0.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 47.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 46.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 47.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 0.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 47.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 47.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 47.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 47.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 0.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 0.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 0.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 0.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 62.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 0.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 0.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 0.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 62.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 47.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 47.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 47.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 47.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 46.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 0.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 47.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 0.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 0.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 47.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 47.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 0.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 63.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 0.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 0.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 0.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 0.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 47.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 47.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 0.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 0.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 46.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 0.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 47.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 47.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 47.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 0.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 0.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 32.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 47.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 47.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 0.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 0.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 31.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 15.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 0.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 0.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/orders",
+      "status": 200,
+      "duration_ms": 16.0
+    },
+    {
+      "endpoint": "/tickets",
+      "status": 200,
+      "duration_ms": 16.0
+    }
+  ],
+  "tenant_orders": 10000,
+  "tenant_tickets": 10000,
+  "elapsed_seconds": 1.0,
+  "p50_ms": 16.0,
+  "p95_ms": 32.0,
+  "errors": 0,
+  "target_met": true,
+  "database_cleaned": true,
+  "completed_at": "2026-11-03T04:59:12.566193+00:00"
+}

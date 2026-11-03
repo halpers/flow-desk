@@ -2,7 +2,7 @@
 
 ## Project overview
 
-FlowDesk is an enterprise ticket-processing Agent application with React, go-zero and FastAPI services. M1 provides engineering/identity; M2 provides read-only tasks, durable graph execution and SSE; M3 adds versioned knowledge, filtered retrieval/citations and budgeted compatible model calls; M4 adds approved ticket actions, immutable receipts and durable input/approval recovery. See docs/progress.md for delivery evidence. PostgreSQL is the user-selected database. Design documents describe the full intended system, not a claim that every feature exists.
+FlowDesk is an enterprise ticket-processing Agent application with React, go-zero and FastAPI services. M1 provides engineering/identity; M2 provides read-only tasks, durable graph execution and SSE; M3 adds versioned knowledge, filtered retrieval/citations and budgeted compatible model calls; M4 adds approved ticket actions, immutable receipts and durable input/approval recovery; M5 adds fixed evaluations, metadata traces and measured quality/performance/recovery reports. See docs/progress.md for delivery evidence. PostgreSQL is the user-selected database. Design documents describe the full intended system, not a claim that every feature exists.
 
 - `flow-desk-web/`: React and TypeScript frontend. The browser calls the Go service only.
 - `flow-desk-serv/flowdesk/`: Go module location for the go-zero business API and scheduler.

@@ -1,30 +1,31 @@
 {
   "phase": "M4",
   "profile": "mock",
-  "started_at": "2026-11-03T03:46:38.003712+00:00",
+  "started_at": "2026-11-03T06:08:14.144790+00:00",
   "cases": [
     {
       "name": "input, restart, approval and create",
       "passed": true,
-      "run_id": "903a1b50-21c7-44f3-8432-10cbcf01bb34",
-      "action_id": "cdbbda34-f0aa-57cc-b24e-6c0a4b9a5463"
+      "run_id": "ef67f60d-bf29-497a-b14d-3eb2b8c2fb14",
+      "action_id": "218eea43-0b4e-5add-a817-1a4c650ad80e"
     },
     {
       "name": "approved note",
       "passed": true,
-      "run_id": "b0d05c48-20b2-47f7-b4ff-685eba4cfd31"
+      "run_id": "53370a4f-93bb-4d1a-920d-723808fdf5f8"
     },
     {
       "name": "rejection has no effect",
       "passed": true,
-      "run_id": "d819657c-71d6-499a-8811-81770e932de5"
+      "run_id": "28d8890a-05fe-45b7-a9f6-df306ba2fe9e"
     },
     {
       "name": "cancel invalidates pending approval",
       "passed": true,
-      "run_id": "030f1c5a-a93d-4e86-9138-92f07b9c472c"
+      "run_id": "f41e6be8-a909-478b-835b-ba7bb352ad5d"
     }
   ],
   "restart_verified": true,
-  "completed_at": "2026-11-03T03:46:59.237703+00:00"
+  "restart_to_completed_ms": 5203,
+  "completed_at": "2026-11-03T06:08:35.674321+00:00"
 }

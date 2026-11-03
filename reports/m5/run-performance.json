@@ -1,0 +1,65 @@
+{
+  "started_at": "2026-11-03T05:37:10.148241+00:00",
+  "profile": "mock",
+  "active_runs": 10,
+  "tenants": 2,
+  "actors": 5,
+  "runs_per_actor": 2,
+  "definition": "HTTP 202 received to run.started SSE received; excludes queued event; includes all-accepted barrier",
+  "target_p95_ms": 2000,
+  "samples": [
+    {
+      "run_id": "1cfaefb6-5279-49c7-b242-9dd9232d82d4",
+      "accept_ms": 109.0,
+      "first_progress_ms": 516.0
+    },
+    {
+      "run_id": "870daf93-8de8-4c1d-b8ce-24b91fa72139",
+      "accept_ms": 78.0,
+      "first_progress_ms": 328.0
+    },
+    {
+      "run_id": "1acf2a05-f9e0-43ec-a918-a34bcefa3d2a",
+      "accept_ms": 63.0,
+      "first_progress_ms": 328.0
+    },
+    {
+      "run_id": "e0df8f2c-efe4-460f-b359-9a03aa263015",
+      "accept_ms": 94.0,
+      "first_progress_ms": 531.0
+    },
+    {
+      "run_id": "acf60701-e96a-43a0-ba24-45f781f370bb",
+      "accept_ms": 78.0,
+      "first_progress_ms": 563.0
+    },
+    {
+      "run_id": "0ec60ee1-60c2-49f2-bd5e-0b9779bc379b",
+      "accept_ms": 94.0,
+      "first_progress_ms": 297.0
+    },
+    {
+      "run_id": "793076c9-6e28-44f6-8ab9-d2fdfbaca5b7",
+      "accept_ms": 110.0,
+      "first_progress_ms": 531.0
+    },
+    {
+      "run_id": "59130ac0-aeb6-4fab-9a12-1324f7d0c9c2",
+      "accept_ms": 110.0,
+      "first_progress_ms": 531.0
+    },
+    {
+      "run_id": "826cf816-43c2-4c34-980f-6fbdf93cbfb5",
+      "accept_ms": 94.0,
+      "first_progress_ms": 547.0
+    },
+    {
+      "run_id": "a0138d9f-4e47-4f14-9596-9c0384497c5f",
+      "accept_ms": 63.0,
+      "first_progress_ms": 328.0
+    }
+  ],
+  "p95_ms": 563.0,
+  "target_met": true,
+  "completed_at": "2026-11-03T05:37:14.985856+00:00"
+}

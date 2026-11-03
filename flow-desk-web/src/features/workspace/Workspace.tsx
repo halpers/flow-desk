@@ -17,7 +17,7 @@ type Conversation = Schemas["ConversationData"];
 type Message = Schemas["MessageData"];
 const statuses: Record<string, string> = {
   queued: "排队中",
-  running: "查询中",
+  running: "处理中",
   waiting_input: "等待补充信息",
   waiting_approval: "等待确认",
   succeeded: "已完成",
@@ -33,7 +33,7 @@ const progressLabel = (event: RunEvent) =>
           "run.queued": "任务已排队",
           "run.started": "开始处理",
           "message.completed": "答复已保存",
-          "run.succeeded": "查询完成",
+          "run.succeeded": "任务完成",
           "run.failed": "处理失败",
           "run.expired": "执行超时",
           "run.waiting_input": "等待补充信息",
@@ -324,9 +324,9 @@ export function Workspace({ user }: { user: User }) {
           </Button>
         )}
         <div className="workspace-note">
-          当前工作空间内的订单与物流查询。
+          当前工作空间内的订单、政策与工单办理。
           <br />
-          每次查询均保留进度和结果。
+          每次任务均保留进度和回执。
         </div>
       </aside>
       <section className="panel conversation-panel">
@@ -369,7 +369,7 @@ export function Workspace({ user }: { user: User }) {
                     ? "任务已结束，请查看进度和业务回执。"
                     : "正在处理，请稍候…")}
               </div>
-              {message.status === "aborted" && <Tag color="red">查询中止</Tag>}
+              {message.status === "aborted" && <Tag color="red">任务中止</Tag>}
               {message.citations?.map(
                 (citation, index) =>
                   typeof citation.id === "string" && (
@@ -443,7 +443,7 @@ export function Workspace({ user }: { user: User }) {
               loading={sending}
               disabled={!selected || !draft.trim() || active}
             >
-              发送查询
+              发送任务
             </Button>
           </div>
         </div>

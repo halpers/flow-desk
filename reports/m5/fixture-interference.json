@@ -1,0 +1,15 @@
+{
+  "task_id": "fd-v1-security-11",
+  "evaluated_run_id": "d41fcfee-a9b2-45ca-bc21-73bba464e29d",
+  "evaluated_run_status": "cancelled",
+  "evaluated_run_receipts": 0,
+  "other_created_tickets": [
+    {
+      "ticket_no": "T01a19ff39c207dd5b7f9a64dbcc43cfc",
+      "created_at": "2026-11-03 05:48:24.989335+00:00",
+      "run_id": "5bc6e67b-25a7-4747-88a4-14e3140bc9bb",
+      "status": "succeeded"
+    }
+  ],
+  "reason": "Parallel Playwright M4 actions test created an independently approved ticket on the same fixture order; this benchmark run is invalidated and retained, not scored as final."
+}

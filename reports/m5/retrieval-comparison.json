@@ -1,0 +1,576 @@
+{
+  "started_at": "2026-11-03T04:52:34.376249+00:00",
+  "fixture": "m3-policies-v1",
+  "k": 5,
+  "filter": "current Go-authorized tenant and active version allowlist before ranking",
+  "profiles": {
+    "lexical": {
+      "hits": 20,
+      "total": 20,
+      "recall_at_5": 1.0,
+      "cases": [
+        {
+          "query_id": "return-window",
+          "relevant_version": "d06187b6-d3c8-4619-a295-fd6e3eae2398",
+          "returned_versions": [
+            "d06187b6-d3c8-4619-a295-fd6e3eae2398",
+            "482406a0-6fea-412f-909b-e4a99877b8e7",
+            "0ba9dadc-db7c-4aa9-aea3-1e3336931bb1",
+            "3687e6ec-1b58-4e43-acf2-3a547b4c77ca",
+            "995b6c44-ddf8-48da-952c-12d2908e1b0f"
+          ],
+          "hit": true,
+          "rank": 1,
+          "duration_ms": 16
+        },
+        {
+          "query_id": "return-window-variant",
+          "relevant_version": "d06187b6-d3c8-4619-a295-fd6e3eae2398",
+          "returned_versions": [
+            "d06187b6-d3c8-4619-a295-fd6e3eae2398",
+            "482406a0-6fea-412f-909b-e4a99877b8e7",
+            "0ba9dadc-db7c-4aa9-aea3-1e3336931bb1",
+            "3687e6ec-1b58-4e43-acf2-3a547b4c77ca",
+            "995b6c44-ddf8-48da-952c-12d2908e1b0f"
+          ],
+          "hit": true,
+          "rank": 1,
+          "duration_ms": 0
+        },
+        {
+          "query_id": "refund-time",
+          "relevant_version": "2426178f-b7ca-4563-a33e-b2d4bec3e1b2",
+          "returned_versions": [
+            "2426178f-b7ca-4563-a33e-b2d4bec3e1b2",
+            "3687e6ec-1b58-4e43-acf2-3a547b4c77ca",
+            "482406a0-6fea-412f-909b-e4a99877b8e7",
+            "44310df0-42a0-484f-883d-095d982b8fe5",
+            "d06187b6-d3c8-4619-a295-fd6e3eae2398"
+          ],
+          "hit": true,
+          "rank": 1,
+          "duration_ms": 0
+        },
+        {
+          "query_id": "refund-time-variant",
+          "relevant_version": "2426178f-b7ca-4563-a33e-b2d4bec3e1b2",
+          "returned_versions": [
+            "2426178f-b7ca-4563-a33e-b2d4bec3e1b2",
+            "ff50fd8f-ebb0-46c4-8241-931621edef33",
+            "3687e6ec-1b58-4e43-acf2-3a547b4c77ca",
+            "482406a0-6fea-412f-909b-e4a99877b8e7",
+            "44310df0-42a0-484f-883d-095d982b8fe5"
+          ],
+          "hit": true,
+          "rank": 1,
+          "duration_ms": 0
+        },
+        {
+          "query_id": "invoice",
+          "relevant_version": "44310df0-42a0-484f-883d-095d982b8fe5",
+          "returned_versions": [
+            "44310df0-42a0-484f-883d-095d982b8fe5",
+            "0ba9dadc-db7c-4aa9-aea3-1e3336931bb1",
+            "3687e6ec-1b58-4e43-acf2-3a547b4c77ca",
+            "482406a0-6fea-412f-909b-e4a99877b8e7",
+            "d06187b6-d3c8-4619-a295-fd6e3eae2398"
+          ],
+          "hit": true,
+          "rank": 1,
+          "duration_ms": 0
+        },
+        {
+          "query_id": "invoice-variant",
+          "relevant_version": "44310df0-42a0-484f-883d-095d982b8fe5",
+          "returned_versions": [
+            "44310df0-42a0-484f-883d-095d982b8fe5",
+            "0ba9dadc-db7c-4aa9-aea3-1e3336931bb1",
+            "ff50fd8f-ebb0-46c4-8241-931621edef33",
+            "3687e6ec-1b58-4e43-acf2-3a547b4c77ca",
+            "482406a0-6fea-412f-909b-e4a99877b8e7"
+          ],
+          "hit": true,
+          "rank": 1,
+          "duration_ms": 0
+        },
+        {
+          "query_id": "warranty",
+          "relevant_version": "482406a0-6fea-412f-909b-e4a99877b8e7",
+          "returned_versions": [
+            "482406a0-6fea-412f-909b-e4a99877b8e7",
+            "d06187b6-d3c8-4619-a295-fd6e3eae2398",
+            "3687e6ec-1b58-4e43-acf2-3a547b4c77ca",
+            "44310df0-42a0-484f-883d-095d982b8fe5",
+            "e6c9ab16-ba8a-413a-ad08-20b6cc7b1209"
+          ],
+          "hit": true,
+          "rank": 1,
+          "duration_ms": 0
+        },
+        {
+          "query_id": "warranty-variant",
+          "relevant_version": "482406a0-6fea-412f-909b-e4a99877b8e7",
+          "returned_versions": [
+            "482406a0-6fea-412f-909b-e4a99877b8e7",
+            "d06187b6-d3c8-4619-a295-fd6e3eae2398",
+            "ff50fd8f-ebb0-46c4-8241-931621edef33",
+            "3687e6ec-1b58-4e43-acf2-3a547b4c77ca",
+            "44310df0-42a0-484f-883d-095d982b8fe5"
+          ],
+          "hit": true,
+          "rank": 1,
+          "duration_ms": 0
+        },
+        {
+          "query_id": "damage",
+          "relevant_version": "3687e6ec-1b58-4e43-acf2-3a547b4c77ca",
+          "returned_versions": [
+            "3687e6ec-1b58-4e43-acf2-3a547b4c77ca",
+            "d06187b6-d3c8-4619-a295-fd6e3eae2398",
+            "482406a0-6fea-412f-909b-e4a99877b8e7",
+            "1de1869c-ef20-497d-b25b-d5d4a6969845",
+            "44310df0-42a0-484f-883d-095d982b8fe5"
+          ],
+          "hit": true,
+          "rank": 1,
+          "duration_ms": 16
+        },
+        {
+          "query_id": "damage-variant",
+          "relevant_version": "3687e6ec-1b58-4e43-acf2-3a547b4c77ca",
+          "returned_versions": [
+            "3687e6ec-1b58-4e43-acf2-3a547b4c77ca",
+            "d06187b6-d3c8-4619-a295-fd6e3eae2398",
+            "482406a0-6fea-412f-909b-e4a99877b8e7",
+            "1de1869c-ef20-497d-b25b-d5d4a6969845",
+            "ff50fd8f-ebb0-46c4-8241-931621edef33"
+          ],
+          "hit": true,
+          "rank": 1,
+          "duration_ms": 0
+        },
+        {
+          "query_id": "shipping",
+          "relevant_version": "f912fe2b-96de-45a1-9a92-f7d5f0634622",
+          "returned_versions": [
+            "f912fe2b-96de-45a1-9a92-f7d5f0634622",
+            "0ba9dadc-db7c-4aa9-aea3-1e3336931bb1",
+            "d06187b6-d3c8-4619-a295-fd6e3eae2398",
+            "995b6c44-ddf8-48da-952c-12d2908e1b0f",
+            "ff50fd8f-ebb0-46c4-8241-931621edef33"
+          ],
+          "hit": true,
+          "rank": 1,
+          "duration_ms": 0
+        },
+        {
+          "query_id": "shipping-variant",
+          "relevant_version": "f912fe2b-96de-45a1-9a92-f7d5f0634622",
+          "returned_versions": [
+            "f912fe2b-96de-45a1-9a92-f7d5f0634622",
+            "ff50fd8f-ebb0-46c4-8241-931621edef33",
+            "0ba9dadc-db7c-4aa9-aea3-1e3336931bb1",
+            "d06187b6-d3c8-4619-a295-fd6e3eae2398",
+            "995b6c44-ddf8-48da-952c-12d2908e1b0f"
+          ],
+          "hit": true,
+          "rank": 1,
+          "duration_ms": 0
+        },
+        {
+          "query_id": "cancel",
+          "relevant_version": "0ba9dadc-db7c-4aa9-aea3-1e3336931bb1",
+          "returned_versions": [
+            "0ba9dadc-db7c-4aa9-aea3-1e3336931bb1",
+            "995b6c44-ddf8-48da-952c-12d2908e1b0f",
+            "f912fe2b-96de-45a1-9a92-f7d5f0634622",
+            "ff50fd8f-ebb0-46c4-8241-931621edef33",
+            "44310df0-42a0-484f-883d-095d982b8fe5"
+          ],
+          "hit": true,
+          "rank": 1,
+          "duration_ms": 0
+        },
+        {
+          "query_id": "cancel-variant",
+          "relevant_version": "0ba9dadc-db7c-4aa9-aea3-1e3336931bb1",
+          "returned_versions": [
+            "0ba9dadc-db7c-4aa9-aea3-1e3336931bb1",
+            "995b6c44-ddf8-48da-952c-12d2908e1b0f",
+            "ff50fd8f-ebb0-46c4-8241-931621edef33",
+            "f912fe2b-96de-45a1-9a92-f7d5f0634622",
+            "44310df0-42a0-484f-883d-095d982b8fe5"
+          ],
+          "hit": true,
+          "rank": 1,
+          "duration_ms": 0
+        },
+        {
+          "query_id": "address",
+          "relevant_version": "995b6c44-ddf8-48da-952c-12d2908e1b0f",
+          "returned_versions": [
+            "995b6c44-ddf8-48da-952c-12d2908e1b0f",
+            "0ba9dadc-db7c-4aa9-aea3-1e3336931bb1",
+            "f912fe2b-96de-45a1-9a92-f7d5f0634622",
+            "ff50fd8f-ebb0-46c4-8241-931621edef33"
+          ],
+          "hit": true,
+          "rank": 1,
+          "duration_ms": 0
+        },
+        {
+          "query_id": "address-variant",
+          "relevant_version": "995b6c44-ddf8-48da-952c-12d2908e1b0f",
+          "returned_versions": [
+            "995b6c44-ddf8-48da-952c-12d2908e1b0f",
+            "0ba9dadc-db7c-4aa9-aea3-1e3336931bb1",
+            "ff50fd8f-ebb0-46c4-8241-931621edef33",
+            "f912fe2b-96de-45a1-9a92-f7d5f0634622"
+          ],
+          "hit": true,
+          "rank": 1,
+          "duration_ms": 0
+        },
+        {
+          "query_id": "delay",
+          "relevant_version": "1de1869c-ef20-497d-b25b-d5d4a6969845",
+          "returned_versions": [
+            "1de1869c-ef20-497d-b25b-d5d4a6969845",
+            "3687e6ec-1b58-4e43-acf2-3a547b4c77ca",
+            "e6c9ab16-ba8a-413a-ad08-20b6cc7b1209",
+            "995b6c44-ddf8-48da-952c-12d2908e1b0f",
+            "482406a0-6fea-412f-909b-e4a99877b8e7"
+          ],
+          "hit": true,
+          "rank": 1,
+          "duration_ms": 0
+        },
+        {
+          "query_id": "delay-variant",
+          "relevant_version": "1de1869c-ef20-497d-b25b-d5d4a6969845",
+          "returned_versions": [
+            "1de1869c-ef20-497d-b25b-d5d4a6969845",
+            "3687e6ec-1b58-4e43-acf2-3a547b4c77ca",
+            "e6c9ab16-ba8a-413a-ad08-20b6cc7b1209",
+            "995b6c44-ddf8-48da-952c-12d2908e1b0f",
+            "ff50fd8f-ebb0-46c4-8241-931621edef33"
+          ],
+          "hit": true,
+          "rank": 1,
+          "duration_ms": 0
+        },
+        {
+          "query_id": "exchange",
+          "relevant_version": "ff50fd8f-ebb0-46c4-8241-931621edef33",
+          "returned_versions": [
+            "ff50fd8f-ebb0-46c4-8241-931621edef33",
+            "995b6c44-ddf8-48da-952c-12d2908e1b0f",
+            "f912fe2b-96de-45a1-9a92-f7d5f0634622",
+            "0ba9dadc-db7c-4aa9-aea3-1e3336931bb1"
+          ],
+          "hit": true,
+          "rank": 1,
+          "duration_ms": 0
+        },
+        {
+          "query_id": "exchange-variant",
+          "relevant_version": "ff50fd8f-ebb0-46c4-8241-931621edef33",
+          "returned_versions": [
+            "ff50fd8f-ebb0-46c4-8241-931621edef33",
+            "995b6c44-ddf8-48da-952c-12d2908e1b0f",
+            "f912fe2b-96de-45a1-9a92-f7d5f0634622",
+            "0ba9dadc-db7c-4aa9-aea3-1e3336931bb1"
+          ],
+          "hit": true,
+          "rank": 1,
+          "duration_ms": 0
+        }
+      ]
+    },
+    "hybrid": {
+      "hits": 20,
+      "total": 20,
+      "recall_at_5": 1.0,
+      "cases": [
+        {
+          "query_id": "return-window",
+          "relevant_version": "d06187b6-d3c8-4619-a295-fd6e3eae2398",
+          "returned_versions": [
+            "d06187b6-d3c8-4619-a295-fd6e3eae2398",
+            "482406a0-6fea-412f-909b-e4a99877b8e7",
+            "0ba9dadc-db7c-4aa9-aea3-1e3336931bb1",
+            "3687e6ec-1b58-4e43-acf2-3a547b4c77ca",
+            "995b6c44-ddf8-48da-952c-12d2908e1b0f"
+          ],
+          "hit": true,
+          "rank": 1,
+          "duration_ms": 0
+        },
+        {
+          "query_id": "return-window-variant",
+          "relevant_version": "d06187b6-d3c8-4619-a295-fd6e3eae2398",
+          "returned_versions": [
+            "d06187b6-d3c8-4619-a295-fd6e3eae2398",
+            "482406a0-6fea-412f-909b-e4a99877b8e7",
+            "0ba9dadc-db7c-4aa9-aea3-1e3336931bb1",
+            "3687e6ec-1b58-4e43-acf2-3a547b4c77ca",
+            "995b6c44-ddf8-48da-952c-12d2908e1b0f"
+          ],
+          "hit": true,
+          "rank": 1,
+          "duration_ms": 15
+        },
+        {
+          "query_id": "refund-time",
+          "relevant_version": "2426178f-b7ca-4563-a33e-b2d4bec3e1b2",
+          "returned_versions": [
+            "2426178f-b7ca-4563-a33e-b2d4bec3e1b2",
+            "1de1869c-ef20-497d-b25b-d5d4a6969845",
+            "3687e6ec-1b58-4e43-acf2-3a547b4c77ca",
+            "482406a0-6fea-412f-909b-e4a99877b8e7",
+            "44310df0-42a0-484f-883d-095d982b8fe5"
+          ],
+          "hit": true,
+          "rank": 1,
+          "duration_ms": 0
+        },
+        {
+          "query_id": "refund-time-variant",
+          "relevant_version": "2426178f-b7ca-4563-a33e-b2d4bec3e1b2",
+          "returned_versions": [
+            "2426178f-b7ca-4563-a33e-b2d4bec3e1b2",
+            "3687e6ec-1b58-4e43-acf2-3a547b4c77ca",
+            "ff50fd8f-ebb0-46c4-8241-931621edef33",
+            "482406a0-6fea-412f-909b-e4a99877b8e7",
+            "44310df0-42a0-484f-883d-095d982b8fe5"
+          ],
+          "hit": true,
+          "rank": 1,
+          "duration_ms": 0
+        },
+        {
+          "query_id": "invoice",
+          "relevant_version": "44310df0-42a0-484f-883d-095d982b8fe5",
+          "returned_versions": [
+            "44310df0-42a0-484f-883d-095d982b8fe5",
+            "d06187b6-d3c8-4619-a295-fd6e3eae2398",
+            "1de1869c-ef20-497d-b25b-d5d4a6969845",
+            "0ba9dadc-db7c-4aa9-aea3-1e3336931bb1",
+            "3687e6ec-1b58-4e43-acf2-3a547b4c77ca"
+          ],
+          "hit": true,
+          "rank": 1,
+          "duration_ms": 0
+        },
+        {
+          "query_id": "invoice-variant",
+          "relevant_version": "44310df0-42a0-484f-883d-095d982b8fe5",
+          "returned_versions": [
+            "44310df0-42a0-484f-883d-095d982b8fe5",
+            "0ba9dadc-db7c-4aa9-aea3-1e3336931bb1",
+            "ff50fd8f-ebb0-46c4-8241-931621edef33",
+            "3687e6ec-1b58-4e43-acf2-3a547b4c77ca",
+            "482406a0-6fea-412f-909b-e4a99877b8e7"
+          ],
+          "hit": true,
+          "rank": 1,
+          "duration_ms": 0
+        },
+        {
+          "query_id": "warranty",
+          "relevant_version": "482406a0-6fea-412f-909b-e4a99877b8e7",
+          "returned_versions": [
+            "482406a0-6fea-412f-909b-e4a99877b8e7",
+            "d06187b6-d3c8-4619-a295-fd6e3eae2398",
+            "3687e6ec-1b58-4e43-acf2-3a547b4c77ca",
+            "44310df0-42a0-484f-883d-095d982b8fe5",
+            "e6c9ab16-ba8a-413a-ad08-20b6cc7b1209"
+          ],
+          "hit": true,
+          "rank": 1,
+          "duration_ms": 0
+        },
+        {
+          "query_id": "warranty-variant",
+          "relevant_version": "482406a0-6fea-412f-909b-e4a99877b8e7",
+          "returned_versions": [
+            "482406a0-6fea-412f-909b-e4a99877b8e7",
+            "d06187b6-d3c8-4619-a295-fd6e3eae2398",
+            "ff50fd8f-ebb0-46c4-8241-931621edef33",
+            "3687e6ec-1b58-4e43-acf2-3a547b4c77ca",
+            "44310df0-42a0-484f-883d-095d982b8fe5"
+          ],
+          "hit": true,
+          "rank": 1,
+          "duration_ms": 0
+        },
+        {
+          "query_id": "damage",
+          "relevant_version": "3687e6ec-1b58-4e43-acf2-3a547b4c77ca",
+          "returned_versions": [
+            "3687e6ec-1b58-4e43-acf2-3a547b4c77ca",
+            "1de1869c-ef20-497d-b25b-d5d4a6969845",
+            "d06187b6-d3c8-4619-a295-fd6e3eae2398",
+            "482406a0-6fea-412f-909b-e4a99877b8e7",
+            "44310df0-42a0-484f-883d-095d982b8fe5"
+          ],
+          "hit": true,
+          "rank": 1,
+          "duration_ms": 16
+        },
+        {
+          "query_id": "damage-variant",
+          "relevant_version": "3687e6ec-1b58-4e43-acf2-3a547b4c77ca",
+          "returned_versions": [
+            "3687e6ec-1b58-4e43-acf2-3a547b4c77ca",
+            "d06187b6-d3c8-4619-a295-fd6e3eae2398",
+            "482406a0-6fea-412f-909b-e4a99877b8e7",
+            "1de1869c-ef20-497d-b25b-d5d4a6969845",
+            "ff50fd8f-ebb0-46c4-8241-931621edef33"
+          ],
+          "hit": true,
+          "rank": 1,
+          "duration_ms": 0
+        },
+        {
+          "query_id": "shipping",
+          "relevant_version": "f912fe2b-96de-45a1-9a92-f7d5f0634622",
+          "returned_versions": [
+            "f912fe2b-96de-45a1-9a92-f7d5f0634622",
+            "0ba9dadc-db7c-4aa9-aea3-1e3336931bb1",
+            "d06187b6-d3c8-4619-a295-fd6e3eae2398",
+            "995b6c44-ddf8-48da-952c-12d2908e1b0f",
+            "ff50fd8f-ebb0-46c4-8241-931621edef33"
+          ],
+          "hit": true,
+          "rank": 1,
+          "duration_ms": 0
+        },
+        {
+          "query_id": "shipping-variant",
+          "relevant_version": "f912fe2b-96de-45a1-9a92-f7d5f0634622",
+          "returned_versions": [
+            "f912fe2b-96de-45a1-9a92-f7d5f0634622",
+            "ff50fd8f-ebb0-46c4-8241-931621edef33",
+            "0ba9dadc-db7c-4aa9-aea3-1e3336931bb1",
+            "d06187b6-d3c8-4619-a295-fd6e3eae2398",
+            "995b6c44-ddf8-48da-952c-12d2908e1b0f"
+          ],
+          "hit": true,
+          "rank": 1,
+          "duration_ms": 0
+        },
+        {
+          "query_id": "cancel",
+          "relevant_version": "0ba9dadc-db7c-4aa9-aea3-1e3336931bb1",
+          "returned_versions": [
+            "0ba9dadc-db7c-4aa9-aea3-1e3336931bb1",
+            "995b6c44-ddf8-48da-952c-12d2908e1b0f",
+            "f912fe2b-96de-45a1-9a92-f7d5f0634622",
+            "ff50fd8f-ebb0-46c4-8241-931621edef33",
+            "44310df0-42a0-484f-883d-095d982b8fe5"
+          ],
+          "hit": true,
+          "rank": 1,
+          "duration_ms": 0
+        },
+        {
+          "query_id": "cancel-variant",
+          "relevant_version": "0ba9dadc-db7c-4aa9-aea3-1e3336931bb1",
+          "returned_versions": [
+            "0ba9dadc-db7c-4aa9-aea3-1e3336931bb1",
+            "995b6c44-ddf8-48da-952c-12d2908e1b0f",
+            "ff50fd8f-ebb0-46c4-8241-931621edef33",
+            "f912fe2b-96de-45a1-9a92-f7d5f0634622",
+            "44310df0-42a0-484f-883d-095d982b8fe5"
+          ],
+          "hit": true,
+          "rank": 1,
+          "duration_ms": 0
+        },
+        {
+          "query_id": "address",
+          "relevant_version": "995b6c44-ddf8-48da-952c-12d2908e1b0f",
+          "returned_versions": [
+            "995b6c44-ddf8-48da-952c-12d2908e1b0f",
+            "0ba9dadc-db7c-4aa9-aea3-1e3336931bb1",
+            "f912fe2b-96de-45a1-9a92-f7d5f0634622",
+            "ff50fd8f-ebb0-46c4-8241-931621edef33"
+          ],
+          "hit": true,
+          "rank": 1,
+          "duration_ms": 16
+        },
+        {
+          "query_id": "address-variant",
+          "relevant_version": "995b6c44-ddf8-48da-952c-12d2908e1b0f",
+          "returned_versions": [
+            "995b6c44-ddf8-48da-952c-12d2908e1b0f",
+            "0ba9dadc-db7c-4aa9-aea3-1e3336931bb1",
+            "ff50fd8f-ebb0-46c4-8241-931621edef33",
+            "f912fe2b-96de-45a1-9a92-f7d5f0634622"
+          ],
+          "hit": true,
+          "rank": 1,
+          "duration_ms": 0
+        },
+        {
+          "query_id": "delay",
+          "relevant_version": "1de1869c-ef20-497d-b25b-d5d4a6969845",
+          "returned_versions": [
+            "1de1869c-ef20-497d-b25b-d5d4a6969845",
+            "3687e6ec-1b58-4e43-acf2-3a547b4c77ca",
+            "e6c9ab16-ba8a-413a-ad08-20b6cc7b1209",
+            "995b6c44-ddf8-48da-952c-12d2908e1b0f",
+            "482406a0-6fea-412f-909b-e4a99877b8e7"
+          ],
+          "hit": true,
+          "rank": 1,
+          "duration_ms": 0
+        },
+        {
+          "query_id": "delay-variant",
+          "relevant_version": "1de1869c-ef20-497d-b25b-d5d4a6969845",
+          "returned_versions": [
+            "1de1869c-ef20-497d-b25b-d5d4a6969845",
+            "3687e6ec-1b58-4e43-acf2-3a547b4c77ca",
+            "e6c9ab16-ba8a-413a-ad08-20b6cc7b1209",
+            "995b6c44-ddf8-48da-952c-12d2908e1b0f",
+            "ff50fd8f-ebb0-46c4-8241-931621edef33"
+          ],
+          "hit": true,
+          "rank": 1,
+          "duration_ms": 0
+        },
+        {
+          "query_id": "exchange",
+          "relevant_version": "ff50fd8f-ebb0-46c4-8241-931621edef33",
+          "returned_versions": [
+            "ff50fd8f-ebb0-46c4-8241-931621edef33",
+            "995b6c44-ddf8-48da-952c-12d2908e1b0f",
+            "f912fe2b-96de-45a1-9a92-f7d5f0634622",
+            "0ba9dadc-db7c-4aa9-aea3-1e3336931bb1"
+          ],
+          "hit": true,
+          "rank": 1,
+          "duration_ms": 0
+        },
+        {
+          "query_id": "exchange-variant",
+          "relevant_version": "ff50fd8f-ebb0-46c4-8241-931621edef33",
+          "returned_versions": [
+            "ff50fd8f-ebb0-46c4-8241-931621edef33",
+            "995b6c44-ddf8-48da-952c-12d2908e1b0f",
+            "f912fe2b-96de-45a1-9a92-f7d5f0634622",
+            "0ba9dadc-db7c-4aa9-aea3-1e3336931bb1"
+          ],
+          "hit": true,
+          "rank": 1,
+          "duration_ms": 0
+        }
+      ]
+    }
+  },
+  "semantic_embedding": false,
+  "completed_at": "2026-11-03T04:52:34.463476+00:00"
+}

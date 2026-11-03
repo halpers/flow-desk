@@ -1,6 +1,6 @@
 # 设计文档索引
 
-版本：v0.1；日期：2026-11-02；状态：详细设计基线与 M1 工程实现。后续功能及验收以 [实施记录](progress.md) 为准；启动步骤见 [本地运行说明](runtime.md)。
+版本：v0.1；状态：详细设计基线与 M1–M4 业务实现，M5 提供固定评测与展示。实际功能及验收以 [实施记录](progress.md) 为准；启动步骤见 [本地运行说明](runtime.md)。
 
 | 文档 | 内容 |
 | --- | --- |
@@ -13,6 +13,8 @@
 | [Python 服务详细设计](../flow-desk-agent/docs/design.md) | 图节点、工具适配、检索、检查点、模型调用与评测实现 |
 | [部署规划](../deploy/README.md) | 端口、数据卷、健康检查、服务发现与发布顺序 |
 | [协议来源](../shared/contracts/README.md) | 契约唯一来源与生成流水线 |
+| [M5 评测](m5-evaluation.md) | 固定任务、评分断言、模型/检索/性能报告及复跑方式 |
+| [演示与运维](demo-and-operations.md) | 正常办理、失败恢复、备份恢复和排障边界 |
 
 ## 阅读与修改顺序
 
@@ -25,4 +27,4 @@
 - 用户已确定：FlowDesk 名称；前端与 Go/Python 两个后端；Go 使用 go-zero 并以 `goctl api new flowdesk` 生成；数据库使用 PostgreSQL；代码统一位于本工作区；协作规范参考 RWA Go 项目。
 - 本设计选型：React + TypeScript、Python + FastAPI + LangGraph、pgvector 向量检索；一期以 HTTP/JSON 与持久化事件交互。
 - Go 基线：Go 1.27.1、goctl 1.10.2、go-zero 1.10.3；Python 3.12、Node 22/24。各服务依赖已由 go.sum、requirements.lock、pnpm-lock.yaml 固定。
-- M1 包含健康、身份、迁移、模型/契约生成与 Compose；不宣称后续业务、性能或模型质量目标已达到。
+- 各阶段的实际证据见实施记录；完整目标设计不等于当前已实现范围。

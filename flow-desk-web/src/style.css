@@ -111,9 +111,15 @@ textarea {
   margin: 0;
 }
 .conversations {
-  min-height: 75vh;
+  height: 78vh;
+  min-height: 540px;
   display: flex;
   flex-direction: column;
+}
+.conversations nav {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
 }
 .conversation,
 .order {
@@ -329,10 +335,12 @@ textarea {
   }
   .conversations {
     min-height: auto;
+    height: auto;
   }
   .conversations nav {
     display: flex;
     overflow: auto;
+    max-height: 180px;
   }
   .conversation {
     min-width: 180px;

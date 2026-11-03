@@ -4,7 +4,7 @@
 
 ## 当前交付
 
-2026-11-02：M1 工程基础已实现，包括 React 登录工作台、go-zero 身份接口、FastAPI 健康检查、PostgreSQL 迁移与合成账号、模型/契约生成、锁文件及 Compose。Go 工程最初按要求使用 `goctl api new flowdesk` 生成。任务编排、RAG 和业务办理按后续阶段实现，具体状态见 [实施记录](docs/progress.md)。
+M1–M4 已交付：登录与租户权限、持久化任务/SSE、版本化知识与有效引用、兼容 OpenAI 协议的模型接入，以及经批准的建单/备注、幂等回执、取消和重启恢复。Go 工程最初按要求使用 `goctl api new flowdesk` 生成。M5 的固定任务、质量/性能报告及实际证据见 [实施记录](docs/progress.md)和[评测报告](reports/m5/summary.md)。
 
 用户已确定 Go 业务后端使用 **go-zero**，Agent 使用独立 Python 服务，数据库使用 **PostgreSQL**。前端选用 React + TypeScript，沿用参考项目的前端技术路线；向量检索设计使用 pgvector。所有代码集中存放在当前 `flow-desk/` 工作区。
 
@@ -37,3 +37,9 @@
 在 PowerShell 执行 `.\scripts\start.ps1`。默认打开 `http://localhost:13000`，账号 `demo.operator`，密码读取本地 `.env` 的 `DEMO_PASSWORD`。凭据由启动脚本随机生成，不会提交 Git。
 
 运行、生成、测试和故障排查见 [本地运行说明](docs/runtime.md)。每阶段验收通过后提交并推送一次，M6 为可选扩展。设计文档包含完整目标范围，尚未实现的内容不代表当前功能。
+
+## 评测与演示
+
+固定 100 条合成任务按 60/20/20 划分开发、回归和留出集，分别报告 mock 功能断言与 DeepSeek 真实留出结果。复跑步骤见 [M5 评测](docs/m5-evaluation.md)，查询→检索→确认→真实工单及失败恢复的展示步骤见[演示与运维](docs/demo-and-operations.md)。模型费用未知时标为 unknown，密钥仅放在本地 `.env`。
+
+当前检索使用字符词面向量和全文 RRF；尚未实现语义 embedding、PDF/OCR、MCP、团队共享权限或生产监控平台。性能数字仅适用于报告中的本机合成环境。
