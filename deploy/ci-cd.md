@@ -7,7 +7,7 @@
 验证任务使用 Ubuntu 24.04、Go 模块声明的版本、Python 3.12、Node 24 和前端声明的 pnpm 版本，执行：
 
 1. Go 格式检查、`go vet`、一次性数据库中的集成测试。
-2. Agent Ruff 静态检查和临时 schema 测试。
+2. 在临时测试库初始化 `knowledge` schema 和 pgvector 扩展，执行 Agent Ruff 静态检查和临时 schema 测试。
 3. 前端锁文件安装、单元测试和 TypeScript/Vite 构建。
 4. 生成临时随机 `.env`，验证 Compose，构建并启动完整服务，通过 Web 代理检查认证、Cookie 和权限。
 
