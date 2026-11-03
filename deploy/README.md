@@ -47,6 +47,6 @@ live 表示事件循环/服务进程存活；ready 表示数据库、迁移和�
 
 ## 6. Windows 开发
 
-Go 与前端可在宿主机运行，PostgreSQL/Python 可选容器运行；以团队统一方案作为 README 的默认路径。PS 与 Bash 脚本分别说明工作目录和依赖；Go 生成脚本需要 psql/goose/goctl，可由项目专用开发容器提供，避免要求修改参考 RWA 环境。
+Go 与前端可在宿主机运行，PostgreSQL/Python 可选容器运行；以团队统一方案作为 README 的默认路径。PS 与 Bash 脚本分别说明工作目录和依赖；Go 生成脚本需要 psql/goose/goctl，可由项目专用开发容器提供。
 
 只有在实际 Dockerfile/Compose/脚本提交且验证后，README 才添加 `docker compose up --build` 等“一键启动”命令。

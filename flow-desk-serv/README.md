@@ -1,6 +1,6 @@
 # flow-desk-serv
 
-Go 业务服务，使用 **go-zero**。参考 RWA 服务的布局，将 Go module、API 定义和应用命令放在 `flowdesk/`，而不是本目录根部。
+Go 业务服务，使用 **go-zero**。Go module、API 定义和应用命令位于 `flowdesk/`。
 
 最初通过 `goctl api new flowdesk` 生成工程，M1 已接入健康检查、登录/刷新/退出/身份接口、三个固定角色、租户隔离约束、goose 迁移和 goctl PostgreSQL 模型生成。业务设计见 [Go 详细设计](flowdesk/docs/design.md)。
 

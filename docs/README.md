@@ -24,7 +24,7 @@
 
 ## 已确定与实施选型
 
-- 用户已确定：FlowDesk 名称；前端与 Go/Python 两个后端；Go 使用 go-zero 并以 `goctl api new flowdesk` 生成；数据库使用 PostgreSQL；代码统一位于本工作区；协作规范参考 RWA Go 项目。
+- 用户已确定：FlowDesk 名称；前端与 Go/Python 两个后端；Go 使用 go-zero 并以 `goctl api new flowdesk` 生成；数据库使用 PostgreSQL；代码统一位于本工作区；协作规范见 [AGENTS.md](../AGENTS.md)。
 - 本设计选型：React + TypeScript、Python + FastAPI + LangGraph、pgvector 向量检索；一期以 HTTP/JSON 与持久化事件交互。
 - Go 基线：Go 1.27.1、goctl 1.10.2、go-zero 1.10.3；Python 3.12、Node 22/24。各服务依赖已由 go.sum、requirements.lock、pnpm-lock.yaml 固定。
 - 各阶段的实际证据见实施记录；完整目标设计不等于当前已实现范围。

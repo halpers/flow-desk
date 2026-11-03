@@ -6,7 +6,7 @@
 
 M1–M4 已交付：登录与租户权限、持久化任务/SSE、版本化知识与有效引用、兼容 OpenAI 协议的模型接入，以及经批准的建单/备注、幂等回执、取消和重启恢复。Go 工程最初按要求使用 `goctl api new flowdesk` 生成。M5 的固定任务、质量/性能报告及实际证据见 [实施记录](docs/progress.md)和[评测报告](reports/m5/summary.md)。
 
-用户已确定 Go 业务后端使用 **go-zero**，Agent 使用独立 Python 服务，数据库使用 **PostgreSQL**。前端选用 React + TypeScript，沿用参考项目的前端技术路线；向量检索设计使用 pgvector。所有代码集中存放在当前 `flow-desk/` 工作区。
+用户已确定 Go 业务后端使用 **go-zero**，Agent 使用独立 Python 服务，数据库使用 **PostgreSQL**。前端选用 React + TypeScript；向量检索设计使用 pgvector。所有代码集中存放在当前 `flow-desk/` 工作区。
 
 ## 服务划分
 
@@ -30,7 +30,7 @@ M1–M4 已交付：登录与租户权限、持久化任务/SSE、版本化知�
 - [测试、评测与交付计划](docs/quality-and-roadmap.md)：数据集、验收、非功能目标与阶段划分。
 - 各服务的实现设计位于对应目录的 `docs/design.md`。
 
-协作规范见 [AGENTS.md](AGENTS.md)。Go 规范参考 `C:/work/go/src/rwa/rwa-tokenization-serv/AGENTS.md`，适配本项目目录和业务边界，不依赖参考项目的代码、子模块或运行环境。
+协作规范见 [AGENTS.md](AGENTS.md)，涵盖项目目录、服务边界和代码约定。
 
 ## 本地启动
 
