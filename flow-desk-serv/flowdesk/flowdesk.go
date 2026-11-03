@@ -4,7 +4,7 @@
 package main
 
 import (
- "context"
+	"context"
 	"flag"
 	"fmt"
 	"net/http"
@@ -13,11 +13,11 @@ import (
 	"flowdesk/internal/handler"
 	"flowdesk/internal/middleware"
 	"flowdesk/internal/svc"
- "flowdesk/internal/worker"
+	"flowdesk/internal/worker"
 
 	"github.com/google/uuid"
 	"github.com/zeromicro/go-zero/core/conf"
- "github.com/zeromicro/go-zero/core/proc"
+	"github.com/zeromicro/go-zero/core/proc"
 	"github.com/zeromicro/go-zero/rest"
 )
 
@@ -40,12 +40,12 @@ func main() {
 
 	ctx := svc.NewServiceContext(c)
 	ctx.SessionAuth = middleware.NewSessionAuthMiddleware(ctx).Handle
- ctx.ServiceAuth = middleware.NewServiceAuthMiddleware(c.InternalToken).Handle
- workerContext,cancelWorker:=context.WithCancel(context.Background())
- workerDone:=make(chan struct{})
- proc.AddShutdownListener(cancelWorker)
- go func(){defer close(workerDone);worker.Run(workerContext,ctx)}()
- defer func(){cancelWorker();<-workerDone}()
+	ctx.ServiceAuth = middleware.NewServiceAuthMiddleware(c.InternalToken).Handle
+	workerContext, cancelWorker := context.WithCancel(context.Background())
+	workerDone := make(chan struct{})
+	proc.AddShutdownListener(cancelWorker)
+	go func() { defer close(workerDone); worker.Run(workerContext, ctx) }()
+	defer func() { cancelWorker(); <-workerDone }()
 	server.Use(func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("X-Request-ID", uuid.NewString())
