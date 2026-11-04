@@ -1,0 +1,5 @@
+# Debian 13 trixie amd64 OCR baseline; update together with the parser version and fixtures.
+poppler-utils=25.03.0-5+deb13u4
+tesseract-ocr=5.5.0-1+b1
+tesseract-ocr-chi-sim=1:4.1.0-2
+tesseract-ocr-eng=1:4.1.0-2

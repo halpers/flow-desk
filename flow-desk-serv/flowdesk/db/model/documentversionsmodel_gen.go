@@ -55,6 +55,7 @@ type (
 		SourceBytes   []byte    `db:"source_bytes"`
 		PageTexts     string    `db:"page_texts"`
 		ParserVersion string    `db:"parser_version"`
+		OcrMode       string    `db:"ocr_mode"`
 	}
 )
 
@@ -128,14 +129,14 @@ func (m *defaultDocumentVersionsModel) FindOneByTenantIdId(ctx context.Context, 
 }
 
 func (m *defaultDocumentVersionsModel) Insert(ctx context.Context, data *DocumentVersions) (sql.Result, error) {
-	query := fmt.Sprintf("insert into %s (%s) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)", m.table, documentVersionsRowsExpectAutoSet)
-	ret, err := m.conn.ExecCtx(ctx, query, data.Id, data.TenantId, data.DocumentId, data.JobId, data.Filename, data.Content, data.ContentHash, data.IndexStatus, data.ChunkCount, data.ErrorCode, data.SourceFormat, data.SourceBytes, data.PageTexts, data.ParserVersion)
+	query := fmt.Sprintf("insert into %s (%s) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)", m.table, documentVersionsRowsExpectAutoSet)
+	ret, err := m.conn.ExecCtx(ctx, query, data.Id, data.TenantId, data.DocumentId, data.JobId, data.Filename, data.Content, data.ContentHash, data.IndexStatus, data.ChunkCount, data.ErrorCode, data.SourceFormat, data.SourceBytes, data.PageTexts, data.ParserVersion, data.OcrMode)
 	return ret, err
 }
 
 func (m *defaultDocumentVersionsModel) Update(ctx context.Context, newData *DocumentVersions) error {
 	query := fmt.Sprintf("update %s set %s where id = $1", m.table, documentVersionsRowsWithPlaceHolder)
-	_, err := m.conn.ExecCtx(ctx, query, newData.Id, newData.TenantId, newData.DocumentId, newData.JobId, newData.Filename, newData.Content, newData.ContentHash, newData.IndexStatus, newData.ChunkCount, newData.ErrorCode, newData.SourceFormat, newData.SourceBytes, newData.PageTexts, newData.ParserVersion)
+	_, err := m.conn.ExecCtx(ctx, query, newData.Id, newData.TenantId, newData.DocumentId, newData.JobId, newData.Filename, newData.Content, newData.ContentHash, newData.IndexStatus, newData.ChunkCount, newData.ErrorCode, newData.SourceFormat, newData.SourceBytes, newData.PageTexts, newData.ParserVersion, newData.OcrMode)
 	return err
 }
 

@@ -1,0 +1,11 @@
+{
+  "phase": "M7.3",
+  "profile": "mock",
+  "completed_at": "2026-11-04T09:44:52.866504+00:00",
+  "checks": [
+    "real Chinese/English scan, immutable upload replay and physical page preview",
+    "server-enforced OCR review before activation",
+    "operator retrieves OCR text with Go-owned source metadata",
+    "withdrawal blocks OCR citation"
+  ]
+}

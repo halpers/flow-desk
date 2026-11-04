@@ -124,3 +124,7 @@ M1 从 Go OpenAPI 生成 API 类型；事件使用 shared/contracts JSON Schema 
 单元测试覆盖 SSE 拆包/乱序/重复/重置、状态 reducer、401 singleflight、确认过期和取消竞争。组件测试覆盖卡片不同状态、表单校验和安全 Markdown。Playwright 覆盖登录→发起任务→确认→看到工单，以及刷新/断线后恢复。
 
 实现后建立 pnpm dev/build/typecheck/lint/test/test:e2e 等脚本，固定 Node/pnpm 版本并提交锁文件。设计阶段仅检查文档，不宣称前端构建成功。
+
+## M7.3 已实现的 OCR 操作
+
+管理员上传 PDF 时选择文本层、自动无文字页或整页识别；TXT/Markdown 沿用文本上传。版本列表显示方式和 OCR 页数，分页预览标明 text/ocr/empty。含 OCR 内容的版本显示核对确认框，勾选后发送 confirm_ocr=true；Go 最终校验，不依赖按钮禁用保证审核。引用弹窗只根据 Go 返回的 extraction_method 显示 OCR 提醒，不接受模型来源标记。错误使用固定中文指引，不显示原生路径或诊断正文，见[OCR 说明](../../docs/m7-ocr.md)。

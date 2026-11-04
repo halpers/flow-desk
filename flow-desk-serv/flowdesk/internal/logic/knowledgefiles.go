@@ -20,10 +20,67 @@ const maxPDFPages = 50
 const maxPDFTextBytes = 512 * 1024
 const maxPDFTextCharacters = 100000
 const pdfParserVersion = "pypdf-6.21.4-text-v1"
+const ocrParserVersion = "pypdf-6.21.4-tesseract-5.5.0-ocr-v1"
+const maxOCRPages = 10
 
 type knowledgeFile struct {
-	format, content string
-	raw             []byte
+	format, content, ocrMode string
+	raw                      []byte
+}
+
+func knowledgeUploadWithOCR(filename, content, encoded, mode string) (knowledgeFile, error) {
+	file, err := knowledgeUpload(filename, content, encoded)
+	if err != nil {
+		return file, err
+	}
+	if mode == "" {
+		mode = "off"
+	}
+	if !slices.Contains([]string{"off", "auto", "force"}, mode) || (file.format != "pdf" && mode != "off") {
+		return knowledgeFile{}, errArgument
+	}
+	file.ocrMode = mode
+	return file, nil
+}
+
+func ocrPageCount(pages []types.KnowledgePageText) int64 {
+	var count int64
+	for _, page := range pages {
+		if page.ExtractionMethod == "ocr" {
+			count++
+		}
+	}
+	return count
+}
+
+func validPDFProvenance(row *model.DocumentVersions, req *types.IndexCompleteReq) bool {
+	if req.ParserVersion == pdfParserVersion {
+		if row.OcrMode == "force" {
+			return false
+		}
+		for _, page := range req.PageTexts {
+			if page.ExtractionMethod != "" {
+				return false
+			}
+		}
+		return true
+	}
+	if req.ParserVersion != ocrParserVersion || (row.OcrMode != "auto" && row.OcrMode != "force") || ocrPageCount(req.PageTexts) == 0 {
+		return false
+	}
+	attempted := 0
+	for _, page := range req.PageTexts {
+		if !slices.Contains([]string{"text", "ocr", "empty"}, page.ExtractionMethod) || ((page.ExtractionMethod == "empty") != (strings.TrimSpace(page.Text) == "")) {
+			return false
+		}
+		if page.ExtractionMethod != "text" {
+			attempted++
+		}
+		if row.OcrMode == "force" && page.ExtractionMethod == "text" {
+			return false
+		}
+	}
+	return attempted <= maxOCRPages
 }
 
 func knowledgeUpload(filename, content, encoded string) (knowledgeFile, error) {
@@ -76,7 +133,7 @@ func applyIndexResult(row *model.DocumentVersions, req *types.IndexCompleteReq) 
 		return errArgument
 	}
 	if req.Status == "failed" {
-		allowed := []string{"PDF_INVALID", "PDF_ENCRYPTED", "PDF_OCR_REQUIRED", "PDF_LIMIT_EXCEEDED", "PDF_PARSE_TIMEOUT", "INDEX_FAILED"}
+		allowed := []string{"PDF_INVALID", "PDF_ENCRYPTED", "PDF_OCR_REQUIRED", "PDF_LIMIT_EXCEEDED", "PDF_PARSE_TIMEOUT", "PDF_OCR_UNAVAILABLE", "PDF_OCR_FAILED", "PDF_OCR_EMPTY", "PDF_OCR_TIMEOUT", "PDF_OCR_PAGE_LIMIT", "INDEX_FAILED"}
 		if !slices.Contains(allowed, req.ErrorCode) || req.ChunkCount != 0 || len(req.PageTexts) != 0 || req.ParserVersion != "" {
 			return errArgument
 		}
@@ -85,7 +142,7 @@ func applyIndexResult(row *model.DocumentVersions, req *types.IndexCompleteReq) 
 	}
 	content, pages, parser := row.Content, "[]", ""
 	if req.Status == "ready" && row.SourceFormat == "pdf" {
-		if req.ParserVersion != pdfParserVersion || !validPDFPages(req.PageTexts) {
+		if !validPDFProvenance(row, req) || !validPDFPages(req.PageTexts) {
 			return errArgument
 		}
 		texts := make([]string, 0, len(req.PageTexts))
@@ -110,6 +167,15 @@ func applyIndexResult(row *model.DocumentVersions, req *types.IndexCompleteReq) 
 	row.Content, row.PageTexts, row.ParserVersion = content, pages, parser
 	row.IndexStatus, row.ChunkCount, row.ErrorCode = req.Status, req.ChunkCount, req.ErrorCode
 	return nil
+}
+
+func evidenceExtractionMethod(version model.ActiveKnowledgeVersion, pageNumber int64) string {
+	for _, page := range pageTexts(version.PageTexts) {
+		if page.PageNumber == pageNumber && page.ExtractionMethod == "ocr" {
+			return "ocr"
+		}
+	}
+	return "text"
 }
 
 func excerptOnPage(version model.ActiveKnowledgeVersion, candidate types.EvidenceCandidate) bool {

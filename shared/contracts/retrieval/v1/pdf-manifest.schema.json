@@ -4,6 +4,17 @@
     "PDFPage": {
       "additionalProperties": false,
       "properties": {
+        "extraction_method": {
+          "default": "",
+          "enum": [
+            "",
+            "text",
+            "ocr",
+            "empty"
+          ],
+          "title": "Extraction Method",
+          "type": "string"
+        },
         "page_number": {
           "maximum": 50,
           "minimum": 1,
@@ -36,7 +47,10 @@
       "type": "array"
     },
     "parser_version": {
-      "pattern": "^pypdf-6\\.21\\.4-text-v1$",
+      "enum": [
+        "pypdf-6.21.4-text-v1",
+        "pypdf-6.21.4-tesseract-5.5.0-ocr-v1"
+      ],
       "title": "Parser Version",
       "type": "string"
     }

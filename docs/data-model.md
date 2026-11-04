@@ -226,3 +226,7 @@ M1 建立生成器、迁移脚本和模型表清单。迁移按依赖拆为 iden
 所有业务表生成 go-zero 基础模型，并在各表 custom model 扩展本文的锁查询和条件更新。新增跨表事务由 owning logic 组织，禁止在表模型中协调其他表写操作。
 
 必须覆盖的数据库集成案例：跨租户外键拒绝、同会话并发发起、重复 action、并发确认/取消、回执提交后响应丢失、后续步骤失败回滚、旧文档索引回调乱序、旧 lease_generation 被拒。测试只使用隔离 schema/可丢弃数据库。
+
+## M7.3 OCR 版本和引用来源
+
+Go 迁移 2026110406_knowledge_ocr.sql 为 document_versions 增加 ocr_mode（默认 off，枚举及非 PDF 约束），为 run_evidence 增加 extraction_method（旧行为默认空）。逐页方法保存于既有 page_texts JSONB，摘要查询只统计 OCR 页数，不加载原文件。确认激活在业务事务中记录 knowledge.ocr_review 审计，绑定版本、当前 actor 和租户；不保存识别置信度或原生 stderr。Python 沿用 knowledge_manifests.page_texts/parser_version 及 knowledge_jobs 的代次/错误持久化，不访问 Go 表。模式随版本不可变，变更需另建版本；不执行 Down 清理审核或引用来源。

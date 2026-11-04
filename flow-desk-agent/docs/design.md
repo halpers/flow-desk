@@ -149,3 +149,7 @@ M6.2 已实现官方 SDK stdio MCP 适配，复用相同工具定义和 Go actio
 - 评测：mock 工具固定功能正确性；真实模型分开评估选择工具、事实依据、RAG 与完成率。
 
 M1 创建 pyproject、锁文件、格式/静态检查和 Pytest 配置；M2 使用假模型先跑通 read-only；M3 引入真实模型/RAG；M4 验证写操作与崩溃恢复；M5 固定版本执行质量报告。细则见 [质量与交付](../../docs/quality-and-roadmap.md)。
+
+## M7.3 已实现的本地 OCR
+
+初期文本层限制由 [OCR 增量](../../docs/m7-ocr.md)扩展：off 保留旧行为，auto 识别无文字页，force 忽略原文本层并识别全页。固定 Linux Poppler/Tesseract/中英文语言包由 system-packages.lock 与基础镜像 digest 管理。45 秒受限子进程在私有临时目录中工作，最多 OCR 10 页；超时/取消终止进程组，输出仅含有界文本和逐页来源。成功 manifest 和固定终止错误沿用索引任务 fencing，回调丢失重用持久结果。新 OCR parser 与旧文本 parser 并存；这不是云 OCR 或手写/表格准确率承诺。

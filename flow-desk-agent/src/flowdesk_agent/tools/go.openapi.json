@@ -633,6 +633,9 @@
                         "excerpt": {
                           "type": "string"
                         },
+                        "extraction_method": {
+                          "type": "string"
+                        },
                         "id": {
                           "type": "string"
                         },
@@ -1342,6 +1345,9 @@
                   "expected_version"
                 ],
                 "properties": {
+                  "confirm_ocr": {
+                    "type": "boolean"
+                  },
                   "expected_version": {
                     "type": "integer"
                   },
@@ -1443,6 +1449,8 @@
                           "items": {
                             "type": "object",
                             "required": [
+                              "ocr_mode",
+                              "ocr_page_count",
                               "source_format",
                               "source_size",
                               "page_count",
@@ -1476,6 +1484,12 @@
                               },
                               "index_status": {
                                 "type": "string"
+                              },
+                              "ocr_mode": {
+                                "type": "string"
+                              },
+                              "ocr_page_count": {
+                                "type": "integer"
                               },
                               "page_count": {
                                 "type": "integer"
@@ -1541,6 +1555,9 @@
                   },
                   "filename": {
                     "type": "string"
+                  },
+                  "ocr_mode": {
+                    "type": "string"
                   }
                 }
               }
@@ -1562,6 +1579,8 @@
                     "data": {
                       "type": "object",
                       "required": [
+                        "ocr_mode",
+                        "ocr_page_count",
                         "source_format",
                         "source_size",
                         "page_count",
@@ -1595,6 +1614,12 @@
                         },
                         "index_status": {
                           "type": "string"
+                        },
+                        "ocr_mode": {
+                          "type": "string"
+                        },
+                        "ocr_page_count": {
+                          "type": "integer"
                         },
                         "page_count": {
                           "type": "integer"
@@ -1671,6 +1696,9 @@
                               "text"
                             ],
                             "properties": {
+                              "extraction_method": {
+                                "type": "string"
+                              },
                               "page_number": {
                                 "type": "integer"
                               },
@@ -2131,6 +2159,9 @@
                   "filename": {
                     "type": "string"
                   },
+                  "ocr_mode": {
+                    "type": "string"
+                  },
                   "title": {
                     "type": "string"
                   }
@@ -2154,6 +2185,8 @@
                     "data": {
                       "type": "object",
                       "required": [
+                        "ocr_mode",
+                        "ocr_page_count",
                         "source_format",
                         "source_size",
                         "page_count",
@@ -2187,6 +2220,12 @@
                         },
                         "index_status": {
                           "type": "string"
+                        },
+                        "ocr_mode": {
+                          "type": "string"
+                        },
+                        "ocr_page_count": {
+                          "type": "integer"
                         },
                         "page_count": {
                           "type": "integer"
@@ -5540,6 +5579,9 @@
                         "text"
                       ],
                       "properties": {
+                        "extraction_method": {
+                          "type": "string"
+                        },
                         "page_number": {
                           "type": "integer"
                         },
@@ -5575,6 +5617,8 @@
                     "data": {
                       "type": "object",
                       "required": [
+                        "ocr_mode",
+                        "ocr_page_count",
                         "source_format",
                         "source_size",
                         "page_count",
@@ -5608,6 +5652,12 @@
                         },
                         "index_status": {
                           "type": "string"
+                        },
+                        "ocr_mode": {
+                          "type": "string"
+                        },
+                        "ocr_page_count": {
+                          "type": "integer"
                         },
                         "page_count": {
                           "type": "integer"
@@ -5670,6 +5720,7 @@
                     "data": {
                       "type": "object",
                       "required": [
+                        "ocr_mode",
                         "source_format",
                         "source_base64",
                         "tenant_id",
@@ -5690,6 +5741,9 @@
                           "type": "string"
                         },
                         "knowledge_base_id": {
+                          "type": "string"
+                        },
+                        "ocr_mode": {
                           "type": "string"
                         },
                         "source_base64": {
@@ -6235,6 +6289,9 @@
                                 "type": "string"
                               },
                               "excerpt": {
+                                "type": "string"
+                              },
+                              "extraction_method": {
                                 "type": "string"
                               },
                               "id": {

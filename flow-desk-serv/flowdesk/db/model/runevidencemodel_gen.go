@@ -38,16 +38,17 @@ type (
 	}
 
 	RunEvidence struct {
-		Id          string    `db:"id"`
-		TenantId    string    `db:"tenant_id"`
-		RunId       string    `db:"run_id"`
-		VersionId   string    `db:"version_id"`
-		ChunkId     string    `db:"chunk_id"`
-		Title       string    `db:"title"`
-		Excerpt     string    `db:"excerpt"`
-		ContentHash string    `db:"content_hash"`
-		CreatedAt   time.Time `db:"created_at"`
-		PageNumber  int64     `db:"page_number"`
+		Id               string    `db:"id"`
+		TenantId         string    `db:"tenant_id"`
+		RunId            string    `db:"run_id"`
+		VersionId        string    `db:"version_id"`
+		ChunkId          string    `db:"chunk_id"`
+		Title            string    `db:"title"`
+		Excerpt          string    `db:"excerpt"`
+		ContentHash      string    `db:"content_hash"`
+		CreatedAt        time.Time `db:"created_at"`
+		PageNumber       int64     `db:"page_number"`
+		ExtractionMethod string    `db:"extraction_method"`
 	}
 )
 
@@ -93,14 +94,14 @@ func (m *defaultRunEvidenceModel) FindOneByTenantIdRunIdChunkId(ctx context.Cont
 }
 
 func (m *defaultRunEvidenceModel) Insert(ctx context.Context, data *RunEvidence) (sql.Result, error) {
-	query := fmt.Sprintf("insert into %s (%s) values ($1, $2, $3, $4, $5, $6, $7, $8, $9)", m.table, runEvidenceRowsExpectAutoSet)
-	ret, err := m.conn.ExecCtx(ctx, query, data.Id, data.TenantId, data.RunId, data.VersionId, data.ChunkId, data.Title, data.Excerpt, data.ContentHash, data.PageNumber)
+	query := fmt.Sprintf("insert into %s (%s) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)", m.table, runEvidenceRowsExpectAutoSet)
+	ret, err := m.conn.ExecCtx(ctx, query, data.Id, data.TenantId, data.RunId, data.VersionId, data.ChunkId, data.Title, data.Excerpt, data.ContentHash, data.PageNumber, data.ExtractionMethod)
 	return ret, err
 }
 
 func (m *defaultRunEvidenceModel) Update(ctx context.Context, newData *RunEvidence) error {
 	query := fmt.Sprintf("update %s set %s where id = $1", m.table, runEvidenceRowsWithPlaceHolder)
-	_, err := m.conn.ExecCtx(ctx, query, newData.Id, newData.TenantId, newData.RunId, newData.VersionId, newData.ChunkId, newData.Title, newData.Excerpt, newData.ContentHash, newData.PageNumber)
+	_, err := m.conn.ExecCtx(ctx, query, newData.Id, newData.TenantId, newData.RunId, newData.VersionId, newData.ChunkId, newData.Title, newData.Excerpt, newData.ContentHash, newData.PageNumber, newData.ExtractionMethod)
 	return err
 }
 

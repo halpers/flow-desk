@@ -64,10 +64,10 @@ func versionData(row *model.DocumentVersions) types.VersionData {
 	if row.SourceFormat != "pdf" {
 		size = len(row.Content)
 	}
-	return types.VersionData{SourceFormat: row.SourceFormat, SourceSize: int64(size), PageCount: int64(len(pages)), TextPageCount: textPages, Id: row.Id, DocumentId: row.DocumentId, Filename: row.Filename, ContentHash: row.ContentHash, IndexStatus: row.IndexStatus, ChunkCount: row.ChunkCount, ErrorCode: row.ErrorCode}
+	return types.VersionData{OcrMode: row.OcrMode, OcrPageCount: ocrPageCount(pages), SourceFormat: row.SourceFormat, SourceSize: int64(size), PageCount: int64(len(pages)), TextPageCount: textPages, Id: row.Id, DocumentId: row.DocumentId, Filename: row.Filename, ContentHash: row.ContentHash, IndexStatus: row.IndexStatus, ChunkCount: row.ChunkCount, ErrorCode: row.ErrorCode}
 }
 func evidenceData(row *model.RunEvidence) types.EvidenceData {
-	return types.EvidenceData{PageNumber: row.PageNumber, Id: row.Id, VersionId: row.VersionId, ChunkId: row.ChunkId, Title: row.Title, Excerpt: row.Excerpt}
+	return types.EvidenceData{ExtractionMethod: row.ExtractionMethod, PageNumber: row.PageNumber, Id: row.Id, VersionId: row.VersionId, ChunkId: row.ChunkId, Title: row.Title, Excerpt: row.Excerpt}
 }
 func readableBase(row *model.KnowledgeBases, role string) bool {
 	var roles []string
@@ -199,7 +199,7 @@ func insertDocumentVersionTx(ctx context.Context, s *svc.ServiceContext, tx sqlx
 	if file.format == "pdf" {
 		hash = HashToken(string(file.raw))
 	}
-	row := &model.DocumentVersions{SourceFormat: file.format, SourceBytes: file.raw, PageTexts: "[]", Id: uuid.NewString(), TenantId: actor.TenantId, DocumentId: doc.Id, JobId: uuid.NewString(), Filename: filename, Content: file.content, ContentHash: hash, IndexStatus: "pending"}
+	row := &model.DocumentVersions{OcrMode: file.ocrMode, SourceFormat: file.format, SourceBytes: file.raw, PageTexts: "[]", Id: uuid.NewString(), TenantId: actor.TenantId, DocumentId: doc.Id, JobId: uuid.NewString(), Filename: filename, Content: file.content, ContentHash: hash, IndexStatus: "pending"}
 	if err := s.DocumentVersionsModel.InsertTx(ctx, tx, row); err != nil {
 		return types.VersionData{}, err
 	}
@@ -215,10 +215,11 @@ func UploadDocument(ctx context.Context, s *svc.ServiceContext, req *types.Uploa
 		return types.VersionData{}, err
 	}
 	req.Title = strings.TrimSpace(req.Title)
-	file, err := knowledgeUpload(req.Filename, req.Content, req.ContentBase64)
+	file, err := knowledgeUploadWithOCR(req.Filename, req.Content, req.ContentBase64, req.OcrMode)
 	if err != nil {
 		return types.VersionData{}, err
 	}
+	req.OcrMode = file.ocrMode
 	if file.format == "pdf" {
 		req.ContentBase64 = base64.StdEncoding.EncodeToString(file.raw)
 	}
@@ -248,10 +249,11 @@ func UploadDocumentVersion(ctx context.Context, s *svc.ServiceContext, req *type
 	if err != nil {
 		return types.VersionData{}, err
 	}
-	file, err := knowledgeUpload(req.Filename, req.Content, req.ContentBase64)
+	file, err := knowledgeUploadWithOCR(req.Filename, req.Content, req.ContentBase64, req.OcrMode)
 	if err != nil {
 		return types.VersionData{}, err
 	}
+	req.OcrMode = file.ocrMode
 	if file.format == "pdf" {
 		req.ContentBase64 = base64.StdEncoding.EncodeToString(file.raw)
 	}
@@ -285,11 +287,11 @@ func ListDocumentVersions(ctx context.Context, s *svc.ServiceContext, documentID
 	for _, row := range rows {
 		result.Items = append(result.Items, types.VersionData{Id: row.Id, DocumentId: row.DocumentId, Filename: row.Filename,
 			ContentHash: row.ContentHash, IndexStatus: row.IndexStatus, ChunkCount: row.ChunkCount, ErrorCode: row.ErrorCode,
-			SourceFormat: row.SourceFormat, SourceSize: row.SourceSize, PageCount: row.PageCount, TextPageCount: row.TextPageCount})
+			OcrMode: row.OcrMode, OcrPageCount: row.OcrPageCount, SourceFormat: row.SourceFormat, SourceSize: row.SourceSize, PageCount: row.PageCount, TextPageCount: row.TextPageCount})
 	}
 	return result, nil
 }
-func changeDocument(ctx context.Context, s *svc.ServiceContext, id, versionID string, expected int64) (types.DocumentData, error) {
+func changeDocument(ctx context.Context, s *svc.ServiceContext, id, versionID string, expected int64, confirmOCR bool) (types.DocumentData, error) {
 	var result types.DocumentData
 	actor, err := knowledgeAdmin(ctx)
 	if err != nil {
@@ -318,6 +320,14 @@ func changeDocument(ctx context.Context, s *svc.ServiceContext, id, versionID st
 			if v.IndexStatus != "ready" {
 				return failure(409, "INDEX_NOT_READY", "索引尚未就绪")
 			}
+			if ocrPageCount(pageTexts(v.PageTexts)) > 0 {
+				if !confirmOCR {
+					return failure(409, "OCR_REVIEW_REQUIRED", "请核对 OCR 提取文本并确认后再激活")
+				}
+				if err = s.AuditEventsModel.InsertTx(ctx, tx, &model.AuditEvents{Id: orderedID(), TenantId: actor.TenantId, ActorUserId: actor.Id, Operation: "knowledge.ocr_review", ObjectType: "document_version", ObjectId: v.Id, Source: "manual", Summary: "OCR text reviewed before activation"}); err != nil {
+					return err
+				}
+			}
 			status = "active"
 		}
 		if err = s.DocumentsModel.UpdateActiveVersionTx(ctx, tx, actor.TenantId, id, expected, versionID, status); err != nil {
@@ -336,10 +346,10 @@ func ActivateDocument(ctx context.Context, s *svc.ServiceContext, req *types.Act
 	if !validID(req.VersionId) {
 		return types.DocumentData{}, errArgument
 	}
-	return changeDocument(ctx, s, req.DocumentId, req.VersionId, req.ExpectedVersion)
+	return changeDocument(ctx, s, req.DocumentId, req.VersionId, req.ExpectedVersion, req.ConfirmOcr)
 }
 func WithdrawDocument(ctx context.Context, s *svc.ServiceContext, req *types.WithdrawDocumentReq) (types.DocumentData, error) {
-	return changeDocument(ctx, s, req.DocumentId, "", req.ExpectedVersion)
+	return changeDocument(ctx, s, req.DocumentId, "", req.ExpectedVersion, false)
 }
 func GetIndexSource(ctx context.Context, s *svc.ServiceContext, req *types.IndexSourceReq) (types.IndexSourceData, error) {
 	var result types.IndexSourceData
@@ -357,7 +367,7 @@ func GetIndexSource(ctx context.Context, s *svc.ServiceContext, req *types.Index
 	if err != nil {
 		return result, err
 	}
-	return types.IndexSourceData{SourceFormat: v.SourceFormat, SourceBase64: base64.StdEncoding.EncodeToString(v.SourceBytes), TenantId: v.TenantId, KnowledgeBaseId: d.KnowledgeBaseId, DocumentId: d.Id, VersionId: v.Id, Content: v.Content, ContentHash: v.ContentHash}, nil
+	return types.IndexSourceData{OcrMode: v.OcrMode, SourceFormat: v.SourceFormat, SourceBase64: base64.StdEncoding.EncodeToString(v.SourceBytes), TenantId: v.TenantId, KnowledgeBaseId: d.KnowledgeBaseId, DocumentId: d.Id, VersionId: v.Id, Content: v.Content, ContentHash: v.ContentHash}, nil
 }
 func CompleteIndex(ctx context.Context, s *svc.ServiceContext, req *types.IndexCompleteReq) (types.VersionData, error) {
 	var result types.VersionData
@@ -456,7 +466,7 @@ func ValidateEvidence(ctx context.Context, s *svc.ServiceContext, req *types.Evi
 			id := uuid.NewSHA1(uuid.MustParse(run.Id), []byte(candidate.ChunkId)).String()
 			row, err := s.RunEvidenceModel.FindOneForRunTx(ctx, tx, run.TenantId, run.Id, id)
 			if errors.Is(err, model.ErrNotFound) {
-				row = &model.RunEvidence{PageNumber: candidate.PageNumber, Id: id, TenantId: run.TenantId, RunId: run.Id, VersionId: v.VersionId, ChunkId: candidate.ChunkId, Title: v.Title, Excerpt: candidate.Excerpt, ContentHash: candidate.ContentHash}
+				row = &model.RunEvidence{ExtractionMethod: evidenceExtractionMethod(v, candidate.PageNumber), PageNumber: candidate.PageNumber, Id: id, TenantId: run.TenantId, RunId: run.Id, VersionId: v.VersionId, ChunkId: candidate.ChunkId, Title: v.Title, Excerpt: candidate.Excerpt, ContentHash: candidate.ContentHash}
 				err = s.RunEvidenceModel.InsertTx(ctx, tx, row)
 			} else if err == nil && (row.VersionId != candidate.VersionId || row.ContentHash != candidate.ContentHash || row.PageNumber != candidate.PageNumber) {
 				return errForbidden

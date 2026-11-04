@@ -9,6 +9,7 @@ type ActionReq struct {
 }
 
 type ActivateDocumentReq struct {
+	ConfirmOcr      bool   `json:"confirm_ocr,optional"`
 	DocumentId      string `path:"document_id"`
 	VersionId       string `json:"version_id"`
 	ExpectedVersion int64  `json:"expected_version"`
@@ -210,12 +211,13 @@ type EvidenceCandidate struct {
 }
 
 type EvidenceData struct {
-	PageNumber int64  `json:"page_number"`
-	Id         string `json:"id"`
-	VersionId  string `json:"version_id"`
-	ChunkId    string `json:"chunk_id"`
-	Title      string `json:"title"`
-	Excerpt    string `json:"excerpt"`
+	ExtractionMethod string `json:"extraction_method,optional"`
+	PageNumber       int64  `json:"page_number"`
+	Id               string `json:"id"`
+	VersionId        string `json:"version_id"`
+	ChunkId          string `json:"chunk_id"`
+	Title            string `json:"title"`
+	Excerpt          string `json:"excerpt"`
 }
 
 type EvidencePage struct {
@@ -263,6 +265,7 @@ type IndexCompleteReq struct {
 }
 
 type IndexSourceData struct {
+	OcrMode         string `json:"ocr_mode"`
 	SourceFormat    string `json:"source_format"`
 	SourceBase64    string `json:"source_base64"`
 	TenantId        string `json:"tenant_id"`
@@ -325,8 +328,9 @@ type KnowledgeBasesResp struct {
 }
 
 type KnowledgePageText struct {
-	PageNumber int64  `json:"page_number"`
-	Text       string `json:"text"`
+	ExtractionMethod string `json:"extraction_method,optional"`
+	PageNumber       int64  `json:"page_number"`
+	Text             string `json:"text"`
 }
 
 type KnowledgeScope struct {
@@ -795,6 +799,7 @@ type ToolResult struct {
 }
 
 type UploadDocumentReq struct {
+	OcrMode         string `json:"ocr_mode,optional"`
 	KnowledgeBaseId string `path:"knowledge_base_id"`
 	Title           string `json:"title"`
 	Filename        string `json:"filename"`
@@ -804,6 +809,7 @@ type UploadDocumentReq struct {
 }
 
 type UploadVersionReq struct {
+	OcrMode        string `json:"ocr_mode,optional"`
 	DocumentId     string `path:"document_id"`
 	Filename       string `json:"filename"`
 	Content        string `json:"content,optional"`
@@ -828,6 +834,8 @@ type UserResp struct {
 }
 
 type VersionData struct {
+	OcrMode       string `json:"ocr_mode"`
+	OcrPageCount  int64  `json:"ocr_page_count"`
 	SourceFormat  string `json:"source_format"`
 	SourceSize    int64  `json:"source_size"`
 	PageCount     int64  `json:"page_count"`

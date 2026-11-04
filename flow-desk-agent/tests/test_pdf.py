@@ -3,6 +3,7 @@ import base64
 import hashlib
 import io
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -89,16 +90,41 @@ def test_parser_deadline_kills_child_and_excludes_service_credentials(monkeypatc
 
 
 @pytest.mark.parametrize(
-    "filename,error_code", [("policy.pdf", ""), ("scan.pdf", "PDF_OCR_REQUIRED")]
+    "filename,error_code,ocr_mode",
+    [
+        ("policy.pdf", "", "off"),
+        ("scan.pdf", "PDF_OCR_REQUIRED", "off"),
+        pytest.param(
+            "ocr-policy.pdf",
+            "",
+            "auto",
+            marks=pytest.mark.skipif(
+                os.environ.get("FLOWDESK_NATIVE_OCR_TESTS") != "1",
+                reason="Pinned native OCR image",
+            ),
+        ),
+        ("scan.pdf", "PDF_OCR_PAGE_LIMIT", "force_limit"),
+    ],
 )
 def test_pdf_index_callback_crash_replays_manifest_or_durable_error(
-    monkeypatch, filename, error_code
+    monkeypatch, filename, error_code, ocr_mode
 ):
     async def scenario():
         async with isolated_pool() as pool:
             tenant, version, job_id = uuid4(), uuid4(), uuid4()
             raw = (FIXTURES / filename).read_bytes()
+            if ocr_mode == "force_limit":
+                writer = PdfWriter()
+                for _ in range(11):
+                    writer.add_blank_page(width=200, height=200)
+                output = io.BytesIO()
+                writer.write(output)
+                raw = output.getvalue()
+                ocr_selection = "force"
+            else:
+                ocr_selection = ocr_mode
             source = {
+                "ocr_mode": ocr_selection,
                 "source_format": "pdf",
                 "content": "",
                 "source_base64": base64.b64encode(raw).decode(),
@@ -157,8 +183,12 @@ def test_pdf_index_callback_crash_replays_manifest_or_durable_error(
                 if error_code:
                     assert not rows and callbacks[1]["status"] == "failed"
                 else:
-                    assert [row["page_number"] for row in rows] == [1, 2, 3]
+                    assert [row["page_number"] for row in rows] == (
+                        [1, 2] if filename == "ocr-policy.pdf" else [1, 2, 3]
+                    )
                     assert callbacks[1]["page_texts"][1]["page_number"] == 2
+                    if filename == "ocr-policy.pdf":
+                        assert callbacks[1]["page_texts"][1]["extraction_method"] == "ocr"
                     retriever = Retriever(pool, None, profile="baseline")
                     chosen = await retriever.rank("三十六个月", tenant, [version], mode="lexical")
                     assert chosen[0]["page_number"] == 2

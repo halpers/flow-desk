@@ -329,3 +329,9 @@ POST `/api/v1/runs/:run_id/retry` 仅原所有者，要求 Idempotency-Key、exp
 ## 9. 契约验收
 
 M1 建立每个 API/事件/工具的机器 schema 和合成样例；生成前端类型与内部客户端；JSON Schema 校验正/反向案例。M2 起加入跨服务兼容测试、幂等重投、越权、乱序/重复事件及旧 lease_generation 测试。所有枚举由契约生成，禁止三端手写不同版本。
+
+## M7.3 OCR 增量契约
+
+PDF 两个上传端点增加可选 ocr_mode，缺省 off，仅允许 off/auto/force；非 PDF 只允许 off。模式参与幂等请求摘要并存入不可变版本，内部 source 返回该模式。版本响应增加 ocr_mode/ocr_page_count；分页文本可选 extraction_method，旧文本页可以不包含此字段。新 OCR manifest 必须有 text/ocr/empty 来源、连续物理页号和至少一个非空 OCR 页；原生 OCR 最多 10 页，旧文本 parser 的回调不能声称 OCR。Go 检查模式、parser、来源、页数和文本总量，冻结后的结果只能一致重放。
+
+包含 OCR 页的版本激活必须增加 confirm_ocr=true；缺省 false，未确认返回 OCR_REVIEW_REQUIRED（409）。当前管理员授权、expected_version、审核审计及激活同事务处理。EvidenceData 的可选 extraction_method 由 Go 逐页派生并保存；模型候选不提供此字段，旧证据缺省为空。撤回后的引用沿用 EVIDENCE_REVOKED（409）等既有权限错误。固定识别错误、预算和手动复核流程见[扫描 PDF OCR](m7-ocr.md)。本阶段没有新增 SSE 类型。

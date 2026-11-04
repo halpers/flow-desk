@@ -48,6 +48,8 @@ type ActiveKnowledgeVersion struct {
 
 // Listing metadata must not load every original PDF into API memory.
 type DocumentVersionSummary struct {
+	OcrMode       string `db:"ocr_mode"`
+	OcrPageCount  int64  `db:"ocr_page_count"`
 	Id            string `db:"id"`
 	DocumentId    string `db:"document_id"`
 	Filename      string `db:"filename"`
@@ -62,6 +64,9 @@ type DocumentVersionSummary struct {
 }
 
 func (m *customDocumentVersionsModel) InsertTx(ctx context.Context, tx sqlx.Session, row *DocumentVersions) error {
+	if row.OcrMode == "" {
+		row.OcrMode = "off"
+	}
 	if row.SourceFormat == "" {
 		row.SourceFormat = "text"
 	}
@@ -89,10 +94,11 @@ func (m *customDocumentVersionsModel) UpdateIndexResultTx(ctx context.Context, t
 }
 func (m *customDocumentVersionsModel) ListByDocument(ctx context.Context, tenant, document string) ([]DocumentVersionSummary, error) {
 	rows := []DocumentVersionSummary{}
-	query := fmt.Sprintf(`select id,document_id,filename,content_hash,index_status,chunk_count,error_code,source_format,
+	query := fmt.Sprintf(`select id,document_id,filename,content_hash,index_status,chunk_count,error_code,source_format,ocr_mode,
     case when source_format='pdf' then octet_length(source_bytes) else octet_length(content) end as source_size,
     jsonb_array_length(page_texts) as page_count,
-    (select count(*) from jsonb_array_elements(page_texts) p where p->>'text' ~ '[^[:space:]]') as text_page_count
+    (select count(*) from jsonb_array_elements(page_texts) p where p->>'text' ~ '[^[:space:]]') as text_page_count,
+ (select count(*) from jsonb_array_elements(page_texts) p where p->>'extraction_method'='ocr') as ocr_page_count
     from %s where tenant_id=$1 and document_id=$2 order by created_at,id limit 101`, m.table)
 	err := m.conn.QueryRowsCtx(ctx, &rows, query, tenant, document)
 	return rows, err

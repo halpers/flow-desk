@@ -22,3 +22,5 @@ M7.1 增加 retrieval/v1/pdf-manifest.schema.json，来源为 Python PDFManifest
 M7.2 增加 Go operations.api 的列表/追踪/重试，Python AgentTraceData 的内部脱敏观测响应。生成到各自 OpenAPI 和浏览器类型；没有新增 SSE 事件，也没有把执行账本或检查点作为通用 JSON 导出。两个服务的观测字段需保持一致，真实 HTTP 验收验证 Go 严格解码 Python 返回值。
 
 M6.5 对 v1 追加两个工具名、相应严格参数和可选回执结果字段，既有事件仍可验证。新增工具名要求 Go/Python/Web 一同升级，旧消费者可能拒绝新枚举；原图版本继续保留，恢复不改写旧动作。回退旧镜像前需停止接收新任务并妥善完成 ticket-v2 等待任务，不能把旧版本能启动视为新动作也可恢复。
+
+M7.3 扩展 PDFManifest 到文本/OCR 两个固定解析版本，增加可选逐页 extraction_method；旧文本页可省略。Go .api 增加可选 ocr_mode/confirm_ocr、版本统计和证据来源，随后统一生成。业务证据来源只由 Go 从已冻结页派生，不能由模型候选提供；没有新增 SSE 事件。

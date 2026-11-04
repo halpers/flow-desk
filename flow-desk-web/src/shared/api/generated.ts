@@ -1186,6 +1186,7 @@ export interface operations {
                         data?: {
                             chunk_id: string;
                             excerpt: string;
+                            extraction_method?: string;
                             id: string;
                             page_number: number;
                             title: string;
@@ -1456,6 +1457,7 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
+                    confirm_ocr?: boolean;
                     expected_version: number;
                     version_id: string;
                 };
@@ -1510,6 +1512,8 @@ export interface operations {
                                 filename: string;
                                 id: string;
                                 index_status: string;
+                                ocr_mode: string;
+                                ocr_page_count: number;
                                 page_count: number;
                                 source_format: string;
                                 source_size: number;
@@ -1539,6 +1543,7 @@ export interface operations {
                     content?: string;
                     content_base64?: string;
                     filename: string;
+                    ocr_mode?: string;
                 };
             };
         };
@@ -1558,6 +1563,8 @@ export interface operations {
                             filename: string;
                             id: string;
                             index_status: string;
+                            ocr_mode: string;
+                            ocr_page_count: number;
                             page_count: number;
                             source_format: string;
                             source_size: number;
@@ -1590,6 +1597,7 @@ export interface operations {
                         code?: string;
                         data?: {
                             pages: {
+                                extraction_method?: string;
                                 page_number: number;
                                 text: string;
                             }[];
@@ -1792,6 +1800,7 @@ export interface operations {
                     content?: string;
                     content_base64?: string;
                     filename: string;
+                    ocr_mode?: string;
                     title: string;
                 };
             };
@@ -1812,6 +1821,8 @@ export interface operations {
                             filename: string;
                             id: string;
                             index_status: string;
+                            ocr_mode: string;
+                            ocr_page_count: number;
                             page_count: number;
                             source_format: string;
                             source_size: number;
@@ -3082,6 +3093,7 @@ export interface operations {
                     error_code?: string;
                     job_id: string;
                     page_texts?: {
+                        extraction_method?: string;
                         page_number: number;
                         text: string;
                     }[];
@@ -3106,6 +3118,8 @@ export interface operations {
                             filename: string;
                             id: string;
                             index_status: string;
+                            ocr_mode: string;
+                            ocr_page_count: number;
                             page_count: number;
                             source_format: string;
                             source_size: number;
@@ -3142,6 +3156,7 @@ export interface operations {
                             content_hash: string;
                             document_id: string;
                             knowledge_base_id: string;
+                            ocr_mode: string;
                             source_base64: string;
                             source_format: string;
                             tenant_id: string;
@@ -3378,6 +3393,7 @@ export interface operations {
                             items: {
                                 chunk_id: string;
                                 excerpt: string;
+                                extraction_method?: string;
                                 id: string;
                                 page_number: number;
                                 title: string;
