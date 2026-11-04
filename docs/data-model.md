@@ -174,7 +174,7 @@ topic 包含 run.execute、run.resume、run.cancel、knowledge.index。唯一 di
 
 | agent 表/集合 | 内容与约束 |
 | --- | --- |
-| execution_commands | dispatch_id 唯一、run_id、lease_generation、command、可信上下文、状态和时间；接收先落盘 |
+| execution_commands | dispatch_id 唯一、run_id、lease_generation、command、可信上下文、状态和时间；接收先落盘；M6.3 追加 traceparent，仅用于恢复 trace 父上下文，不参与命令 hash |
 | execution_owners | run_id 唯一、current_generation、worker_id、ownership_version；配合数据库执行锁 |
 | checkpoint tables | 由已锁定版本的 PostgreSQL checkpointer 管理；thread_id 固定 run:{UUID} |
 | callback_outbox | source_event_id 唯一、run_id、代次、稳定 payload/hash、顺序、重试和 ack |

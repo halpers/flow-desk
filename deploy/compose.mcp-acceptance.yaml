@@ -3,6 +3,9 @@ services:
   agent:
     environment:
       MODEL_PROVIDER: mock
+      MODEL_BASE_URL: ""
+      MODEL_NAME: ""
+      MODEL_API_KEY: ""
       EMBEDDING_BASE_URL: ""
       EMBEDDING_MODEL: ""
       EMBEDDING_API_KEY: ""

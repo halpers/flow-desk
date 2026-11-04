@@ -1,6 +1,6 @@
 # 部署说明
 
-根目录 [docker-compose.yaml](../docker-compose.yaml) 是统一运行配置，提供服务构建、PostgreSQL 角色初始化、健康检查、依赖顺序和数据库持久化。PowerShell 启动入口为 `scripts/start.ps1`，操作步骤见 [本地运行说明](../docs/runtime.md)。镜像自动发布和配置方法见 [CI/CD](ci-cd.md)。
+根目录 [docker-compose.yaml](../docker-compose.yaml) 是统一运行配置，提供服务构建、PostgreSQL 角色初始化、健康检查、依赖顺序和数据库持久化。PowerShell 启动入口为 `scripts/start.ps1`，操作步骤见 [本地运行说明](../docs/runtime.md)。镜像自动发布和配置方法见 [CI/CD](ci-cd.md)。固定版本发布/回滚、TLS override 及监控启动见 [M6.3 运维说明](../docs/m6-deployment-monitoring.md)，当前只完成本地验收，未部署服务器。
 
 ## 1. 本地拓扑
 
@@ -51,4 +51,4 @@ live 表示事件循环/服务进程存活；ready 表示数据库、迁移和�
 
 默认使用完整 Compose：`scripts/start.ps1` 构建并等待服务健康；`scripts/compose.ps1` 优先调用 Windows Docker，无该命令时转发到 WSL Docker。Go 与前端也可在宿主机开发，端口配置见运行说明。Go 生成脚本需要 psql/goose/goctl，可由项目专用开发容器提供。
 
-PowerShell 包装脚本请使用完整参数 `--detach`，避免 `-d` 被 PowerShell 当作公共参数解释。
+PowerShell 包装脚本原样转发 Compose 参数；示例统一使用完整参数 `--detach`。

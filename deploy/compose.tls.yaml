@@ -1,0 +1,14 @@
+services:
+  api:
+    environment:
+      COOKIE_SECURE: "true"
+      APP_MODE: pro
+      ALLOWED_ORIGINS: https://localhost:${TLS_HOST_PORT:-13443}
+  web:
+    healthcheck:
+      test: ["CMD", "wget", "--no-check-certificate", "-q", "-O", "-", "https://127.0.0.1/"]
+    ports:
+      - "127.0.0.1:${TLS_HOST_PORT:-13443}:443"
+    volumes:
+      - ./deploy/nginx-tls.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./runtime/tls:/etc/nginx/tls:ro

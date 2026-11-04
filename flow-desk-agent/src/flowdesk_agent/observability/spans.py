@@ -7,6 +7,8 @@ from uuid import uuid4
 
 from langgraph.errors import GraphInterrupt
 
+from flowdesk_agent.observability.telemetry import node_span
+
 logger = logging.getLogger(__name__)
 
 
@@ -19,7 +21,11 @@ class SpanRecorder:
             started = time.monotonic()
             status = "completed"
             try:
-                return await function(state)
+                with node_span(node_name, self.command) as span:
+                    try:
+                        return await function(state)
+                    finally:
+                        span.set_attribute("flowdesk.node", node_name)
             except GraphInterrupt:
                 status = "interrupted"
                 raise

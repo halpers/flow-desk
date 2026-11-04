@@ -10,6 +10,7 @@
 - 金额为精确十进制字符串，另给 ISO 货币码；不通过 JavaScript float 计算结算金额。
 - seq、version 为限定范围的非负安全整数，单次 run 事件上限 50,000，超过时受控失败并保留历史。
 - 请求头接受 `X-Request-ID`，服务端校验长度/字符并在缺失时生成；内部传递 W3C traceparent。
+- M6.3 内部执行接收可选 traceparent，仅接受合法 v00 上下文；随命令持久化，重放保留首值且不改变命令身份。traceparent 不是租户、服务身份或批准凭据。指标仅在 Go 容器 9101/metrics 和 Agent /metrics 提供，不经公开浏览器路由；部署及 metadata 白名单见[M6.3](m6-deployment-monitoring.md)。
 - 所有用户输入有长度、枚举、大小及数量限制。额外未知工具参数默认拒绝；HTTP API 的未知字段策略在机器契约中显式定义。
 - 成功保留真实 HTTP 语义：读取/修改 200，创建资源 201，接受异步任务 202；业务失败使用对应 4xx/5xx。
 

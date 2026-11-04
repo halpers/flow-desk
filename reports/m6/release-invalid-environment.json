@@ -1,0 +1,40 @@
+{
+  "status": "invalid harness configuration; superseded by final acceptance",
+  "window_start": "2026-11-03T10:16:08.644207+00:00",
+  "window_end": "2026-11-03T10:19:18.892529+00:00",
+  "revision": "474bc6f4c88eb192ab9c1f2a3bd13a936fd5cae0",
+  "error_code": "MODEL_ATTEMPTS_EXHAUSTED",
+  "cause": "Windows subprocess environment was not forwarded by WSL to Docker Compose; actual provider configuration remained active",
+  "fix": "Explicit synthetic Compose override plus container mock/key-presence assertions before tasks",
+  "cost": "unknown",
+  "model_attempts": [
+    {
+      "run_id": "75ed8ba1-f1f5-4131-9587-ab281961cd4e",
+      "status": "failed",
+      "error_code": "MODEL_UNAVAILABLE",
+      "input_tokens": null,
+      "output_tokens": null,
+      "cost_status": "unknown",
+      "duration_ms": 35213
+    },
+    {
+      "run_id": "75ed8ba1-f1f5-4131-9587-ab281961cd4e",
+      "status": "failed",
+      "error_code": "MODEL_UNAVAILABLE",
+      "input_tokens": null,
+      "output_tokens": null,
+      "cost_status": "unknown",
+      "duration_ms": 172
+    },
+    {
+      "run_id": "75ed8ba1-f1f5-4131-9587-ab281961cd4e",
+      "status": "failed",
+      "error_code": "MODEL_UNAVAILABLE",
+      "input_tokens": null,
+      "output_tokens": null,
+      "cost_status": "unknown",
+      "duration_ms": 91
+    }
+  ],
+  "embedding_attempts": []
+}

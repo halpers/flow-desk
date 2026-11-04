@@ -66,3 +66,7 @@ docker compose ps --all
 Windows/WSL 可将 `docker compose` 替换为 `.\scripts\compose.ps1`。`migrate` 使用拉取的 API 镜像，并在 Agent/API 启动前运行。使用发布镜像时采用 `--no-build`；`scripts/start.ps1` 面向本地源码构建。
 
 当前 CD 交付到镜像仓库。尚未配置目标服务器、SSH 凭据或自动上线作业；目标机执行上述拉取和更新命令。应用镜像回滚需要确认数据库迁移兼容，不自动回滚数据库 schema。
+
+M6.3 新增完整 SHA 的 `scripts/release.py`，按迁移/服务 readiness gate 更新并保留成功版本，支持显式应用回滚；TLS、OTel、Prometheus/Grafana/Jaeger override 和本地验收见[部署与监控](../docs/m6-deployment-monitoring.md)。CI 同时验证 Compose/TLS 配置、Prometheus 规则及 Collector 配置；当前不会自动连接服务器。
+
+镜像只构建一次并加载到 runner，再依次推送同一镜像的 GHCR/ACR 标签。每个标签推送最多三次、每次最多十分钟，失败明确标记所在仓库和标签；全部成功才生成发布摘要。这样单个仓库暂时超时不会立即丢失整轮构建结果。

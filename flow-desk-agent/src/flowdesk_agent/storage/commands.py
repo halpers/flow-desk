@@ -16,15 +16,16 @@ class CommandStore:
     def __init__(self, pool: AsyncConnectionPool):
         self.pool = pool
 
-    async def accept(self, command: ExecutionCommand):
+    async def accept(self, command: ExecutionCommand, traceparent: str = ""):
         body = command.model_dump(mode="json")
         digest = hashlib.sha256(json.dumps(body, sort_keys=True).encode()).hexdigest()
         async with self.pool.connection() as conn, conn.transaction():
             await conn.execute(
                 "INSERT INTO "
-                "execution_commands(dispatch_id,run_id,lease_generation,command,request_hash,body)"
+                "execution_commands(dispatch_id,run_id,lease_generation,command,request_hash,body,"
+                "traceparent)"
                 " "
-                "VALUES (%s,%s,%s,%s,%s,%s) ON CONFLICT DO NOTHING",
+                "VALUES (%s,%s,%s,%s,%s,%s,%s) ON CONFLICT DO NOTHING",
                 (
                     command.dispatch_id,
                     command.run_id,
@@ -32,6 +33,7 @@ class CommandStore:
                     command.command,
                     digest,
                     Jsonb(body),
+                    traceparent,
                 ),
             )
             row = await (

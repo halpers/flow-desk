@@ -1,0 +1,45 @@
+{
+  "started_at": "2026-11-04T01:32:36.844044+00:00",
+  "scope": "local published images",
+  "remote_deployment": false,
+  "paid_model_calls": false,
+  "steps": [
+    {
+      "step": "baseline",
+      "revision": "474bc6f4c88eb192ab9c1f2a3bd13a936fd5cae0",
+      "images": {
+        "api": "ghcr.io/halpers/flow-desk-api:sha-474bc6f4c88eb192ab9c1f2a3bd13a936fd5cae0",
+        "agent": "ghcr.io/halpers/flow-desk-agent:sha-474bc6f4c88eb192ab9c1f2a3bd13a936fd5cae0",
+        "web": "ghcr.io/halpers/flow-desk-web:sha-474bc6f4c88eb192ab9c1f2a3bd13a936fd5cae0"
+      },
+      "verified_api_image": "ghcr.io/halpers/flow-desk-api:sha-474bc6f4c88eb192ab9c1f2a3bd13a936fd5cae0",
+      "run_id": "d70b6e20-7af9-4c81-895a-d8a51646e436",
+      "task_status": "succeeded"
+    },
+    {
+      "step": "upgrade",
+      "revision": "d015a8e06c207601a7858ef68291aa4e9b50346b",
+      "images": {
+        "api": "ghcr.io/halpers/flow-desk-api:sha-d015a8e06c207601a7858ef68291aa4e9b50346b",
+        "agent": "ghcr.io/halpers/flow-desk-agent:sha-d015a8e06c207601a7858ef68291aa4e9b50346b",
+        "web": "ghcr.io/halpers/flow-desk-web:sha-d015a8e06c207601a7858ef68291aa4e9b50346b"
+      },
+      "verified_api_image": "ghcr.io/halpers/flow-desk-api:sha-d015a8e06c207601a7858ef68291aa4e9b50346b",
+      "run_id": "ae91a95a-018a-4472-8343-b728be5b42a9",
+      "task_status": "succeeded"
+    },
+    {
+      "step": "rollback",
+      "revision": "474bc6f4c88eb192ab9c1f2a3bd13a936fd5cae0",
+      "images": {
+        "api": "ghcr.io/halpers/flow-desk-api:sha-474bc6f4c88eb192ab9c1f2a3bd13a936fd5cae0",
+        "agent": "ghcr.io/halpers/flow-desk-agent:sha-474bc6f4c88eb192ab9c1f2a3bd13a936fd5cae0",
+        "web": "ghcr.io/halpers/flow-desk-web:sha-474bc6f4c88eb192ab9c1f2a3bd13a936fd5cae0"
+      },
+      "verified_api_image": "ghcr.io/halpers/flow-desk-api:sha-474bc6f4c88eb192ab9c1f2a3bd13a936fd5cae0",
+      "run_id": "1061e729-98f7-430e-a352-37a815348fb1",
+      "task_status": "succeeded"
+    }
+  ],
+  "completed_at": "2026-11-04T01:34:03.947081+00:00"
+}

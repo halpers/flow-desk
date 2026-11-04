@@ -112,6 +112,12 @@ jobs:
           docker compose ps --all
       - name: Check HTTP authentication through Web proxy
         run: python scripts/smoke.py
+      - name: Validate local monitoring and TLS configuration
+        run: |
+          python scripts/configure-monitoring.py
+          docker compose --file docker-compose.yaml --file deploy/compose.monitoring.yaml --file deploy/compose.tls.yaml config --quiet
+          docker compose --file docker-compose.yaml --file deploy/compose.monitoring.yaml run --rm --no-deps --entrypoint promtool prometheus check config /etc/prometheus/prometheus.yaml
+          docker compose --file docker-compose.yaml --file deploy/compose.monitoring.yaml run --rm --no-deps otel-collector validate --config=/etc/otelcol/config.yaml
       - name: Clean up disposable Compose stack
         if: always()
         run: |
@@ -124,7 +130,7 @@ jobs:
       github.event_name != 'pull_request' &&
       (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 60
     permissions:
       contents: read
       packages: write
@@ -191,13 +197,13 @@ jobs:
           registry: ${{ env.ACR_REGISTRY }}
           username: ${{ secrets.ACR_USERNAME }}
           password: ${{ secrets.ACR_PASSWORD }}
-      - name: Build once and push to both registries
+      - name: Build once and load the release image
         id: build
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
         with:
           context: ${{ matrix.context }}
           platforms: linux/amd64
-          push: true
+          load: true
           tags: ${{ steps.images.outputs.tags }}
           labels: |
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
@@ -210,15 +216,34 @@ jobs:
           # Keep a single-platform manifest compatible with Personal Edition ACR.
           provenance: false
           sbom: false
+      - name: Push identical images with bounded retries
+        env:
+          IMAGE_TAGS: ${{ steps.images.outputs.tags }}
+        run: |
+          while IFS= read -r image_tag; do
+            [[ -n "$image_tag" ]] || continue
+            delivered=false
+            for attempt in 1 2 3; do
+              if timeout 600 docker push "$image_tag"; then
+                delivered=true
+                break
+              fi
+              echo "::warning::Push attempt $attempt failed for $image_tag"
+              if [[ "$attempt" -lt 3 ]]; then sleep 15; fi
+            done
+            if [[ "$delivered" != true ]]; then
+              echo "::error::Image was not delivered: $image_tag"
+              exit 1
+            fi
+          done <<< "$IMAGE_TAGS"
       - name: Summarize published images
         env:
           GHCR_IMAGE: ${{ steps.images.outputs.ghcr }}
           ACR_IMAGE: ${{ steps.images.outputs.acr }}
-          IMAGE_DIGEST: ${{ steps.build.outputs.digest }}
         run: |
           {
             printf '### %s\n\n' "$SERVICE"
             printf -- '- `%s:sha-%s`\n' "$GHCR_IMAGE" "$GITHUB_SHA"
             printf -- '- `%s:sha-%s`\n' "$ACR_IMAGE" "$GITHUB_SHA"
-            printf -- '- Digest: `%s`\n' "$IMAGE_DIGEST"
+            printf -- '- Repo digests: `%s`\n' "$(docker image inspect --format '{{json .RepoDigests}}' "$GHCR_IMAGE:sha-$GITHUB_SHA")"
           } >> "$GITHUB_STEP_SUMMARY"

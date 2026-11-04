@@ -19,12 +19,13 @@ def settings():
 
 
 class PublicAPI:
-    def __init__(self, config, account, base=None):
+    def __init__(self, config, account, base=None, verify=True):
         self.config = config
         base = base or "http://localhost:" + config["WEB_HOST_PORT"]
         self.http = httpx.Client(
             base_url=base,
             timeout=20,
+            verify=verify,
             trust_env=False,
             headers={"Origin": base, "X-FlowDesk-Client": "web"},
         )

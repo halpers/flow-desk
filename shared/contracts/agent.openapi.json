@@ -234,6 +234,16 @@
         "parameters": [
           {
             "in": "header",
+            "name": "traceparent",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Traceparent",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
             "name": "authorization",
             "required": false,
             "schema": {

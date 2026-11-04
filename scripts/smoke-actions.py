@@ -3,6 +3,7 @@
 import argparse
 import json
 import shutil
+import ssl
 import subprocess
 import time
 from datetime import UTC, datetime
@@ -20,15 +21,25 @@ def main():
     parser.add_argument("--output", type=Path)
     parser.add_argument("--transport", choices=["http", "mcp"], default="http")
     parser.add_argument("--profile", choices=["mock", "openai-compatible"])
+    parser.add_argument(
+        "--tls",
+        action="store_true",
+        help="verify the local development TLS certificate",
+    )
     args = parser.parse_args()
     settings = dict(
         line.split("=", 1)
         for line in (ROOT / ".env").read_text(encoding="utf-8-sig").splitlines()
         if line and not line.startswith("#")
     )
-    base = "http://localhost:" + settings["WEB_HOST_PORT"]
+    base = (
+        "https://localhost:" + settings.get("TLS_HOST_PORT", "13443")
+        if args.tls
+        else "http://localhost:" + settings["WEB_HOST_PORT"]
+    )
     report = {
-        "phase": "M6.2" if args.transport == "mcp" else "M4",
+        "phase": "M6.3" if args.tls else ("M6.2" if args.transport == "mcp" else "M4"),
+        "tls_verified": args.tls,
         "tool_transport": args.transport,
         "profile": args.profile or settings.get("MODEL_PROVIDER", "mock"),
         "started_at": datetime.now(UTC).isoformat(),
@@ -98,6 +109,9 @@ def main():
         return result
 
     options = {
+        "verify": ssl.create_default_context(cafile=str(ROOT / "runtime/tls/localhost.crt"))
+        if args.tls
+        else True,
         "base_url": base,
         "timeout": 15,
         "trust_env": False,

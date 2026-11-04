@@ -14,6 +14,7 @@ from flowdesk_agent.api.schemas import ExecutionCommand
 from flowdesk_agent.graph.read_graph import build_graph
 from flowdesk_agent.models import CompatibleModel
 from flowdesk_agent.observability.spans import SpanRecorder
+from flowdesk_agent.observability.telemetry import execution_span
 from flowdesk_agent.reranking import ModelReranker
 from flowdesk_agent.retrieval import Retriever
 from flowdesk_agent.storage.callbacks import CallbackStore, DeliveryFailed
@@ -85,6 +86,11 @@ class AgentRuntime:
                 await asyncio.sleep(0.5)
 
     async def execute(self, row: dict):
+        command = ExecutionCommand.model_validate(row["body"])
+        with execution_span(command, row.get("traceparent", "")):
+            await self.execute_traced(row)
+
+    async def execute_traced(self, row: dict):
         command = ExecutionCommand.model_validate(row["body"])
         owner = row["lease_owner"]
         heartbeat_task = None

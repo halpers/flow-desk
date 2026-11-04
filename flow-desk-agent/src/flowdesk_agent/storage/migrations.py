@@ -140,6 +140,9 @@ MIGRATIONS = [
         duration_ms BIGINT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
     """,
+    """
+    ALTER TABLE execution_commands ADD COLUMN traceparent TEXT NOT NULL DEFAULT '';
+    """,
 ]
 
 

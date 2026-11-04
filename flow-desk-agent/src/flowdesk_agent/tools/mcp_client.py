@@ -9,6 +9,7 @@ from mcp import Client
 from mcp.client.stdio import StdioServerParameters, stdio_client
 
 from flowdesk_agent.api.schemas import ExecutionCommand
+from flowdesk_agent.observability.telemetry import current_headers
 from flowdesk_agent.tools.go_client import ToolError
 
 MCP_TIMEOUT_SECONDS = 20
@@ -31,6 +32,7 @@ class MCPTools:
                 "FLOWDESK_MCP_RUN_ID": str(command.run_id),
                 "FLOWDESK_MCP_DISPATCH_ID": str(command.dispatch_id),
                 "FLOWDESK_MCP_GENERATION": str(command.lease_generation),
+                "FLOWDESK_MCP_TRACEPARENT": current_headers().get("traceparent", ""),
             }
         )
         self.parameters = StdioServerParameters(
@@ -44,7 +46,17 @@ class MCPTools:
             async with asyncio.timeout(MCP_TIMEOUT_SECONDS):
                 # Child errors must never leak service credentials to logs.
                 with open(os.devnull, "w", encoding="utf-8") as errors:
-                    async with Client(stdio_client(self.parameters, errlog=errors)) as client:
+                    parameters = self.parameters.model_copy(
+                        update={
+                            "env": {
+                                **self.parameters.env,
+                                "FLOWDESK_MCP_TRACEPARENT": current_headers().get(
+                                    "traceparent", ""
+                                ),
+                            }
+                        }
+                    )
+                    async with Client(stdio_client(parameters, errlog=errors)) as client:
                         definitions = (await client.list_tools()).tools
                         if name not in {tool.name for tool in definitions}:
                             raise ToolError("PERMISSION_DENIED")

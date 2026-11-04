@@ -1,0 +1,31 @@
+groups:
+  - name: flowdesk
+    rules:
+      - alert: FlowDeskServiceDown
+        expr: up{job=~"flowdesk-api|flowdesk-agent"} == 0
+        for: 15s
+        labels:
+          severity: critical
+        annotations:
+          summary: FlowDesk scrape target is unavailable
+      - alert: FlowDeskAgentBacklog
+        expr: flowdesk_agent_commands{status="queued"} > 10
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: Agent queue exceeds normal tenant concurrency
+      - alert: FlowDeskCallbackRejected
+        expr: flowdesk_agent_callbacks{status="permanent_failure"} > 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: Retained callbacks require reconciliation
+      - alert: FlowDeskModelFailures
+        expr: delta(flowdesk_agent_model_calls{status="failed"}[5m]) > 2
+        for: 30s
+        labels:
+          severity: warning
+        annotations:
+          summary: Model failures increased in the retained ledger

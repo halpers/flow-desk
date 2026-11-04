@@ -1,0 +1,43 @@
+{
+  "started_at": "2026-11-04T01:37:10.553332+00:00",
+  "scope": "local synthetic acceptance",
+  "remote_deployment": false,
+  "paid_model_calls": false,
+  "tls_verified_login_and_task": true,
+  "run_id": "83d8f949-e821-4e02-a860-1311f5d44d48",
+  "scrape_jobs_healthy": [
+    "flowdesk-api",
+    "flowdesk-agent"
+  ],
+  "dashboard_panels": 12,
+  "grafana_prometheus_health": "OK",
+  "dashboard_queries_valid": true,
+  "shared_trace_id": "60ce2cfa362d4babf190d49b2c750acf",
+  "trace_services": [
+    "flowdesk-agent",
+    "flowdesk-api"
+  ],
+  "trace_span_names": [
+    "/internal/v1/runs/:run_id/lease",
+    "/internal/v1/tools/:tool_name",
+    "MCP send server/discover",
+    "MCP send tools/call logistics.track",
+    "MCP send tools/call order.lookup",
+    "MCP send tools/list",
+    "POST /internal/v1/executions",
+    "agent.dispatch",
+    "agent.execute",
+    "agent.node.finalize",
+    "agent.node.read_business_tools",
+    "agent.node.retrieve_knowledge",
+    "agent.node.understand_and_route",
+    "fastapi.dependencies",
+    "fastapi.endpoint",
+    "fastapi.serialization",
+    "sql"
+  ],
+  "collector_attributes_events_status_redacted": true,
+  "controlled_service_down_alert_fired": true,
+  "alert_resolved_and_agent_healthy": true,
+  "completed_at": "2026-11-04T01:38:03.060144+00:00"
+}

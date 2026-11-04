@@ -22,6 +22,7 @@ from mcp.types import (
 )
 
 from flowdesk_agent.api.schemas import ExecutionCommand
+from flowdesk_agent.observability.telemetry import safe_traceparent
 from flowdesk_agent.tools.go_client import GoTools, ToolError, argument_validator, result_validator
 
 ACTION_NAME = "actions.execute"
@@ -135,7 +136,10 @@ async def main():
 
     async with httpx.AsyncClient(
         base_url=os.environ["GO_BASE_URL"],
-        headers={"Authorization": "Bearer " + token},
+        headers={
+            "Authorization": "Bearer " + token,
+            "traceparent": safe_traceparent(os.getenv("FLOWDESK_MCP_TRACEPARENT", "")),
+        },
         timeout=5,
         trust_env=False,
     ) as http:

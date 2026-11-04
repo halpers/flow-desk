@@ -8,6 +8,7 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
+	"os"
 
 	"flowdesk/internal/config"
 	"flowdesk/internal/handler"
@@ -28,6 +29,14 @@ func main() {
 
 	var c config.Config
 	conf.MustLoad(*configFile, &c, conf.UseEnv())
+	if mode := os.Getenv("APP_MODE"); mode != "" {
+		switch mode {
+		case "dev", "test", "rt", "pre", "pro":
+			c.Mode = mode
+		default:
+			panic("APP_MODE is invalid")
+		}
+	}
 	if c.Mode != "dev" && !c.CookieSecure {
 		panic("COOKIE_SECURE must be enabled outside dev mode")
 	}

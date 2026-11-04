@@ -8,12 +8,14 @@ from uuid import UUID
 
 import httpx
 from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi.responses import Response
 from psycopg.rows import dict_row
 from psycopg_pool import AsyncConnectionPool
 from pydantic import BaseModel
 
 from flowdesk_agent.api.schemas import CancelCommand, CommandReceipt, ExecutionCommand, IndexCommand
 from flowdesk_agent.embeddings import configured_embedder
+from flowdesk_agent.observability import metrics, telemetry
 from flowdesk_agent.retrieval import KnowledgeIndex
 from flowdesk_agent.runtime import AgentRuntime
 from flowdesk_agent.storage.commands import CommandConflict
@@ -39,6 +41,7 @@ async def lifespan(app: FastAPI):
         kwargs={"autocommit": True, "prepare_threshold": 0, "row_factory": dict_row},
     )
     await pool.open(wait=True)
+    tracing = telemetry.configure()
     try:
         await migrate(pool)
         async with httpx.AsyncClient(
@@ -46,6 +49,7 @@ async def lifespan(app: FastAPI):
             timeout=5,
             trust_env=False,
             headers={"Authorization": f"Bearer {token}"},
+            event_hooks={"request": [telemetry.inject_go_trace]},
         ) as http:
             runtime = AgentRuntime(pool, http)
             app.state.pool = pool
@@ -63,6 +67,8 @@ async def lifespan(app: FastAPI):
                 await asyncio.gather(*workers, return_exceptions=True)
     finally:
         await pool.close()
+        if tracing:
+            await asyncio.to_thread(tracing.shutdown)
 
 
 app = FastAPI(title="FlowDesk Agent", version="0.1.0", lifespan=lifespan)
@@ -89,9 +95,11 @@ async def accept_index(command: IndexCommand):
     response_model=CommandReceipt,
     dependencies=[Depends(service_auth)],
 )
-async def accept_execution(command: ExecutionCommand):
+async def accept_execution(command: ExecutionCommand, traceparent: str = Header(default="")):
     try:
-        row = await app.state.runtime.commands.accept(command)
+        row = await app.state.runtime.commands.accept(
+            command, telemetry.safe_traceparent(traceparent)
+        )
     except CommandConflict as exc:
         raise HTTPException(409, "dispatch payload conflict") from exc
     return {"dispatch_id": row["dispatch_id"], "status": row["status"]}
@@ -122,6 +130,15 @@ async def cancel_execution(run_id: UUID, command: CancelCommand):
 @app.get("/health/live", response_model=Health)
 async def live():
     return {"status": "ok", "service": "flowdesk-agent"}
+
+
+@app.get("/metrics", include_in_schema=False)
+async def scrape_metrics():
+    try:
+        body = await metrics.render(app.state.pool)
+    except Exception:
+        return Response("flowdesk_agent_up 0\n", status_code=503, media_type="text/plain")
+    return Response(body, media_type="text/plain; version=0.0.4")
 
 
 @app.get("/health/ready", response_model=Health)

@@ -1,0 +1,33 @@
+{
+  "phase": "M6.3",
+  "tls_verified": true,
+  "tool_transport": "mcp",
+  "profile": "mock",
+  "started_at": "2026-11-04T01:35:59.750138+00:00",
+  "cases": [
+    {
+      "name": "input, restart, approval and create",
+      "passed": true,
+      "run_id": "e51038f3-2c7c-47b8-a61c-b97771a267e4",
+      "action_id": "c13bbd32-3ab8-52ce-9f39-4aae4dde203c"
+    },
+    {
+      "name": "approved note",
+      "passed": true,
+      "run_id": "9fc5bb32-fe94-4e6e-9e6b-e6fe03460dd1"
+    },
+    {
+      "name": "rejection has no effect",
+      "passed": true,
+      "run_id": "114d2497-6f77-4f94-8495-983b5ca864e4"
+    },
+    {
+      "name": "cancel invalidates pending approval",
+      "passed": true,
+      "run_id": "af1cc817-7897-4ede-8bb0-03768ce5d842"
+    }
+  ],
+  "restart_verified": true,
+  "restart_to_completed_ms": 6437,
+  "completed_at": "2026-11-04T01:36:41.919346+00:00"
+}

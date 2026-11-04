@@ -1,0 +1,12 @@
+apiVersion: 1
+deleteDatasources:
+  - name: FlowDesk Jaeger
+    orgId: 1
+datasources:
+  - name: FlowDesk Prometheus
+    uid: flowdesk-prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: false

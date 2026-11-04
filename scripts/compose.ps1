@@ -1,4 +1,4 @@
-param([Parameter(ValueFromRemainingArguments = $true)][string[]]$ComposeArguments)
+$ComposeArguments = $args
 $ErrorActionPreference = 'Stop'
 $flowdeskRoot = Split-Path $PSScriptRoot
 $flowdeskComposeFile = 'docker-compose.yaml'

@@ -9,8 +9,19 @@
 | M3 RAG 与真实模型 | 已完成 | 版本化索引/激活、检索引用、DeepSeek 实测与预算；见下方证据 |
 | M4 办理与恢复 | 已完成 | 审批绑定快照、真实回执、取消/补充输入、重启恢复和故障验收 |
 | M5 评测与展示 | 已完成 | 100 条固定任务、真实留出/对比/trace、性能和备份恢复实测 |
+| M6 专项 | 已完成（本地范围） | 语义 RAG、官方 MCP、固定镜像发布/回滚、TLS 与本地监控验收 |
 
-M6 按用户要求继续：M6.1 语义 RAG、M6.2 MCP 已完成本地验收；M6.3 部署配置/本地监控继续实施，暂不上服务器。设计及验收见 [M6 专项计划](m6-plan.md)。
+M6.1–M6.3 已按用户选定范围完成本地验收，未连接或部署服务器。设计及验收见 [M6 专项计划](m6-plan.md)和[M6.3 运维说明](m6-deployment-monitoring.md)。
+
+## M6.3 部署与监控验收（2026-11-04）
+
+- 固定完整 SHA 镜像发布按迁移及 Agent/API/Web readiness 推进；保留成功 current/previous、未完成 pending 和发布锁。迁移失败测试验证不继续启动 Web、不改写成功状态，之后可显式回滚；不执行数据库 Down 或删除卷。
+- 已发布 M6.1（474bc6f）→M6.2（d015a8e）→回滚 M6.1，三个步骤各通过 TLS 登录/查询并核对实际 API 镜像；全过程使用显式 mock override，见[发布报告](../reports/m6/release-local.json)。完成后恢复当前源码服务。
+- TLS 下真实 Go/MCP 办理 4/4：补充输入、待审批重启恢复后原 action 建单、批准备注、拒绝和取消，以及外租户拒绝；重启到完成 6437ms，见[TLS 办理报告](../reports/m6/acceptance-tls-actions.json)。使用确定性模型与真实合成业务事务。
+- OTel 串联 Go dispatch、持久 traceparent、Agent 节点和 Go/MCP 工具；Collector 执行属性白名单、清空状态消息和删除事件。两项指标 scrape、Grafana 数据源及 12 个面板查询、共享 trace、脱敏 canary、停止 Agent 后告警触发和恢复均通过，见[监控报告](../reports/m6/monitoring-local.json)。
+- Agent 完整 Linux 隔离 schema 回归 19/19（9.67 秒）、Go 数据库集成及 vet、Ruff lint/format、pip check、契约导出、actionlint、promtool 和 Collector 配置检查通过。CI 新增监控/TLS 配置校验；镜像一次构建后向双仓库推送，对每个标签设置超时和有界重试。
+- 保留首次演练的[配置失败记录](../reports/m6/release-invalid-environment.json)：Windows→WSL 未传递 mock 环境导致真实聊天配置被调用，3 次 MODEL_UNAVAILABLE，无 usage、费用 unknown。已修正为显式 Compose override，发起任务前断言实际容器 mock 且密钥为空；失败记录不计入通过结果。
+- Jaeger 当前为临时内存存储，Grafana 使用已验收的 Prometheus 数据源，trace 由 Jaeger UI/v3 API 查询。正式域名证书、持久 trace 存储、监控访问控制、外部告警通知及真实服务器上线仍需独立实施，本阶段未执行。
 
 ## M6.2 MCP 验收（2026-11-03）
 
