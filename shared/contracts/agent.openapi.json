@@ -1,6 +1,50 @@
 {
   "components": {
     "schemas": {
+      "AgentTraceData": {
+        "additionalProperties": false,
+        "properties": {
+          "available": {
+            "default": false,
+            "title": "Available",
+            "type": "boolean"
+          },
+          "models": {
+            "items": {
+              "$ref": "#/components/schemas/ModelObservation"
+            },
+            "maxItems": 100,
+            "title": "Models",
+            "type": "array"
+          },
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/NodeObservation"
+            },
+            "maxItems": 100,
+            "title": "Nodes",
+            "type": "array"
+          },
+          "tools": {
+            "items": {
+              "$ref": "#/components/schemas/ToolObservation"
+            },
+            "maxItems": 100,
+            "title": "Tools",
+            "type": "array"
+          },
+          "truncated": {
+            "default": false,
+            "title": "Truncated",
+            "type": "boolean"
+          },
+          "usage": {
+            "$ref": "#/components/schemas/RunUsage"
+          }
+        },
+        "title": "AgentTraceData",
+        "type": "object"
+      },
       "CancelCommand": {
         "additionalProperties": false,
         "properties": {
@@ -143,6 +187,177 @@
           "version_id"
         ],
         "title": "IndexCommand",
+        "type": "object"
+      },
+      "ModelObservation": {
+        "additionalProperties": false,
+        "properties": {
+          "duration_known": {
+            "title": "Duration Known",
+            "type": "boolean"
+          },
+          "duration_ms": {
+            "minimum": 0.0,
+            "title": "Duration Ms",
+            "type": "integer"
+          },
+          "error_code": {
+            "maxLength": 64,
+            "title": "Error Code",
+            "type": "string"
+          },
+          "input_tokens": {
+            "minimum": 0.0,
+            "title": "Input Tokens",
+            "type": "integer"
+          },
+          "output_tokens": {
+            "minimum": 0.0,
+            "title": "Output Tokens",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "reserved",
+              "completed",
+              "failed",
+              "unknown"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "tokens_known": {
+            "title": "Tokens Known",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "status",
+          "error_code",
+          "duration_ms",
+          "duration_known",
+          "input_tokens",
+          "output_tokens",
+          "tokens_known"
+        ],
+        "title": "ModelObservation",
+        "type": "object"
+      },
+      "NodeObservation": {
+        "additionalProperties": false,
+        "properties": {
+          "completed_at": {
+            "title": "Completed At",
+            "type": "string"
+          },
+          "duration_ms": {
+            "minimum": 0.0,
+            "title": "Duration Ms",
+            "type": "integer"
+          },
+          "generation": {
+            "minimum": 1.0,
+            "title": "Generation",
+            "type": "integer"
+          },
+          "node": {
+            "maxLength": 64,
+            "title": "Node",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "completed",
+              "failed",
+              "interrupted",
+              "cancelled"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "node",
+          "status",
+          "duration_ms",
+          "generation",
+          "completed_at"
+        ],
+        "title": "NodeObservation",
+        "type": "object"
+      },
+      "RunUsage": {
+        "additionalProperties": false,
+        "properties": {
+          "cost_status": {
+            "const": "unknown",
+            "default": "unknown",
+            "title": "Cost Status",
+            "type": "string"
+          },
+          "embedding_attempts": {
+            "default": 0,
+            "title": "Embedding Attempts",
+            "type": "integer"
+          },
+          "embedding_input_tokens": {
+            "default": 0,
+            "title": "Embedding Input Tokens",
+            "type": "integer"
+          },
+          "embedding_tokens_known": {
+            "default": false,
+            "title": "Embedding Tokens Known",
+            "type": "boolean"
+          },
+          "input_tokens": {
+            "default": 0,
+            "title": "Input Tokens",
+            "type": "integer"
+          },
+          "model_attempts": {
+            "default": 0,
+            "title": "Model Attempts",
+            "type": "integer"
+          },
+          "model_tokens_known": {
+            "default": false,
+            "title": "Model Tokens Known",
+            "type": "boolean"
+          },
+          "output_tokens": {
+            "default": 0,
+            "title": "Output Tokens",
+            "type": "integer"
+          },
+          "retrieval_attempts": {
+            "default": 0,
+            "title": "Retrieval Attempts",
+            "type": "integer"
+          }
+        },
+        "title": "RunUsage",
+        "type": "object"
+      },
+      "ToolObservation": {
+        "additionalProperties": false,
+        "properties": {
+          "completed_count": {
+            "minimum": 0.0,
+            "title": "Completed Count",
+            "type": "integer"
+          },
+          "tool": {
+            "maxLength": 64,
+            "title": "Tool",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tool",
+          "completed_count"
+        ],
+        "title": "ToolObservation",
         "type": "object"
       },
       "ValidationError": {
@@ -443,6 +658,66 @@
           }
         },
         "summary": "Accept Index"
+      }
+    },
+    "/internal/v1/runs/{run_id}/trace": {
+      "get": {
+        "operationId": "run_trace_internal_v1_runs__run_id__trace_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "tenant_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Tenant Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Authorization",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentTraceData"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Run Trace"
       }
     }
   }

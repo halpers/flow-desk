@@ -13,6 +13,7 @@ import type { RunEvent } from "../../shared/events/sse";
 import { Citation } from "../knowledge/Knowledge";
 import { RunControls, Receipt } from "./RunControls";
 import { Tickets } from "./Tickets";
+import { Operations } from "./Operations";
 
 type Conversation = Schemas["ConversationData"];
 type Message = Schemas["MessageData"];
@@ -334,6 +335,14 @@ export function Workspace({ user }: { user: User }) {
         <div className="panel-heading">
           <h2>{conversation.data?.title || "开始一次服务咨询"}</h2>
           <Tickets user={user} />
+          <Operations
+            user={user}
+            onOpen={(conversationId, taskId) => {
+              choose(conversationId);
+              setRunId(taskId);
+              void cache.invalidateQueries({ queryKey: scope });
+            }}
+          />
           {run && (
             <Tag color={run.status === "succeeded" ? "green" : "blue"}>
               {statuses[run.status] || run.status}

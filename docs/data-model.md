@@ -219,6 +219,8 @@ M6.1 的 Python 追加迁移还创建 embedding 调用账本/租户缓存、语�
 
 ## 12. 迁移与生成交付
 
+M7.2 的 `2026110405_run_operations.sql` 在 Go 的 runs 增加 retry_of_run_id/depth；租户复合外键及部分唯一索引保证同租户关联和每源一个子任务，depth 限 0–3。列表索引覆盖租户/所有者和 created_at/id 排序，权限过滤通过 run_ticket_resources 与当前团队成员关系完成。Go 在会话→源 run 锁下将新 run、消息、queued 事件、outbox、审计和幂等记录同事务提交。Python 自有迁移增加 run_observation_scopes，只有可信执行授权后写入不可变的 run/tenant 绑定；观测读取不访问业务表。回退不执行 Down，不删除重试来源或观测绑定。
+
 M1 建立生成器、迁移脚本和模型表清单。迁移按依赖拆为 identity、conversation/run、orders/tickets、actions/outbox、knowledge metadata 等文件，日期加两位顺序号。Goose 记录已应用版本，后续只新增迁移。
 
 所有业务表生成 go-zero 基础模型，并在各表 custom model 扩展本文的锁查询和条件更新。新增跨表事务由 owning logic 组织，禁止在表模型中协调其他表写操作。

@@ -65,6 +65,8 @@
                     "data": {
                       "type": "object",
                       "required": [
+                        "retry_of_run_id",
+                        "retry_depth",
                         "id",
                         "conversation_id",
                         "status",
@@ -256,6 +258,12 @@
                               }
                             }
                           }
+                        },
+                        "retry_depth": {
+                          "type": "integer"
+                        },
+                        "retry_of_run_id": {
+                          "type": "string"
                         },
                         "status": {
                           "type": "string"
@@ -1088,6 +1096,8 @@
                     "data": {
                       "type": "object",
                       "required": [
+                        "retry_of_run_id",
+                        "retry_depth",
                         "id",
                         "conversation_id",
                         "status",
@@ -1279,6 +1289,12 @@
                               }
                             }
                           }
+                        },
+                        "retry_depth": {
+                          "type": "integer"
+                        },
+                        "retry_of_run_id": {
+                          "type": "string"
                         },
                         "status": {
                           "type": "string"
@@ -2555,6 +2571,162 @@
         }
       }
     },
+    "/api/v1/runs": {
+      "get": {
+        "summary": "List authorized run metadata | permission=conversation:use/run:observe | auth=required",
+        "operationId": "listRuns",
+        "parameters": [
+          {
+            "example": "own",
+            "name": "scope",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "default": "own"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "allowEmptyValue": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "run_id",
+            "in": "query",
+            "allowEmptyValue": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "allowEmptyValue": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "example": 20,
+            "name": "limit",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "items",
+                        "next_cursor",
+                        "has_more"
+                      ],
+                      "properties": {
+                        "has_more": {
+                          "type": "boolean"
+                        },
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "id",
+                              "conversation_id",
+                              "actor_user_id",
+                              "status",
+                              "version",
+                              "error_code",
+                              "tool_call_count",
+                              "created_at",
+                              "updated_at",
+                              "retry_of_run_id",
+                              "retried_by_run_id",
+                              "retry_depth",
+                              "can_retry",
+                              "retry_block_reason"
+                            ],
+                            "properties": {
+                              "actor_user_id": {
+                                "type": "string"
+                              },
+                              "can_retry": {
+                                "type": "boolean"
+                              },
+                              "conversation_id": {
+                                "type": "string"
+                              },
+                              "created_at": {
+                                "type": "string"
+                              },
+                              "error_code": {
+                                "type": "string"
+                              },
+                              "id": {
+                                "type": "string"
+                              },
+                              "retried_by_run_id": {
+                                "type": "string"
+                              },
+                              "retry_block_reason": {
+                                "type": "string"
+                              },
+                              "retry_depth": {
+                                "type": "integer"
+                              },
+                              "retry_of_run_id": {
+                                "type": "string"
+                              },
+                              "status": {
+                                "type": "string"
+                              },
+                              "tool_call_count": {
+                                "type": "integer"
+                              },
+                              "updated_at": {
+                                "type": "string"
+                              },
+                              "version": {
+                                "type": "integer"
+                              }
+                            }
+                          }
+                        },
+                        "next_cursor": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "request_id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/runs/{run_id}": {
       "get": {
         "summary": "Run snapshot | permission=conversation:use | auth=required",
@@ -2583,6 +2755,8 @@
                     "data": {
                       "type": "object",
                       "required": [
+                        "retry_of_run_id",
+                        "retry_depth",
                         "id",
                         "conversation_id",
                         "status",
@@ -2774,6 +2948,12 @@
                               }
                             }
                           }
+                        },
+                        "retry_depth": {
+                          "type": "integer"
+                        },
+                        "retry_of_run_id": {
+                          "type": "string"
                         },
                         "status": {
                           "type": "string"
@@ -2926,6 +3106,8 @@
                     "data": {
                       "type": "object",
                       "required": [
+                        "retry_of_run_id",
+                        "retry_depth",
                         "id",
                         "conversation_id",
                         "status",
@@ -3117,6 +3299,12 @@
                               }
                             }
                           }
+                        },
+                        "retry_depth": {
+                          "type": "integer"
+                        },
+                        "retry_of_run_id": {
+                          "type": "string"
                         },
                         "status": {
                           "type": "string"
@@ -3260,6 +3448,8 @@
                     "data": {
                       "type": "object",
                       "required": [
+                        "retry_of_run_id",
+                        "retry_depth",
                         "id",
                         "conversation_id",
                         "status",
@@ -3452,6 +3642,12 @@
                             }
                           }
                         },
+                        "retry_depth": {
+                          "type": "integer"
+                        },
+                        "retry_of_run_id": {
+                          "type": "string"
+                        },
                         "status": {
                           "type": "string"
                         },
@@ -3460,6 +3656,522 @@
                         },
                         "version": {
                           "type": "integer"
+                        }
+                      }
+                    },
+                    "request_id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/runs/{run_id}/retry": {
+      "post": {
+        "summary": "Retry own failed run without prepared actions | permission=conversation:use | auth=required",
+        "operationId": "retryRun",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/withdrawDocumentBody"
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "retry_of_run_id",
+                        "retry_depth",
+                        "id",
+                        "conversation_id",
+                        "status",
+                        "version",
+                        "last_event_seq",
+                        "error_code",
+                        "tool_call_count",
+                        "current_message",
+                        "pending_inputs",
+                        "approvals",
+                        "action_receipts"
+                      ],
+                      "properties": {
+                        "action_receipts": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "action_id",
+                              "tool_name",
+                              "business_object_type",
+                              "business_object_id",
+                              "result",
+                              "executed_at"
+                            ],
+                            "properties": {
+                              "action_id": {
+                                "type": "string"
+                              },
+                              "business_object_id": {
+                                "type": "string"
+                              },
+                              "business_object_type": {
+                                "type": "string"
+                              },
+                              "executed_at": {
+                                "type": "string"
+                              },
+                              "result": {
+                                "type": "object",
+                                "additionalProperties": {}
+                              },
+                              "tool_name": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        },
+                        "approvals": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "id",
+                              "run_id",
+                              "action_id",
+                              "status",
+                              "version",
+                              "payload_digest",
+                              "display_snapshot",
+                              "expires_at",
+                              "decision_reason"
+                            ],
+                            "properties": {
+                              "action_id": {
+                                "type": "string"
+                              },
+                              "decision_reason": {
+                                "type": "string"
+                              },
+                              "display_snapshot": {
+                                "type": "object",
+                                "additionalProperties": {}
+                              },
+                              "expires_at": {
+                                "type": "string"
+                              },
+                              "id": {
+                                "type": "string"
+                              },
+                              "payload_digest": {
+                                "type": "string"
+                              },
+                              "run_id": {
+                                "type": "string"
+                              },
+                              "status": {
+                                "type": "string"
+                              },
+                              "version": {
+                                "type": "integer"
+                              }
+                            }
+                          }
+                        },
+                        "conversation_id": {
+                          "type": "string"
+                        },
+                        "current_message": {
+                          "type": "object",
+                          "required": [
+                            "id",
+                            "run_id",
+                            "role",
+                            "content",
+                            "status",
+                            "generation",
+                            "position",
+                            "citations",
+                            "action_receipts",
+                            "created_at"
+                          ],
+                          "properties": {
+                            "action_receipts": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "additionalProperties": {}
+                              }
+                            },
+                            "citations": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "additionalProperties": {}
+                              }
+                            },
+                            "content": {
+                              "type": "string"
+                            },
+                            "created_at": {
+                              "type": "string"
+                            },
+                            "generation": {
+                              "type": "integer"
+                            },
+                            "id": {
+                              "type": "string"
+                            },
+                            "position": {
+                              "type": "integer"
+                            },
+                            "role": {
+                              "type": "string"
+                            },
+                            "run_id": {
+                              "type": "string"
+                            },
+                            "status": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "error_code": {
+                          "type": "string"
+                        },
+                        "id": {
+                          "type": "string"
+                        },
+                        "last_event_seq": {
+                          "type": "integer"
+                        },
+                        "pending_inputs": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "id",
+                              "question",
+                              "status",
+                              "version",
+                              "expires_at"
+                            ],
+                            "properties": {
+                              "expires_at": {
+                                "type": "string"
+                              },
+                              "id": {
+                                "type": "string"
+                              },
+                              "question": {
+                                "type": "string"
+                              },
+                              "status": {
+                                "type": "string"
+                              },
+                              "version": {
+                                "type": "integer"
+                              }
+                            }
+                          }
+                        },
+                        "retry_depth": {
+                          "type": "integer"
+                        },
+                        "retry_of_run_id": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string"
+                        },
+                        "tool_call_count": {
+                          "type": "integer"
+                        },
+                        "version": {
+                          "type": "integer"
+                        }
+                      }
+                    },
+                    "request_id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/runs/{run_id}/trace": {
+      "get": {
+        "summary": "Read authorized sanitized trace | permission=conversation:use/run:observe | auth=required",
+        "operationId": "getRunTrace",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "run",
+                        "observation"
+                      ],
+                      "properties": {
+                        "observation": {
+                          "type": "object",
+                          "required": [
+                            "available",
+                            "truncated",
+                            "nodes",
+                            "models",
+                            "tools",
+                            "usage"
+                          ],
+                          "properties": {
+                            "available": {
+                              "type": "boolean"
+                            },
+                            "models": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "required": [
+                                  "status",
+                                  "error_code",
+                                  "duration_ms",
+                                  "duration_known",
+                                  "input_tokens",
+                                  "output_tokens",
+                                  "tokens_known"
+                                ],
+                                "properties": {
+                                  "duration_known": {
+                                    "type": "boolean"
+                                  },
+                                  "duration_ms": {
+                                    "type": "integer"
+                                  },
+                                  "error_code": {
+                                    "type": "string"
+                                  },
+                                  "input_tokens": {
+                                    "type": "integer"
+                                  },
+                                  "output_tokens": {
+                                    "type": "integer"
+                                  },
+                                  "status": {
+                                    "type": "string"
+                                  },
+                                  "tokens_known": {
+                                    "type": "boolean"
+                                  }
+                                }
+                              }
+                            },
+                            "nodes": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "required": [
+                                  "node",
+                                  "status",
+                                  "duration_ms",
+                                  "generation",
+                                  "completed_at"
+                                ],
+                                "properties": {
+                                  "completed_at": {
+                                    "type": "string"
+                                  },
+                                  "duration_ms": {
+                                    "type": "integer"
+                                  },
+                                  "generation": {
+                                    "type": "integer"
+                                  },
+                                  "node": {
+                                    "type": "string"
+                                  },
+                                  "status": {
+                                    "type": "string"
+                                  }
+                                }
+                              }
+                            },
+                            "tools": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "required": [
+                                  "tool",
+                                  "completed_count"
+                                ],
+                                "properties": {
+                                  "completed_count": {
+                                    "type": "integer"
+                                  },
+                                  "tool": {
+                                    "type": "string"
+                                  }
+                                }
+                              }
+                            },
+                            "truncated": {
+                              "type": "boolean"
+                            },
+                            "usage": {
+                              "type": "object",
+                              "required": [
+                                "retrieval_attempts",
+                                "model_attempts",
+                                "input_tokens",
+                                "output_tokens",
+                                "model_tokens_known",
+                                "embedding_attempts",
+                                "embedding_input_tokens",
+                                "embedding_tokens_known",
+                                "cost_status"
+                              ],
+                              "properties": {
+                                "cost_status": {
+                                  "type": "string"
+                                },
+                                "embedding_attempts": {
+                                  "type": "integer"
+                                },
+                                "embedding_input_tokens": {
+                                  "type": "integer"
+                                },
+                                "embedding_tokens_known": {
+                                  "type": "boolean"
+                                },
+                                "input_tokens": {
+                                  "type": "integer"
+                                },
+                                "model_attempts": {
+                                  "type": "integer"
+                                },
+                                "model_tokens_known": {
+                                  "type": "boolean"
+                                },
+                                "output_tokens": {
+                                  "type": "integer"
+                                },
+                                "retrieval_attempts": {
+                                  "type": "integer"
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "run": {
+                          "type": "object",
+                          "required": [
+                            "id",
+                            "conversation_id",
+                            "actor_user_id",
+                            "status",
+                            "version",
+                            "error_code",
+                            "tool_call_count",
+                            "created_at",
+                            "updated_at",
+                            "retry_of_run_id",
+                            "retried_by_run_id",
+                            "retry_depth",
+                            "can_retry",
+                            "retry_block_reason"
+                          ],
+                          "properties": {
+                            "actor_user_id": {
+                              "type": "string"
+                            },
+                            "can_retry": {
+                              "type": "boolean"
+                            },
+                            "conversation_id": {
+                              "type": "string"
+                            },
+                            "created_at": {
+                              "type": "string"
+                            },
+                            "error_code": {
+                              "type": "string"
+                            },
+                            "id": {
+                              "type": "string"
+                            },
+                            "retried_by_run_id": {
+                              "type": "string"
+                            },
+                            "retry_block_reason": {
+                              "type": "string"
+                            },
+                            "retry_depth": {
+                              "type": "integer"
+                            },
+                            "retry_of_run_id": {
+                              "type": "string"
+                            },
+                            "status": {
+                              "type": "string"
+                            },
+                            "tool_call_count": {
+                              "type": "integer"
+                            },
+                            "updated_at": {
+                              "type": "string"
+                            },
+                            "version": {
+                              "type": "integer"
+                            }
+                          }
                         }
                       }
                     },

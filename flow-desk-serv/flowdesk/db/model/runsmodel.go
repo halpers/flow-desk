@@ -4,9 +4,15 @@ import (
 	"context"
 	"fmt"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
+	"strings"
+	"time"
 )
 
 type RunsModel interface {
+	FindOneForShareTx(context.Context, sqlx.Session, string, string) (*Runs, error)
+	ListOperationsTx(context.Context, sqlx.Session, RunOperationFilter) ([]Runs, error)
+	FindOneVisibleForShareTx(context.Context, sqlx.Session, RunOperationFilter) (*Runs, error)
+	FindOneRetryTx(context.Context, sqlx.Session, string, string) (*Runs, error)
 	LockTenantQuotaTx(context.Context, sqlx.Session, string) error
 	CountActiveTx(context.Context, sqlx.Session, string, string) (int64, int64, error)
 	FindActiveByConversationTx(context.Context, sqlx.Session, string, string) (*Runs, error)
@@ -23,6 +29,46 @@ type RunsModel interface {
 	ListOverdue(context.Context, int64) ([]Runs, error)
 	UpdateWaitingTx(context.Context, sqlx.Session, *Runs) error
 	UpdateResumeTx(context.Context, sqlx.Session, *Runs) error
+}
+
+type RunOperationFilter struct {
+	Tenant, Actor, Role, Scope, Status, RunID string
+	Before                                    time.Time
+	BeforeID                                  string
+	Limit                                     int64
+}
+
+// Apply resource authorization before pagination. The tenant authorization lock is held by logic.
+const runOperationAccess = `r.tenant_id=$1 and ($4='tenant' or r.actor_user_id=$2)
+ and not exists(select 1 from business.run_ticket_resources rr
+ join business.tickets t on t.tenant_id=rr.tenant_id and t.id=rr.ticket_id
+ where rr.tenant_id=r.tenant_id and rr.run_id=r.id and t.team_id is not null
+ and $3<>'admin' and not exists(select 1 from business.team_members tm
+ where tm.tenant_id=t.tenant_id and tm.team_id=t.team_id and tm.user_id=$2))`
+
+func (m *customRunsModel) ListOperationsTx(ctx context.Context, tx sqlx.Session, filter RunOperationFilter) ([]Runs, error) {
+	rows := []Runs{}
+	query := fmt.Sprintf(`select r.%s from %s r where %s
+ and ($5='' or r.status=$5) and ($6='' or r.id=nullif($6,'')::uuid)
+ and (r.created_at,r.id)<($7,$8::uuid) order by r.created_at desc,r.id desc limit $9`, strings.ReplaceAll(runsRows, ",", ",r."), m.table, runOperationAccess)
+	err := tx.QueryRowsCtx(ctx, &rows, query, filter.Tenant, filter.Actor, filter.Role, filter.Scope, filter.Status, filter.RunID, filter.Before, filter.BeforeID, filter.Limit)
+	return rows, err
+}
+func (m *customRunsModel) FindOneVisibleForShareTx(ctx context.Context, tx sqlx.Session, filter RunOperationFilter) (*Runs, error) {
+	var row Runs
+	err := tx.QueryRowCtx(ctx, &row, fmt.Sprintf(`select r.%s from %s r where %s and r.id=$5 for share of r`, strings.ReplaceAll(runsRows, ",", ",r."), m.table, runOperationAccess), filter.Tenant, filter.Actor, filter.Role, filter.Scope, filter.RunID)
+	return &row, err
+}
+func (m *customRunsModel) FindOneRetryTx(ctx context.Context, tx sqlx.Session, tenant, parent string) (*Runs, error) {
+	var row Runs
+	err := tx.QueryRowCtx(ctx, &row, fmt.Sprintf("select %s from %s where tenant_id=$1 and retry_of_run_id=$2", runsRows, m.table), tenant, parent)
+	return &row, err
+}
+
+func (m *customRunsModel) FindOneForShareTx(ctx context.Context, tx sqlx.Session, tenant, id string) (*Runs, error) {
+	var row Runs
+	err := tx.QueryRowCtx(ctx, &row, fmt.Sprintf("select %s from %s where tenant_id=$1 and id=$2 for share", runsRows, m.table), tenant, id)
+	return &row, err
 }
 
 func (m *customRunsModel) LockTenantQuotaTx(ctx context.Context, tx sqlx.Session, tenant string) error {

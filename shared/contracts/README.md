@@ -19,4 +19,6 @@ M6 的 retrieval/v1 定义供应商 embedding 响应和受限重排输出。权�
 
 M7.1 增加 retrieval/v1/pdf-manifest.schema.json，来源为 Python PDFManifest；它只描述内部提取结果，不是新增公网 Agent 接口。PDF 的源文件由 Go 保存，页码随证据和消息引用传递；事件 v1 中 page_number 为可选字段，兼容既有无页码事件。Go HTTP 文本/PDF 上传及管理员分页预览仍由 .api 生成。
 
+M7.2 增加 Go operations.api 的列表/追踪/重试，Python AgentTraceData 的内部脱敏观测响应。生成到各自 OpenAPI 和浏览器类型；没有新增 SSE 事件，也没有把执行账本或检查点作为通用 JSON 导出。两个服务的观测字段需保持一致，真实 HTTP 验收验证 Go 严格解码 Python 返回值。
+
 M6.5 对 v1 追加两个工具名、相应严格参数和可选回执结果字段，既有事件仍可验证。新增工具名要求 Go/Python/Web 一同升级，旧消费者可能拒绝新枚举；原图版本继续保留，恢复不改写旧动作。回退旧镜像前需停止接收新任务并妥善完成 ticket-v2 等待任务，不能把旧版本能启动视为新动作也可恢复。

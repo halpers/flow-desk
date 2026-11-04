@@ -37,7 +37,7 @@ func runDataTx(ctx context.Context, s *svc.ServiceContext, tx sqlx.Session, row 
 	if err = redactMessageTx(ctx, s, tx, row, &visible); err != nil {
 		return types.RunData{}, err
 	}
-	result := types.RunData{Id: row.Id, ConversationId: row.ConversationId, Status: row.Status, Version: row.Version, LastEventSeq: row.LastEventSeq, ErrorCode: row.ErrorCode, ToolCallCount: row.ToolCallCount, CurrentMessage: visible}
+	result := types.RunData{RetryOfRunId: row.RetryOfRunId.String, RetryDepth: row.RetryDepth, Id: row.Id, ConversationId: row.ConversationId, Status: row.Status, Version: row.Version, LastEventSeq: row.LastEventSeq, ErrorCode: row.ErrorCode, ToolCallCount: row.ToolCallCount, CurrentMessage: visible}
 	if err = addRunControlsTx(ctx, s, tx, row, &result); err != nil {
 		return types.RunData{}, err
 	}
@@ -243,49 +243,61 @@ func SendMessage(ctx context.Context, s *svc.ServiceContext, req *types.SendMess
 		if !errors.Is(err, model.ErrNotFound) {
 			return types.RunData{}, err
 		}
-		active, err := s.RunsModel.FindActiveByConversationTx(ctx, tx, actor.TenantId, conversation.Id)
-		if err == nil {
-			busy := failure(409, "CONVERSATION_BUSY", "当前会话还有任务正在处理")
-			busy.Data = map[string]any{"active_run_id": active.Id}
-			return types.RunData{}, busy
-		}
-		if !errors.Is(err, model.ErrNotFound) {
-			return types.RunData{}, err
-		}
-		now := time.Now().UTC()
-		if err = s.RunsModel.LockTenantQuotaTx(ctx, tx, actor.TenantId); err != nil {
-			return types.RunData{}, err
-		}
-		tenantCount, actorCount, err := s.RunsModel.CountActiveTx(ctx, tx, actor.TenantId, actor.Id)
-		if err != nil {
-			return types.RunData{}, err
-		}
-		if tenantCount >= maxTenantActiveRuns || actorCount >= maxActorActiveRuns {
-			return types.RunData{}, failure(429, "QUEUE_FULL", "当前正在处理的任务较多，请稍后重试")
-		}
-		run := &model.Runs{Id: uuid.NewString(), TenantId: actor.TenantId, ConversationId: conversation.Id, ActorUserId: actor.Id, SessionId: Current(ctx).Session.Id, InputMessageId: uuid.NewString(), ResultMessageId: uuid.NewString(), DispatchId: uuid.NewString(), Status: domain.RunQueued, Version: 1, LeaseGeneration: 1, DeadlineAt: now.Add(runDeadline), ResumeData: "{}"}
-		if err = s.RunsModel.InsertTx(ctx, tx, run); err != nil {
-			return types.RunData{}, err
-		}
-		userMessage := &model.Messages{Id: run.InputMessageId, TenantId: actor.TenantId, ConversationId: conversation.Id, RunId: run.Id, Role: "user", Position: conversation.MessageCount + 1, ClientMessageId: sql.NullString{String: req.ClientMessageId, Valid: true}, Content: req.Content, Status: "final", Generation: 1, Citations: "[]", ActionReceipts: "[]"}
-		assistant := &model.Messages{Id: run.ResultMessageId, TenantId: actor.TenantId, ConversationId: conversation.Id, RunId: run.Id, Role: "assistant", Position: conversation.MessageCount + 2, Status: "streaming", Generation: 1, Citations: "[]", ActionReceipts: "[]"}
-		if err = s.MessagesModel.InsertTx(ctx, tx, userMessage); err != nil {
-			return types.RunData{}, err
-		}
-		if err = s.MessagesModel.InsertTx(ctx, tx, assistant); err != nil {
-			return types.RunData{}, err
-		}
-		if err = s.ConversationsModel.UpdateMessageCountTx(ctx, tx, conversation.Id, conversation.MessageCount); err != nil {
-			return types.RunData{}, err
-		}
-		payload := map[string]any{"status": domain.RunQueued, "run_version": run.Version + 1}
-		if _, err = appendEventTx(ctx, s, tx, run, uuid.NewSHA1(uuid.NameSpaceURL, []byte(run.Id+":queued")).String(), domain.EventRunQueued, payload, now, ""); err != nil {
-			return types.RunData{}, err
-		}
-		command := map[string]any{"dispatch_id": run.DispatchId, "run_id": run.Id, "lease_generation": run.LeaseGeneration, "command": "execute", "graph_version": ticketGraphVersion}
-		if err = s.OutboxEventsModel.InsertTx(ctx, tx, &model.OutboxEvents{Id: uuid.NewString(), TenantId: actor.TenantId, AggregateId: run.Id, DispatchId: run.DispatchId, Topic: "run.execute", Payload: marshal(command), Status: "pending", AvailableAt: now}); err != nil {
-			return types.RunData{}, err
-		}
-		return runDataTx(ctx, s, tx, run)
+		return enqueueRunTx(ctx, s, tx, conversation, req.Content, req.ClientMessageId, nil)
 	})
+}
+
+func enqueueRunTx(ctx context.Context, s *svc.ServiceContext, tx sqlx.Session, conversation *model.Conversations, content, clientMessageID string, parent *model.Runs) (types.RunData, error) {
+	actor := Current(ctx).User
+	if conversation.Status != "active" {
+		return types.RunData{}, errForbidden
+	}
+	active, err := s.RunsModel.FindActiveByConversationTx(ctx, tx, actor.TenantId, conversation.Id)
+	if err == nil {
+		busy := failure(409, "CONVERSATION_BUSY", "当前会话还有任务正在处理")
+		busy.Data = map[string]any{"active_run_id": active.Id}
+		return types.RunData{}, busy
+	}
+	if !errors.Is(err, model.ErrNotFound) {
+		return types.RunData{}, err
+	}
+	now := time.Now().UTC()
+	if err = s.RunsModel.LockTenantQuotaTx(ctx, tx, actor.TenantId); err != nil {
+		return types.RunData{}, err
+	}
+	tenantCount, actorCount, err := s.RunsModel.CountActiveTx(ctx, tx, actor.TenantId, actor.Id)
+	if err != nil {
+		return types.RunData{}, err
+	}
+	if tenantCount >= maxTenantActiveRuns || actorCount >= maxActorActiveRuns {
+		return types.RunData{}, failure(429, "QUEUE_FULL", "当前正在处理的任务较多，请稍后重试")
+	}
+	run := &model.Runs{Id: uuid.NewString(), TenantId: actor.TenantId, ConversationId: conversation.Id, ActorUserId: actor.Id, SessionId: Current(ctx).Session.Id, InputMessageId: uuid.NewString(), ResultMessageId: uuid.NewString(), DispatchId: uuid.NewString(), Status: domain.RunQueued, Version: 1, LeaseGeneration: 1, DeadlineAt: now.Add(runDeadline), ResumeData: "{}"}
+	if parent != nil {
+		run.RetryOfRunId = sql.NullString{String: parent.Id, Valid: true}
+		run.RetryDepth = parent.RetryDepth + 1
+	}
+	if err = s.RunsModel.InsertTx(ctx, tx, run); err != nil {
+		return types.RunData{}, err
+	}
+	userMessage := &model.Messages{Id: run.InputMessageId, TenantId: actor.TenantId, ConversationId: conversation.Id, RunId: run.Id, Role: "user", Position: conversation.MessageCount + 1, ClientMessageId: sql.NullString{String: clientMessageID, Valid: true}, Content: content, Status: "final", Generation: 1, Citations: "[]", ActionReceipts: "[]"}
+	assistant := &model.Messages{Id: run.ResultMessageId, TenantId: actor.TenantId, ConversationId: conversation.Id, RunId: run.Id, Role: "assistant", Position: conversation.MessageCount + 2, Status: "streaming", Generation: 1, Citations: "[]", ActionReceipts: "[]"}
+	if err = s.MessagesModel.InsertTx(ctx, tx, userMessage); err != nil {
+		return types.RunData{}, err
+	}
+	if err = s.MessagesModel.InsertTx(ctx, tx, assistant); err != nil {
+		return types.RunData{}, err
+	}
+	if err = s.ConversationsModel.UpdateMessageCountTx(ctx, tx, conversation.Id, conversation.MessageCount); err != nil {
+		return types.RunData{}, err
+	}
+	payload := map[string]any{"status": domain.RunQueued, "run_version": run.Version + 1}
+	if _, err = appendEventTx(ctx, s, tx, run, uuid.NewSHA1(uuid.NameSpaceURL, []byte(run.Id+":queued")).String(), domain.EventRunQueued, payload, now, ""); err != nil {
+		return types.RunData{}, err
+	}
+	command := map[string]any{"dispatch_id": run.DispatchId, "run_id": run.Id, "lease_generation": run.LeaseGeneration, "command": "execute", "graph_version": ticketGraphVersion}
+	if err = s.OutboxEventsModel.InsertTx(ctx, tx, &model.OutboxEvents{Id: uuid.NewString(), TenantId: actor.TenantId, AggregateId: run.Id, DispatchId: run.DispatchId, Topic: "run.execute", Payload: marshal(command), Status: "pending", AvailableAt: now}); err != nil {
+		return types.RunData{}, err
+	}
+	return runDataTx(ctx, s, tx, run)
 }

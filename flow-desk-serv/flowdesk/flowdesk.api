@@ -7,6 +7,7 @@ info (
 
 import "api/common.api"
 import "api/tasks.api"
+import "api/operations.api"
 import "api/knowledge.api"
 import "api/actions.api"
 import "api/teams.api"

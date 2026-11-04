@@ -16,6 +16,7 @@ from pydantic import BaseModel
 from flowdesk_agent.api.schemas import CancelCommand, CommandReceipt, ExecutionCommand, IndexCommand
 from flowdesk_agent.embeddings import configured_embedder
 from flowdesk_agent.observability import metrics, telemetry
+from flowdesk_agent.observability.operations import AgentTraceData, read_trace
 from flowdesk_agent.retrieval import KnowledgeIndex
 from flowdesk_agent.runtime import AgentRuntime
 from flowdesk_agent.storage.commands import CommandConflict
@@ -130,6 +131,15 @@ async def cancel_execution(run_id: UUID, command: CancelCommand):
 @app.get("/health/live", response_model=Health)
 async def live():
     return {"status": "ok", "service": "flowdesk-agent"}
+
+
+@app.get(
+    "/internal/v1/runs/{run_id}/trace",
+    response_model=AgentTraceData,
+    dependencies=[Depends(service_auth)],
+)
+async def run_trace(run_id: UUID, tenant_id: UUID):
+    return await read_trace(app.state.pool, run_id, tenant_id)
 
 
 @app.get("/metrics", include_in_schema=False)

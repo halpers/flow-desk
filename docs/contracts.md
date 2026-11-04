@@ -305,6 +305,10 @@ MCP 提供三个既有读工具及 `actions.execute`；读参数复用 read.sche
 
 ## 8. 错误与重试策略
 
+M7.2 实现的任务运营接口见[任务运营台](m7-run-operations.md)。GET `/api/v1/runs` 默认 own，tenant 需要 run:observe；列表在分页前按查看者当前团队过滤。GET `/api/v1/runs/:run_id/trace` 先后两次授权，中间通过服务身份查询 Python 元数据，不返回提示词、消息或工具正文；Python `/internal/v1/runs/{run_id}/trace?tenant_id=UUID` 仅返回已由 Go 执行上下文绑定的租户/run 观测。没有绑定返回 available=false，服务失败返回 OBSERVATION_UNAVAILABLE（503）。
+
+POST `/api/v1/runs/:run_id/retry` 仅原所有者，要求 Idempotency-Key、expected_version 及当前授权；只接受 failed/expired、无 action、无补充输入的任务。创建关联新 run，不修改原终态；同源最多一个子任务，最多三层重试。RETRY_REQUIRES_REVIEW、RETRY_LIMIT、NOT_RETRYABLE_STATE 为 409；会话/队列及版本约束沿用已有错误。GET run 增加 retry_of_run_id、retry_depth，列表另含 retried_by_run_id、can_retry、retry_block_reason。客户端把新增字段作为兼容扩展；三服务一起升级，源与生成契约仍以 .api / Pydantic 为准。
+
 | HTTP | code | 行为 |
 | --- | --- | --- |
 | 400 | INVALID_ARGUMENT / FILE_UNSUPPORTED | 修正输入，不重试 |

@@ -128,6 +128,11 @@ func TestActionApprovalReceiptReplayAndSummaryFailure(t *testing.T) {
 	if err != nil || snapshot.Status != domain.RunFailed || len(snapshot.ActionReceipts) != 1 || len(snapshot.CurrentMessage.ActionReceipts) != 1 {
 		t.Fatal("summary failure hid committed receipt", err)
 	}
+	if _, err = RetryRun(ctx, s, retryRequest(snapshot)); err == nil {
+		t.Fatal("committed business effect allowed a fresh retry")
+	} else {
+		operationError(t, err, "RETRY_REQUIRES_REVIEW")
+	}
 	// Immutable snapshot is enforced by PostgreSQL, including accidental generated CRUD.
 	action, err := s.ActionsModel.FindOne(context.Background(), approval.ActionId)
 	if err != nil {

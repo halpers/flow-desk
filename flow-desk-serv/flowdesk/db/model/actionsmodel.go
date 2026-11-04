@@ -7,6 +7,7 @@ import (
 )
 
 type ActionsModel interface {
+	ExistsByRunTx(context.Context, sqlx.Session, string, string) (bool, error)
 	actionsModel
 	withSession(sqlx.Session) ActionsModel
 
@@ -15,6 +16,13 @@ type ActionsModel interface {
 	ListByRunTx(ctx context.Context, tx sqlx.Session, tenant, run string) ([]Actions, error)
 	UpdateStatusTx(ctx context.Context, tx sqlx.Session, tenant, id, status string) error
 }
+
+func (m *customActionsModel) ExistsByRunTx(ctx context.Context, tx sqlx.Session, tenant, run string) (bool, error) {
+	var exists bool
+	err := tx.QueryRowCtx(ctx, &exists, fmt.Sprintf("select exists(select 1 from %s where tenant_id=$1 and run_id=$2)", m.table), tenant, run)
+	return exists, err
+}
+
 type customActionsModel struct{ *defaultActionsModel }
 
 func NewActionsModel(conn sqlx.SqlConn) ActionsModel {

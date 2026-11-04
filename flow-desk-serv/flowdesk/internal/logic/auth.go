@@ -174,7 +174,7 @@ func Authenticate(ctx context.Context, s *svc.ServiceContext, raw string) (*Iden
 func Permissions(role string) []string {
 	permissions := []string{"conversation:use", "order:read", "ticket:read", "ticket:create", "ticket:note"}
 	if role == "supervisor" || role == "admin" {
-		permissions = append(permissions, "ticket:manage", "audit:read")
+		permissions = append(permissions, "ticket:manage", "audit:read", "run:observe")
 	}
 	if role == "admin" {
 		permissions = append(permissions, "knowledge:manage", "team:manage")

@@ -181,6 +181,33 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 			[]rest.Middleware{serverCtx.SessionAuth},
 			[]rest.Route{
 				{
+					// List authorized run metadata | permission=conversation:use/run:observe | auth=required
+					Method:  http.MethodGet,
+					Path:    "/runs",
+					Handler: ListRunsHandler(serverCtx),
+				},
+				{
+					// Retry own failed run without prepared actions | permission=conversation:use | auth=required
+					Method:  http.MethodPost,
+					Path:    "/runs/:run_id/retry",
+					Handler: RetryRunHandler(serverCtx),
+				},
+				{
+					// Read authorized sanitized trace | permission=conversation:use/run:observe | auth=required
+					Method:  http.MethodGet,
+					Path:    "/runs/:run_id/trace",
+					Handler: GetRunTraceHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithPrefix("/api/v1"),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.SessionAuth},
+			[]rest.Route{
+				{
 					// GetCitation | permission=conversation:use | auth=required
 					Method:  http.MethodGet,
 					Path:    "/citations/:evidence_id",

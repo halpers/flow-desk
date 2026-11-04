@@ -30,6 +30,15 @@ type AgentEventReq struct {
 	Payload         map[string]interface{} `json:"payload"`
 }
 
+type AgentTraceData struct {
+	Available bool               `json:"available"`
+	Truncated bool               `json:"truncated"`
+	Nodes     []NodeObservation  `json:"nodes"`
+	Models    []ModelObservation `json:"models"`
+	Tools     []ToolObservation  `json:"tools"`
+	Usage     RunUsage           `json:"usage"`
+}
+
 type ApprovalData struct {
 	Id              string                 `json:"id"`
 	RunId           string                 `json:"run_id"`
@@ -404,6 +413,24 @@ type MessagesResp struct {
 	Data      MessagePage `json:"data"`
 }
 
+type ModelObservation struct {
+	Status        string `json:"status"`
+	ErrorCode     string `json:"error_code"`
+	DurationMs    int64  `json:"duration_ms"`
+	DurationKnown bool   `json:"duration_known"`
+	InputTokens   int64  `json:"input_tokens"`
+	OutputTokens  int64  `json:"output_tokens"`
+	TokensKnown   bool   `json:"tokens_known"`
+}
+
+type NodeObservation struct {
+	Node        string `json:"node"`
+	Status      string `json:"status"`
+	DurationMs  int64  `json:"duration_ms"`
+	Generation  int64  `json:"generation"`
+	CompletedAt string `json:"completed_at"`
+}
+
 type OrderData struct {
 	Id                 string `json:"id"`
 	OrderNo            string `json:"order_no"`
@@ -479,7 +506,15 @@ type ReceiptResp struct {
 	Data      ReceiptData `json:"data"`
 }
 
+type RetryRunReq struct {
+	RunId           string `path:"run_id"`
+	IdempotencyKey  string `header:"Idempotency-Key"`
+	ExpectedVersion int64  `json:"expected_version"`
+}
+
 type RunData struct {
+	RetryOfRunId   string             `json:"retry_of_run_id"`
+	RetryDepth     int64              `json:"retry_depth"`
 	Id             string             `json:"id"`
 	ConversationId string             `json:"conversation_id"`
 	Status         string             `json:"status"`
@@ -493,6 +528,35 @@ type RunData struct {
 	ActionReceipts []ReceiptData      `json:"action_receipts"`
 }
 
+type RunOperationData struct {
+	Id               string `json:"id"`
+	ConversationId   string `json:"conversation_id"`
+	ActorUserId      string `json:"actor_user_id"`
+	Status           string `json:"status"`
+	Version          int64  `json:"version"`
+	ErrorCode        string `json:"error_code"`
+	ToolCallCount    int64  `json:"tool_call_count"`
+	CreatedAt        string `json:"created_at"`
+	UpdatedAt        string `json:"updated_at"`
+	RetryOfRunId     string `json:"retry_of_run_id"`
+	RetriedByRunId   string `json:"retried_by_run_id"`
+	RetryDepth       int64  `json:"retry_depth"`
+	CanRetry         bool   `json:"can_retry"`
+	RetryBlockReason string `json:"retry_block_reason"`
+}
+
+type RunOperationPage struct {
+	Items      []RunOperationData `json:"items"`
+	NextCursor string             `json:"next_cursor"`
+	HasMore    bool               `json:"has_more"`
+}
+
+type RunOperationsResp struct {
+	Code      string           `json:"code"`
+	RequestId string           `json:"request_id"`
+	Data      RunOperationPage `json:"data"`
+}
+
 type RunReq struct {
 	RunId string `path:"run_id"`
 }
@@ -501,6 +565,37 @@ type RunResp struct {
 	Code      string  `json:"code"`
 	RequestId string  `json:"request_id"`
 	Data      RunData `json:"data"`
+}
+
+type RunTraceData struct {
+	Run         RunOperationData `json:"run"`
+	Observation AgentTraceData   `json:"observation"`
+}
+
+type RunTraceResp struct {
+	Code      string       `json:"code"`
+	RequestId string       `json:"request_id"`
+	Data      RunTraceData `json:"data"`
+}
+
+type RunUsage struct {
+	RetrievalAttempts    int64  `json:"retrieval_attempts"`
+	ModelAttempts        int64  `json:"model_attempts"`
+	InputTokens          int64  `json:"input_tokens"`
+	OutputTokens         int64  `json:"output_tokens"`
+	ModelTokensKnown     bool   `json:"model_tokens_known"`
+	EmbeddingAttempts    int64  `json:"embedding_attempts"`
+	EmbeddingInputTokens int64  `json:"embedding_input_tokens"`
+	EmbeddingTokensKnown bool   `json:"embedding_tokens_known"`
+	CostStatus           string `json:"cost_status"`
+}
+
+type RunsPageReq struct {
+	Scope  string `form:"scope,default=own"`
+	Status string `form:"status,optional"`
+	RunId  string `form:"run_id,optional"`
+	Cursor string `form:"cursor,optional"`
+	Limit  int64  `form:"limit,default=20,range=[1:50]"`
 }
 
 type ScopeVersion struct {
@@ -675,6 +770,11 @@ type TokenResp struct {
 	Message   string    `json:"message"`
 	RequestId string    `json:"request_id"`
 	Data      TokenData `json:"data"`
+}
+
+type ToolObservation struct {
+	Tool           string `json:"tool"`
+	CompletedCount int64  `json:"completed_count"`
 }
 
 type ToolReq struct {

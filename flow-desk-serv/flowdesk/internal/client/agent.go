@@ -10,12 +10,50 @@ import (
 	"strings"
 	"time"
 
+	"flowdesk/internal/types"
+
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/propagation"
 )
 
 const dispatchTimeout = 5 * time.Second
+
+const maxObservationBytes = 256 * 1024
+
+func (c *AgentClient) Observation(ctx context.Context, tenant, run string) (types.AgentTraceData, error) {
+	var data types.AgentTraceData
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, c.baseURL+"/internal/v1/runs/"+run+"/trace?tenant_id="+tenant, nil)
+	if err != nil {
+		return data, err
+	}
+	request.Header.Set("Authorization", "Bearer "+c.token)
+	propagation.TraceContext{}.Inject(ctx, propagation.HeaderCarrier(request.Header))
+	response, err := c.http.Do(request)
+	if err != nil {
+		return data, errors.New("observation unavailable")
+	}
+	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		return data, errors.New("observation rejected")
+	}
+	raw, err := io.ReadAll(io.LimitReader(response.Body, maxObservationBytes+1))
+	if err != nil || len(raw) > maxObservationBytes {
+		return data, errors.New("observation limit")
+	}
+	decoder := json.NewDecoder(bytes.NewReader(raw))
+	decoder.DisallowUnknownFields()
+	if err = decoder.Decode(&data); err != nil {
+		return types.AgentTraceData{}, errors.New("observation shape")
+	}
+	if err = decoder.Decode(new(any)); err != io.EOF {
+		return types.AgentTraceData{}, errors.New("observation trailing data")
+	}
+	if data.Nodes == nil || data.Models == nil || data.Tools == nil || len(data.Nodes) > 100 || len(data.Models) > 100 || len(data.Tools) > 100 || data.Usage.CostStatus != "unknown" {
+		return types.AgentTraceData{}, errors.New("observation invalid")
+	}
+	return data, nil
+}
 
 type AgentClient struct {
 	baseURL, token string

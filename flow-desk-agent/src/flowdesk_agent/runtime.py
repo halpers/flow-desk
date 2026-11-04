@@ -13,6 +13,7 @@ from psycopg_pool import AsyncConnectionPool
 from flowdesk_agent.api.schemas import ExecutionCommand
 from flowdesk_agent.graph.read_graph import build_graph
 from flowdesk_agent.models import CompatibleModel
+from flowdesk_agent.observability.operations import bind_scope
 from flowdesk_agent.observability.spans import SpanRecorder
 from flowdesk_agent.observability.telemetry import execution_span
 from flowdesk_agent.reranking import ModelReranker
@@ -142,6 +143,7 @@ class AgentRuntime:
                     )
                     tools = GoTools(self.http, command, self.callbacks, self.cache, guard, mcp=mcp)
                     context = await tools.authorize()
+                    await bind_scope(self.pool, command.run_id, context.tenant_id)
                     remaining = min(
                         120.0,
                         (

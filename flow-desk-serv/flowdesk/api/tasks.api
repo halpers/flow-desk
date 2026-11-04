@@ -72,6 +72,8 @@ type RunReq {
     RunId string `path:"run_id"`
 }
 type RunData {
+    RetryOfRunId string `json:"retry_of_run_id"`
+    RetryDepth int64 `json:"retry_depth"`
     Id string `json:"id"`
     ConversationId string `json:"conversation_id"`
     Status string `json:"status"`

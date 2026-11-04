@@ -30,6 +30,7 @@ type (
 		FindOneByDispatchId(ctx context.Context, dispatchId string) (*Runs, error)
 		FindOneByTenantIdConversationId(ctx context.Context, tenantId string, conversationId string) (*Runs, error)
 		FindOneByTenantIdId(ctx context.Context, tenantId string, id string) (*Runs, error)
+		FindOneByTenantIdRetryOfRunId(ctx context.Context, tenantId string, retryOfRunId sql.NullString) (*Runs, error)
 		Update(ctx context.Context, data *Runs) error
 		Delete(ctx context.Context, id string) error
 	}
@@ -40,27 +41,29 @@ type (
 	}
 
 	Runs struct {
-		Id              string       `db:"id"`
-		TenantId        string       `db:"tenant_id"`
-		ConversationId  string       `db:"conversation_id"`
-		ActorUserId     string       `db:"actor_user_id"`
-		SessionId       string       `db:"session_id"`
-		InputMessageId  string       `db:"input_message_id"`
-		ResultMessageId string       `db:"result_message_id"`
-		DispatchId      string       `db:"dispatch_id"`
-		Status          string       `db:"status"`
-		Version         int64        `db:"version"`
-		LastEventSeq    int64        `db:"last_event_seq"`
-		LeaseGeneration int64        `db:"lease_generation"`
-		LeaseExpiresAt  sql.NullTime `db:"lease_expires_at"`
-		DeadlineAt      time.Time    `db:"deadline_at"`
-		ErrorCode       string       `db:"error_code"`
-		ToolCallCount   int64        `db:"tool_call_count"`
-		CreatedAt       time.Time    `db:"created_at"`
-		UpdatedAt       time.Time    `db:"updated_at"`
-		WaitExpiresAt   sql.NullTime `db:"wait_expires_at"`
-		ResumeData      string       `db:"resume_data"`
-		InputCount      int64        `db:"input_count"`
+		Id              string         `db:"id"`
+		TenantId        string         `db:"tenant_id"`
+		ConversationId  string         `db:"conversation_id"`
+		ActorUserId     string         `db:"actor_user_id"`
+		SessionId       string         `db:"session_id"`
+		InputMessageId  string         `db:"input_message_id"`
+		ResultMessageId string         `db:"result_message_id"`
+		DispatchId      string         `db:"dispatch_id"`
+		Status          string         `db:"status"`
+		Version         int64          `db:"version"`
+		LastEventSeq    int64          `db:"last_event_seq"`
+		LeaseGeneration int64          `db:"lease_generation"`
+		LeaseExpiresAt  sql.NullTime   `db:"lease_expires_at"`
+		DeadlineAt      time.Time      `db:"deadline_at"`
+		ErrorCode       string         `db:"error_code"`
+		ToolCallCount   int64          `db:"tool_call_count"`
+		CreatedAt       time.Time      `db:"created_at"`
+		UpdatedAt       time.Time      `db:"updated_at"`
+		WaitExpiresAt   sql.NullTime   `db:"wait_expires_at"`
+		ResumeData      string         `db:"resume_data"`
+		InputCount      int64          `db:"input_count"`
+		RetryOfRunId    sql.NullString `db:"retry_of_run_id"`
+		RetryDepth      int64          `db:"retry_depth"`
 	}
 )
 
@@ -133,15 +136,29 @@ func (m *defaultRunsModel) FindOneByTenantIdId(ctx context.Context, tenantId str
 	}
 }
 
+func (m *defaultRunsModel) FindOneByTenantIdRetryOfRunId(ctx context.Context, tenantId string, retryOfRunId sql.NullString) (*Runs, error) {
+	var resp Runs
+	query := fmt.Sprintf("select %s from %s where tenant_id = $1 and retry_of_run_id = $2 limit 1", runsRows, m.table)
+	err := m.conn.QueryRowCtx(ctx, &resp, query, tenantId, retryOfRunId)
+	switch err {
+	case nil:
+		return &resp, nil
+	case sqlx.ErrNotFound:
+		return nil, ErrNotFound
+	default:
+		return nil, err
+	}
+}
+
 func (m *defaultRunsModel) Insert(ctx context.Context, data *Runs) (sql.Result, error) {
-	query := fmt.Sprintf("insert into %s (%s) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)", m.table, runsRowsExpectAutoSet)
-	ret, err := m.conn.ExecCtx(ctx, query, data.Id, data.TenantId, data.ConversationId, data.ActorUserId, data.SessionId, data.InputMessageId, data.ResultMessageId, data.DispatchId, data.Status, data.Version, data.LastEventSeq, data.LeaseGeneration, data.LeaseExpiresAt, data.DeadlineAt, data.ErrorCode, data.ToolCallCount, data.WaitExpiresAt, data.ResumeData, data.InputCount)
+	query := fmt.Sprintf("insert into %s (%s) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)", m.table, runsRowsExpectAutoSet)
+	ret, err := m.conn.ExecCtx(ctx, query, data.Id, data.TenantId, data.ConversationId, data.ActorUserId, data.SessionId, data.InputMessageId, data.ResultMessageId, data.DispatchId, data.Status, data.Version, data.LastEventSeq, data.LeaseGeneration, data.LeaseExpiresAt, data.DeadlineAt, data.ErrorCode, data.ToolCallCount, data.WaitExpiresAt, data.ResumeData, data.InputCount, data.RetryOfRunId, data.RetryDepth)
 	return ret, err
 }
 
 func (m *defaultRunsModel) Update(ctx context.Context, newData *Runs) error {
 	query := fmt.Sprintf("update %s set %s where id = $1", m.table, runsRowsWithPlaceHolder)
-	_, err := m.conn.ExecCtx(ctx, query, newData.Id, newData.TenantId, newData.ConversationId, newData.ActorUserId, newData.SessionId, newData.InputMessageId, newData.ResultMessageId, newData.DispatchId, newData.Status, newData.Version, newData.LastEventSeq, newData.LeaseGeneration, newData.LeaseExpiresAt, newData.DeadlineAt, newData.ErrorCode, newData.ToolCallCount, newData.WaitExpiresAt, newData.ResumeData, newData.InputCount)
+	_, err := m.conn.ExecCtx(ctx, query, newData.Id, newData.TenantId, newData.ConversationId, newData.ActorUserId, newData.SessionId, newData.InputMessageId, newData.ResultMessageId, newData.DispatchId, newData.Status, newData.Version, newData.LastEventSeq, newData.LeaseGeneration, newData.LeaseExpiresAt, newData.DeadlineAt, newData.ErrorCode, newData.ToolCallCount, newData.WaitExpiresAt, newData.ResumeData, newData.InputCount, newData.RetryOfRunId, newData.RetryDepth)
 	return err
 }
 

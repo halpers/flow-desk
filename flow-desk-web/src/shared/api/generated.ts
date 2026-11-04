@@ -362,6 +362,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List authorized run metadata | permission=conversation:use/run:observe | auth=required */
+        get: operations["listRuns"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/runs/{run_id}": {
         parameters: {
             query?: never;
@@ -441,6 +458,40 @@ export interface paths {
         put?: never;
         /** Supply requested input | permission=conversation:use | auth=required */
         post: operations["submitInput"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/runs/{run_id}/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Retry own failed run without prepared actions | permission=conversation:use | auth=required */
+        post: operations["retryRun"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/runs/{run_id}/trace": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read authorized sanitized trace | permission=conversation:use/run:observe | auth=required */
+        get: operations["getRunTrace"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -948,6 +999,8 @@ export interface operations {
                                 status: string;
                                 version: number;
                             }[];
+                            retry_depth: number;
+                            retry_of_run_id: string;
                             status: string;
                             tool_call_count: number;
                             version: number;
@@ -1379,6 +1432,8 @@ export interface operations {
                                 status: string;
                                 version: number;
                             }[];
+                            retry_depth: number;
+                            retry_of_run_id: string;
                             status: string;
                             tool_call_count: number;
                             version: number;
@@ -1916,6 +1971,56 @@ export interface operations {
             };
         };
     };
+    listRuns: {
+        parameters: {
+            query: {
+                /** @example own */
+                scope: string;
+                status?: string;
+                run_id?: string;
+                cursor?: string;
+                /** @example 20 */
+                limit: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            has_more: boolean;
+                            items: {
+                                actor_user_id: string;
+                                can_retry: boolean;
+                                conversation_id: string;
+                                created_at: string;
+                                error_code: string;
+                                id: string;
+                                retried_by_run_id: string;
+                                retry_block_reason: string;
+                                retry_depth: number;
+                                retry_of_run_id: string;
+                                status: string;
+                                tool_call_count: number;
+                                updated_at: string;
+                                version: number;
+                            }[];
+                            next_cursor: string;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
     getRun: {
         parameters: {
             query?: never;
@@ -1985,6 +2090,8 @@ export interface operations {
                                 status: string;
                                 version: number;
                             }[];
+                            retry_depth: number;
+                            retry_of_run_id: string;
                             status: string;
                             tool_call_count: number;
                             version: number;
@@ -2105,6 +2212,8 @@ export interface operations {
                                 status: string;
                                 version: number;
                             }[];
+                            retry_depth: number;
+                            retry_of_run_id: string;
                             status: string;
                             tool_call_count: number;
                             version: number;
@@ -2227,9 +2336,171 @@ export interface operations {
                                 status: string;
                                 version: number;
                             }[];
+                            retry_depth: number;
+                            retry_of_run_id: string;
                             status: string;
                             tool_call_count: number;
                             version: number;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    retryRun: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: components["requestBodies"]["withdrawDocumentBody"];
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            action_receipts: {
+                                action_id: string;
+                                business_object_id: string;
+                                business_object_type: string;
+                                executed_at: string;
+                                result: {
+                                    [key: string]: unknown;
+                                };
+                                tool_name: string;
+                            }[];
+                            approvals: {
+                                action_id: string;
+                                decision_reason: string;
+                                display_snapshot: {
+                                    [key: string]: unknown;
+                                };
+                                expires_at: string;
+                                id: string;
+                                payload_digest: string;
+                                run_id: string;
+                                status: string;
+                                version: number;
+                            }[];
+                            conversation_id: string;
+                            current_message: {
+                                action_receipts: {
+                                    [key: string]: unknown;
+                                }[];
+                                citations: {
+                                    [key: string]: unknown;
+                                }[];
+                                content: string;
+                                created_at: string;
+                                generation: number;
+                                id: string;
+                                position: number;
+                                role: string;
+                                run_id: string;
+                                status: string;
+                            };
+                            error_code: string;
+                            id: string;
+                            last_event_seq: number;
+                            pending_inputs: {
+                                expires_at: string;
+                                id: string;
+                                question: string;
+                                status: string;
+                                version: number;
+                            }[];
+                            retry_depth: number;
+                            retry_of_run_id: string;
+                            status: string;
+                            tool_call_count: number;
+                            version: number;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    getRunTrace: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            observation: {
+                                available: boolean;
+                                models: {
+                                    duration_known: boolean;
+                                    duration_ms: number;
+                                    error_code: string;
+                                    input_tokens: number;
+                                    output_tokens: number;
+                                    status: string;
+                                    tokens_known: boolean;
+                                }[];
+                                nodes: {
+                                    completed_at: string;
+                                    duration_ms: number;
+                                    generation: number;
+                                    node: string;
+                                    status: string;
+                                }[];
+                                tools: {
+                                    completed_count: number;
+                                    tool: string;
+                                }[];
+                                truncated: boolean;
+                                usage: {
+                                    cost_status: string;
+                                    embedding_attempts: number;
+                                    embedding_input_tokens: number;
+                                    embedding_tokens_known: boolean;
+                                    input_tokens: number;
+                                    model_attempts: number;
+                                    model_tokens_known: boolean;
+                                    output_tokens: number;
+                                    retrieval_attempts: number;
+                                };
+                            };
+                            run: {
+                                actor_user_id: string;
+                                can_retry: boolean;
+                                conversation_id: string;
+                                created_at: string;
+                                error_code: string;
+                                id: string;
+                                retried_by_run_id: string;
+                                retry_block_reason: string;
+                                retry_depth: number;
+                                retry_of_run_id: string;
+                                status: string;
+                                tool_call_count: number;
+                                updated_at: string;
+                                version: number;
+                            };
                         };
                         request_id?: string;
                     };

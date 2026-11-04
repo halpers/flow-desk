@@ -150,6 +150,13 @@ MIGRATIONS = [
         CHECK(page_number BETWEEN 0 AND 50);
     ALTER TABLE knowledge_jobs ADD COLUMN error_code TEXT NOT NULL DEFAULT '';
     """,
+    """
+    CREATE TABLE run_observation_scopes (
+        run_id UUID PRIMARY KEY, tenant_id UUID NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    CREATE INDEX run_observation_tenant ON run_observation_scopes(tenant_id,run_id);
+    """,
 ]
 
 
