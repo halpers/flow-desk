@@ -137,6 +137,7 @@
         "title"
       ],
       "properties": {
+        "page_number": { "type": "integer", "minimum": 0, "maximum": 50 },
         "id": {
           "type": "string",
           "format": "uuid"

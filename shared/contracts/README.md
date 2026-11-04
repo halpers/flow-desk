@@ -17,4 +17,6 @@ M2 新增 `events/v1/run.schema.json` 和 `tools/v1/read.schema.json`。`scripts
 
 M6 的 retrieval/v1 定义供应商 embedding 响应和受限重排输出。权威来源是 Python 的 EmbeddingResponse / Ranking，由 Agent 契约导出脚本生成；运行时使用同一 Pydantic 模型验证，不手改 JSON 产物。
 
+M7.1 增加 retrieval/v1/pdf-manifest.schema.json，来源为 Python PDFManifest；它只描述内部提取结果，不是新增公网 Agent 接口。PDF 的源文件由 Go 保存，页码随证据和消息引用传递；事件 v1 中 page_number 为可选字段，兼容既有无页码事件。Go HTTP 文本/PDF 上传及管理员分页预览仍由 .api 生成。
+
 M6.5 对 v1 追加两个工具名、相应严格参数和可选回执结果字段，既有事件仍可验证。新增工具名要求 Go/Python/Web 一同升级，旧消费者可能拒绝新枚举；原图版本继续保留，恢复不改写旧动作。回退旧镜像前需停止接收新任务并妥善完成 ticket-v2 等待任务，不能把旧版本能启动视为新动作也可恢复。

@@ -40,17 +40,21 @@ type (
 	}
 
 	DocumentVersions struct {
-		Id          string    `db:"id"`
-		TenantId    string    `db:"tenant_id"`
-		DocumentId  string    `db:"document_id"`
-		JobId       string    `db:"job_id"`
-		Filename    string    `db:"filename"`
-		Content     string    `db:"content"`
-		ContentHash string    `db:"content_hash"`
-		IndexStatus string    `db:"index_status"`
-		ChunkCount  int64     `db:"chunk_count"`
-		ErrorCode   string    `db:"error_code"`
-		CreatedAt   time.Time `db:"created_at"`
+		Id            string    `db:"id"`
+		TenantId      string    `db:"tenant_id"`
+		DocumentId    string    `db:"document_id"`
+		JobId         string    `db:"job_id"`
+		Filename      string    `db:"filename"`
+		Content       string    `db:"content"`
+		ContentHash   string    `db:"content_hash"`
+		IndexStatus   string    `db:"index_status"`
+		ChunkCount    int64     `db:"chunk_count"`
+		ErrorCode     string    `db:"error_code"`
+		CreatedAt     time.Time `db:"created_at"`
+		SourceFormat  string    `db:"source_format"`
+		SourceBytes   []byte    `db:"source_bytes"`
+		PageTexts     string    `db:"page_texts"`
+		ParserVersion string    `db:"parser_version"`
 	}
 )
 
@@ -124,14 +128,14 @@ func (m *defaultDocumentVersionsModel) FindOneByTenantIdId(ctx context.Context, 
 }
 
 func (m *defaultDocumentVersionsModel) Insert(ctx context.Context, data *DocumentVersions) (sql.Result, error) {
-	query := fmt.Sprintf("insert into %s (%s) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)", m.table, documentVersionsRowsExpectAutoSet)
-	ret, err := m.conn.ExecCtx(ctx, query, data.Id, data.TenantId, data.DocumentId, data.JobId, data.Filename, data.Content, data.ContentHash, data.IndexStatus, data.ChunkCount, data.ErrorCode)
+	query := fmt.Sprintf("insert into %s (%s) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)", m.table, documentVersionsRowsExpectAutoSet)
+	ret, err := m.conn.ExecCtx(ctx, query, data.Id, data.TenantId, data.DocumentId, data.JobId, data.Filename, data.Content, data.ContentHash, data.IndexStatus, data.ChunkCount, data.ErrorCode, data.SourceFormat, data.SourceBytes, data.PageTexts, data.ParserVersion)
 	return ret, err
 }
 
 func (m *defaultDocumentVersionsModel) Update(ctx context.Context, newData *DocumentVersions) error {
 	query := fmt.Sprintf("update %s set %s where id = $1", m.table, documentVersionsRowsWithPlaceHolder)
-	_, err := m.conn.ExecCtx(ctx, query, newData.Id, newData.TenantId, newData.DocumentId, newData.JobId, newData.Filename, newData.Content, newData.ContentHash, newData.IndexStatus, newData.ChunkCount, newData.ErrorCode)
+	_, err := m.conn.ExecCtx(ctx, query, newData.Id, newData.TenantId, newData.DocumentId, newData.JobId, newData.Filename, newData.Content, newData.ContentHash, newData.IndexStatus, newData.ChunkCount, newData.ErrorCode, newData.SourceFormat, newData.SourceBytes, newData.PageTexts, newData.ParserVersion)
 	return err
 }
 

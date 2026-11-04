@@ -21,6 +21,7 @@
 | [M6.3 部署与监控](m6-deployment-monitoring.md) | 固定镜像发布/回滚、TLS、OTel、指标、告警与本地验收 |
 | [M6.4 团队权限](m6-teams.md) | 团队成员、工单/知识范围、撤权、历史兼容与授权锁 |
 | [M6.5 业务场景](m6-business-scenarios.md) | 物流建单、接手、办结、图版本兼容与固定场景 |
+| [M7.1 PDF 知识文件](m7-knowledge-files.md) | 文本 PDF 上传、受限解析、持久 manifest、预览与物理页码引用 |
 
 ## 阅读与修改顺序
 

@@ -143,6 +143,13 @@ MIGRATIONS = [
     """
     ALTER TABLE execution_commands ADD COLUMN traceparent TEXT NOT NULL DEFAULT '';
     """,
+    """
+    ALTER TABLE knowledge_manifests ADD COLUMN page_texts JSONB NOT NULL DEFAULT '[]';
+    ALTER TABLE knowledge_manifests ADD COLUMN parser_version TEXT NOT NULL DEFAULT '';
+    ALTER TABLE knowledge_chunks ADD COLUMN page_number INTEGER NOT NULL DEFAULT 0
+        CHECK(page_number BETWEEN 0 AND 50);
+    ALTER TABLE knowledge_jobs ADD COLUMN error_code TEXT NOT NULL DEFAULT '';
+    """,
 ]
 
 

@@ -50,4 +50,6 @@ M1–M4 已交付：登录与租户权限、持久化任务/SSE、版本化知�
 
 固定 100 条合成任务按 60/20/20 划分开发、回归和留出集，分别报告 mock 功能断言与 DeepSeek 真实留出结果。复跑步骤见 [M5 评测](docs/m5-evaluation.md)，查询→检索→确认→真实工单及失败恢复的展示步骤见[演示与运维](docs/demo-and-operations.md)。模型费用未知时标为 unknown，密钥仅放在本地 `.env`。
 
-M6.1 增加独立语义 embedding、全文 RRF 与可选重排，保留字符基线及配置回退；配置和索引升级见[语义 RAG](docs/m6-semantic-rag.md)。M6.2 提供官方 SDK 的[MCP 工具发现与调用](docs/m6-mcp.md)，保持 Go 授权与审批事务。M6.3 提供[固定镜像发布/回滚、TLS 与本地监控](docs/m6-deployment-monitoring.md)。实测见[M6 报告](reports/m6/summary.md)。团队共享权限已在 M6.4 交付；PDF/OCR 及正式服务器上线仍待后续实施。性能数字仅适用于报告中的本机合成环境。
+M6.1 增加独立语义 embedding、全文 RRF 与可选重排，保留字符基线及配置回退；配置和索引升级见[语义 RAG](docs/m6-semantic-rag.md)。M6.2 提供官方 SDK 的[MCP 工具发现与调用](docs/m6-mcp.md)，保持 Go 授权与审批事务。M6.3 提供[固定镜像发布/回滚、TLS 与本地监控](docs/m6-deployment-monitoring.md)。实测见[M6 报告](reports/m6/summary.md)。团队共享权限已在 M6.4 交付。
+
+M7.1 增加[文本 PDF 上传、提取文本预览与物理页码引用](docs/m7-knowledge-files.md)，保留版本激活、权限及撤回校验。扫描件 OCR、复杂版面还原、对象存储和正式服务器上线仍待后续实施。性能数字仅适用于报告中的本机合成环境。

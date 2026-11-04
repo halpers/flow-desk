@@ -631,6 +631,7 @@
                 "data": {
                   "type": "object",
                   "required": [
+                    "page_number",
                     "id",
                     "version_id",
                     "chunk_id",
@@ -646,6 +647,9 @@
                     },
                     "id": {
                       "type": "string"
+                    },
+                    "page_number": {
+                      "type": "integer"
                     },
                     "title": {
                       "type": "string"
@@ -1438,6 +1442,10 @@
                       "items": {
                         "type": "object",
                         "required": [
+                          "source_format",
+                          "source_size",
+                          "page_count",
+                          "text_page_count",
                           "id",
                           "document_id",
                           "filename",
@@ -1467,6 +1475,18 @@
                           },
                           "index_status": {
                             "type": "string"
+                          },
+                          "page_count": {
+                            "type": "integer"
+                          },
+                          "source_format": {
+                            "type": "string"
+                          },
+                          "source_size": {
+                            "type": "integer"
+                          },
+                          "text_page_count": {
+                            "type": "integer"
                           }
                         }
                       }
@@ -1512,11 +1532,13 @@
             "schema": {
               "type": "object",
               "required": [
-                "filename",
-                "content"
+                "filename"
               ],
               "properties": {
                 "content": {
+                  "type": "string"
+                },
+                "content_base64": {
                   "type": "string"
                 },
                 "filename": {
@@ -1538,6 +1560,10 @@
                 "data": {
                   "type": "object",
                   "required": [
+                    "source_format",
+                    "source_size",
+                    "page_count",
+                    "text_page_count",
                     "id",
                     "document_id",
                     "filename",
@@ -1566,6 +1592,94 @@
                       "type": "string"
                     },
                     "index_status": {
+                      "type": "string"
+                    },
+                    "page_count": {
+                      "type": "integer"
+                    },
+                    "source_format": {
+                      "type": "string"
+                    },
+                    "source_size": {
+                      "type": "integer"
+                    },
+                    "text_page_count": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/documents/{document_id}/versions/{version_id}/pages": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "PreviewVersionPages | permission=knowledge:manage | auth=required",
+        "operationId": "previewVersionPages",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "document_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "version_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "version_id",
+                    "parser_version",
+                    "pages"
+                  ],
+                  "properties": {
+                    "pages": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "page_number",
+                          "text"
+                        ],
+                        "properties": {
+                          "page_number": {
+                            "type": "integer"
+                          },
+                          "text": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "parser_version": {
+                      "type": "string"
+                    },
+                    "version_id": {
                       "type": "string"
                     }
                   }
@@ -2024,11 +2138,13 @@
               "type": "object",
               "required": [
                 "title",
-                "filename",
-                "content"
+                "filename"
               ],
               "properties": {
                 "content": {
+                  "type": "string"
+                },
+                "content_base64": {
                   "type": "string"
                 },
                 "filename": {
@@ -2053,6 +2169,10 @@
                 "data": {
                   "type": "object",
                   "required": [
+                    "source_format",
+                    "source_size",
+                    "page_count",
+                    "text_page_count",
                     "id",
                     "document_id",
                     "filename",
@@ -2082,6 +2202,18 @@
                     },
                     "index_status": {
                       "type": "string"
+                    },
+                    "page_count": {
+                      "type": "integer"
+                    },
+                    "source_format": {
+                      "type": "string"
+                    },
+                    "source_size": {
+                      "type": "integer"
+                    },
+                    "text_page_count": {
+                      "type": "integer"
                     }
                   }
                 },
@@ -4758,7 +4890,31 @@
                 "content_hash": {
                   "type": "string"
                 },
+                "error_code": {
+                  "type": "string"
+                },
                 "job_id": {
+                  "type": "string"
+                },
+                "page_texts": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "page_number",
+                      "text"
+                    ],
+                    "properties": {
+                      "page_number": {
+                        "type": "integer"
+                      },
+                      "text": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                },
+                "parser_version": {
                   "type": "string"
                 },
                 "status": {
@@ -4780,6 +4936,10 @@
                 "data": {
                   "type": "object",
                   "required": [
+                    "source_format",
+                    "source_size",
+                    "page_count",
+                    "text_page_count",
                     "id",
                     "document_id",
                     "filename",
@@ -4809,6 +4969,18 @@
                     },
                     "index_status": {
                       "type": "string"
+                    },
+                    "page_count": {
+                      "type": "integer"
+                    },
+                    "source_format": {
+                      "type": "string"
+                    },
+                    "source_size": {
+                      "type": "integer"
+                    },
+                    "text_page_count": {
+                      "type": "integer"
                     }
                   }
                 },
@@ -4857,6 +5029,8 @@
                 "data": {
                   "type": "object",
                   "required": [
+                    "source_format",
+                    "source_base64",
                     "tenant_id",
                     "knowledge_base_id",
                     "document_id",
@@ -4875,6 +5049,12 @@
                       "type": "string"
                     },
                     "knowledge_base_id": {
+                      "type": "string"
+                    },
+                    "source_base64": {
+                      "type": "string"
+                    },
+                    "source_format": {
                       "type": "string"
                     },
                     "tenant_id": {
@@ -5371,6 +5551,9 @@
                       "excerpt": {
                         "type": "string"
                       },
+                      "page_number": {
+                        "type": "integer"
+                      },
                       "version_id": {
                         "type": "string"
                       }
@@ -5401,6 +5584,7 @@
                       "items": {
                         "type": "object",
                         "required": [
+                          "page_number",
                           "id",
                           "version_id",
                           "chunk_id",
@@ -5416,6 +5600,9 @@
                           },
                           "id": {
                             "type": "string"
+                          },
+                          "page_number": {
+                            "type": "integer"
                           },
                           "title": {
                             "type": "string"

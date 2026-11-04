@@ -1,13 +1,16 @@
 """Filtered lexical/semantic retrieval with immutable profiles and fenced indexing."""
 
 import asyncio
+import base64
 import hashlib
+import json
 import math
 import os
 import re
 from uuid import UUID, uuid4, uuid5
 
 from flowdesk_agent.embeddings import configured_embedder, vector_literal
+from flowdesk_agent.pdf import PDFError, PDFManifest, extract_pdf
 from flowdesk_agent.semantic_index import SemanticIndex
 from flowdesk_agent.tools.go_client import ToolError
 
@@ -78,6 +81,17 @@ class KnowledgeIndex:
             ).fetchone()
 
     async def process(self, job):
+        async with self.pool.connection() as conn:
+            current = await (
+                await conn.execute(
+                    "SELECT * FROM knowledge_jobs WHERE job_id=%s AND attempts=%s "
+                    "AND status='working' AND lease_until>now()",
+                    (job["job_id"], job["attempts"]),
+                )
+            ).fetchone()
+        if not current:
+            return
+        job = current
         response = await self.http.get(
             f"/internal/v1/knowledge/versions/{job['version_id']}/source",
             params={"job_id": str(job["job_id"])},
@@ -85,10 +99,53 @@ class KnowledgeIndex:
         if response.status_code != 200:
             raise ToolError("INDEX_SOURCE_UNAVAILABLE")
         source = response.json()["data"]
-        content = source["content"]
-        if hashlib.sha256(content.encode()).hexdigest() != source["content_hash"]:
+        raw = (
+            base64.b64decode(source["source_base64"], validate=True)
+            if source.get("source_format") == "pdf"
+            else source["content"].encode()
+        )
+        if hashlib.sha256(raw).hexdigest() != source["content_hash"]:
             raise ToolError("INDEX_HASH_MISMATCH")
-        chunks = split_text(content)
+        if job.get("error_code"):
+            await self.complete(job, source, error_code=job["error_code"])
+            return
+        async with self.pool.connection() as conn:
+            manifest = await (
+                await conn.execute(
+                    "SELECT * FROM knowledge_manifests WHERE version_id=%s", (job["version_id"],)
+                )
+            ).fetchone()
+        pages, parser = [], ""
+        if source.get("source_format") == "pdf":
+            try:
+                parsed = (
+                    PDFManifest.model_validate(
+                        {
+                            "parser_version": manifest["parser_version"],
+                            "pages": manifest["page_texts"],
+                        }
+                    )
+                    if manifest
+                    else await extract_pdf(raw)
+                )
+                pages = [page.model_dump() for page in parsed.pages]
+                parser = parsed.parser_version
+            except PDFError as error:
+                async with self.pool.connection() as conn:
+                    recorded = await conn.execute(
+                        "UPDATE knowledge_jobs SET error_code=%s WHERE job_id=%s "
+                        "AND attempts=%s AND status='working' AND lease_until>now()",
+                        (error.code, job["job_id"], job["attempts"]),
+                    )
+                    if not recorded.rowcount:
+                        return
+                await self.complete(job, source, error_code=error.code)
+                return
+        chunks = (
+            [(page["page_number"], text) for page in pages for text in split_text(page["text"])]
+            if pages
+            else [(0, text) for text in split_text(source["content"])]
+        )
         if not chunks or len(chunks) > 1000:
             raise ToolError("INDEX_CONTENT_INVALID")
         async with self.pool.connection() as conn, conn.transaction():
@@ -105,7 +162,7 @@ class KnowledgeIndex:
                 return
             existing = await (
                 await conn.execute(
-                    "SELECT content_hash,profile FROM knowledge_manifests WHERE version_id=%s",
+                    "SELECT * FROM knowledge_manifests WHERE version_id=%s",
                     (job["version_id"],),
                 )
             ).fetchone()
@@ -115,7 +172,9 @@ class KnowledgeIndex:
                 raise ToolError("INDEX_PROFILE_CONFLICT")
             if not existing:
                 await conn.execute(
-                    "INSERT INTO knowledge_manifests VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+                    "INSERT INTO knowledge_manifests(version_id,tenant_id,knowledge_base_id,"
+                    "document_id,content_hash,profile,dimension,splitter_version,chunk_count,"
+                    "page_texts,parser_version) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s)",
                     (
                         job["version_id"],
                         source["tenant_id"],
@@ -124,15 +183,17 @@ class KnowledgeIndex:
                         source["content_hash"],
                         PROFILE,
                         DIMENSION,
-                        "chars-700-overlap-100-v1",
+                        "pages-chars-700-overlap-100-v1" if pages else "chars-700-overlap-100-v1",
                         len(chunks),
+                        json.dumps(pages, ensure_ascii=False),
+                        parser,
                     ),
                 )
-                for position, chunk in enumerate(chunks):
+                for position, (page_number, chunk) in enumerate(chunks):
                     await conn.execute(
                         "INSERT INTO knowledge_chunks(chunk_id,version_id,tenant_id,position,"
-                        "content,content_hash,lexical,embedding) "
-                        "VALUES(%s,%s,%s,%s,%s,%s,to_tsvector('simple',%s),%s::knowledge.vector)",
+                        "content,content_hash,lexical,embedding,page_number) "
+                        "VALUES(%s,%s,%s,%s,%s,%s,to_tsvector('simple',%s),%s::knowledge.vector,%s)",
                         (
                             uuid5(UUID(str(job["version_id"])), str(position)),
                             job["version_id"],
@@ -142,21 +203,27 @@ class KnowledgeIndex:
                             hashlib.sha256(chunk.encode()).hexdigest(),
                             " ".join(terms(chunk)),
                             vector(chunk),
+                            page_number,
                         ),
                     )
-        if self.embedder:
+            else:
+                # The committed manifest wins if a previous owner finished extraction.
+                pages, parser = existing["page_texts"], existing["parser_version"]
+        await self.complete(job, source, chunk_count=len(chunks), pages=pages, parser=parser)
 
-            async def renew():
-                async with self.pool.connection() as connection:
-                    renewed = await connection.execute(
-                        "UPDATE knowledge_jobs SET lease_until=now()+interval '60 seconds' "
-                        "WHERE job_id=%s AND attempts=%s AND status='working' "
-                        "AND lease_until>now()",
-                        (job["job_id"], job["attempts"]),
-                    )
-                    if not renewed.rowcount:
-                        raise ToolError("INDEX_LEASE_LOST")
+    async def complete(self, job, source, *, chunk_count=0, pages=None, parser="", error_code=""):
+        async def renew():
+            async with self.pool.connection() as connection:
+                renewed = await connection.execute(
+                    "UPDATE knowledge_jobs SET lease_until=now()+interval '60 seconds' "
+                    "WHERE job_id=%s AND attempts=%s AND status='working' AND lease_until>now()",
+                    (job["job_id"], job["attempts"]),
+                )
+                if not renewed.rowcount:
+                    raise ToolError("INDEX_LEASE_LOST")
 
+        await renew()
+        if self.embedder and not error_code:
             await SemanticIndex(self.pool, self.embedder).rebuild(
                 job["version_id"], guard=renew, job=job
             )
@@ -166,8 +233,11 @@ class KnowledgeIndex:
             json={
                 "job_id": str(job["job_id"]),
                 "content_hash": source["content_hash"],
-                "chunk_count": len(chunks),
-                "status": "ready",
+                "chunk_count": chunk_count,
+                "status": "failed" if error_code else "ready",
+                "error_code": error_code,
+                "page_texts": pages or [],
+                "parser_version": parser,
             },
         )
         if completed.status_code != 200:
@@ -268,6 +338,7 @@ class Retriever:
                         "chunk_id": str(item["chunk_id"]),
                         "excerpt": item["content"],
                         "content_hash": item["content_hash"],
+                        "page_number": item.get("page_number", 0),
                     }
                     for item in chosen
                 ]

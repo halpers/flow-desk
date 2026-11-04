@@ -2,6 +2,7 @@ package logic
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"path/filepath"
@@ -52,10 +53,21 @@ func documentData(row *model.Documents) types.DocumentData {
 	return types.DocumentData{Id: row.Id, KnowledgeBaseId: row.KnowledgeBaseId, Title: row.Title, ActiveVersionId: row.ActiveVersionId.String, Version: row.Version, Status: row.Status}
 }
 func versionData(row *model.DocumentVersions) types.VersionData {
-	return types.VersionData{Id: row.Id, DocumentId: row.DocumentId, Filename: row.Filename, ContentHash: row.ContentHash, IndexStatus: row.IndexStatus, ChunkCount: row.ChunkCount, ErrorCode: row.ErrorCode}
+	pages := pageTexts(row.PageTexts)
+	textPages := int64(0)
+	for _, page := range pages {
+		if strings.TrimSpace(page.Text) != "" {
+			textPages++
+		}
+	}
+	size := len(row.SourceBytes)
+	if row.SourceFormat != "pdf" {
+		size = len(row.Content)
+	}
+	return types.VersionData{SourceFormat: row.SourceFormat, SourceSize: int64(size), PageCount: int64(len(pages)), TextPageCount: textPages, Id: row.Id, DocumentId: row.DocumentId, Filename: row.Filename, ContentHash: row.ContentHash, IndexStatus: row.IndexStatus, ChunkCount: row.ChunkCount, ErrorCode: row.ErrorCode}
 }
 func evidenceData(row *model.RunEvidence) types.EvidenceData {
-	return types.EvidenceData{Id: row.Id, VersionId: row.VersionId, ChunkId: row.ChunkId, Title: row.Title, Excerpt: row.Excerpt}
+	return types.EvidenceData{PageNumber: row.PageNumber, Id: row.Id, VersionId: row.VersionId, ChunkId: row.ChunkId, Title: row.Title, Excerpt: row.Excerpt}
 }
 func readableBase(row *model.KnowledgeBases, role string) bool {
 	var roles []string
@@ -175,7 +187,7 @@ func validateUpload(filename, content string) bool {
 	extension := strings.ToLower(filepath.Ext(filename))
 	return (extension == ".txt" || extension == ".md") && len(filename) <= 180 && filepath.Base(filename) == filename && !strings.ContainsAny(filename, "/\\\x00") && utf8.ValidString(content) && len(content) <= 256*1024 && utf8.RuneCountInString(content) <= 20000 && strings.TrimSpace(content) != "" && !strings.ContainsRune(content, 0)
 }
-func insertDocumentVersionTx(ctx context.Context, s *svc.ServiceContext, tx sqlx.Session, actor *model.Users, doc *model.Documents, filename, content string) (types.VersionData, error) {
+func insertDocumentVersionTx(ctx context.Context, s *svc.ServiceContext, tx sqlx.Session, actor *model.Users, doc *model.Documents, filename string, file knowledgeFile) (types.VersionData, error) {
 	count, err := s.DocumentVersionsModel.CountByDocumentTx(ctx, tx, actor.TenantId, doc.Id)
 	if err != nil {
 		return types.VersionData{}, err
@@ -183,7 +195,11 @@ func insertDocumentVersionTx(ctx context.Context, s *svc.ServiceContext, tx sqlx
 	if count >= maxVersionsPerDocument {
 		return types.VersionData{}, failure(429, "KNOWLEDGE_LIMIT", "文档版本数已达到上限")
 	}
-	row := &model.DocumentVersions{Id: uuid.NewString(), TenantId: actor.TenantId, DocumentId: doc.Id, JobId: uuid.NewString(), Filename: filename, Content: content, ContentHash: HashToken(content), IndexStatus: "pending"}
+	hash := HashToken(file.content)
+	if file.format == "pdf" {
+		hash = HashToken(string(file.raw))
+	}
+	row := &model.DocumentVersions{SourceFormat: file.format, SourceBytes: file.raw, PageTexts: "[]", Id: uuid.NewString(), TenantId: actor.TenantId, DocumentId: doc.Id, JobId: uuid.NewString(), Filename: filename, Content: file.content, ContentHash: hash, IndexStatus: "pending"}
 	if err := s.DocumentVersionsModel.InsertTx(ctx, tx, row); err != nil {
 		return types.VersionData{}, err
 	}
@@ -199,7 +215,14 @@ func UploadDocument(ctx context.Context, s *svc.ServiceContext, req *types.Uploa
 		return types.VersionData{}, err
 	}
 	req.Title = strings.TrimSpace(req.Title)
-	if !validID(req.KnowledgeBaseId) || req.Title == "" || utf8.RuneCountInString(req.Title) > 120 || !validateUpload(req.Filename, req.Content) {
+	file, err := knowledgeUpload(req.Filename, req.Content, req.ContentBase64)
+	if err != nil {
+		return types.VersionData{}, err
+	}
+	if file.format == "pdf" {
+		req.ContentBase64 = base64.StdEncoding.EncodeToString(file.raw)
+	}
+	if !validID(req.KnowledgeBaseId) || req.Title == "" || utf8.RuneCountInString(req.Title) > 120 {
 		return types.VersionData{}, errArgument
 	}
 	return idempotent(ctx, s, "document.upload", req.IdempotencyKey, req, 202, func(ctx context.Context, tx sqlx.Session) (types.VersionData, error) {
@@ -217,7 +240,7 @@ func UploadDocument(ctx context.Context, s *svc.ServiceContext, req *types.Uploa
 		if err := s.DocumentsModel.InsertTx(ctx, tx, doc); err != nil {
 			return types.VersionData{}, err
 		}
-		return insertDocumentVersionTx(ctx, s, tx, actor, doc, req.Filename, req.Content)
+		return insertDocumentVersionTx(ctx, s, tx, actor, doc, req.Filename, file)
 	})
 }
 func UploadDocumentVersion(ctx context.Context, s *svc.ServiceContext, req *types.UploadVersionReq) (types.VersionData, error) {
@@ -225,7 +248,14 @@ func UploadDocumentVersion(ctx context.Context, s *svc.ServiceContext, req *type
 	if err != nil {
 		return types.VersionData{}, err
 	}
-	if !validID(req.DocumentId) || !validateUpload(req.Filename, req.Content) {
+	file, err := knowledgeUpload(req.Filename, req.Content, req.ContentBase64)
+	if err != nil {
+		return types.VersionData{}, err
+	}
+	if file.format == "pdf" {
+		req.ContentBase64 = base64.StdEncoding.EncodeToString(file.raw)
+	}
+	if !validID(req.DocumentId) {
 		return types.VersionData{}, errArgument
 	}
 	return idempotent(ctx, s, "document.version", req.IdempotencyKey, req, 202, func(ctx context.Context, tx sqlx.Session) (types.VersionData, error) {
@@ -233,7 +263,7 @@ func UploadDocumentVersion(ctx context.Context, s *svc.ServiceContext, req *type
 		if err != nil {
 			return types.VersionData{}, err
 		}
-		return insertDocumentVersionTx(ctx, s, tx, actor, doc, req.Filename, req.Content)
+		return insertDocumentVersionTx(ctx, s, tx, actor, doc, req.Filename, file)
 	})
 }
 func ListDocumentVersions(ctx context.Context, s *svc.ServiceContext, documentID string) (types.VersionPage, error) {
@@ -253,7 +283,9 @@ func ListDocumentVersions(ctx context.Context, s *svc.ServiceContext, documentID
 		return result, err
 	}
 	for _, row := range rows {
-		result.Items = append(result.Items, versionData(&row))
+		result.Items = append(result.Items, types.VersionData{Id: row.Id, DocumentId: row.DocumentId, Filename: row.Filename,
+			ContentHash: row.ContentHash, IndexStatus: row.IndexStatus, ChunkCount: row.ChunkCount, ErrorCode: row.ErrorCode,
+			SourceFormat: row.SourceFormat, SourceSize: row.SourceSize, PageCount: row.PageCount, TextPageCount: row.TextPageCount})
 	}
 	return result, nil
 }
@@ -325,7 +357,7 @@ func GetIndexSource(ctx context.Context, s *svc.ServiceContext, req *types.Index
 	if err != nil {
 		return result, err
 	}
-	return types.IndexSourceData{TenantId: v.TenantId, KnowledgeBaseId: d.KnowledgeBaseId, DocumentId: d.Id, VersionId: v.Id, Content: v.Content, ContentHash: v.ContentHash}, nil
+	return types.IndexSourceData{SourceFormat: v.SourceFormat, SourceBase64: base64.StdEncoding.EncodeToString(v.SourceBytes), TenantId: v.TenantId, KnowledgeBaseId: d.KnowledgeBaseId, DocumentId: d.Id, VersionId: v.Id, Content: v.Content, ContentHash: v.ContentHash}, nil
 }
 func CompleteIndex(ctx context.Context, s *svc.ServiceContext, req *types.IndexCompleteReq) (types.VersionData, error) {
 	var result types.VersionData
@@ -333,13 +365,21 @@ func CompleteIndex(ctx context.Context, s *svc.ServiceContext, req *types.IndexC
 		return result, errArgument
 	}
 	err := s.Conn.TransactCtx(ctx, func(ctx context.Context, tx sqlx.Session) error {
-		if err := s.DocumentVersionsModel.UpdateIndexTx(ctx, tx, req.VersionId, req.JobId, req.ContentHash, req.ChunkCount, req.Status); err != nil {
-			return err
+		if req.Status == "failed" && req.ErrorCode == "" {
+			req.ErrorCode = "INDEX_FAILED"
 		}
-		// Job id is immutable and globally unique; this lookup stays on the transaction.
-		v, err := s.DocumentVersionsModel.FindOneByJobIdTx(ctx, tx, req.JobId)
+		v, err := s.DocumentVersionsModel.FindOneByJobIdForUpdateTx(ctx, tx, req.JobId)
 		if err != nil {
 			return err
+		}
+		pending := v.IndexStatus == "pending"
+		if err = applyIndexResult(v, req); err != nil {
+			return err
+		}
+		if pending {
+			if err = s.DocumentVersionsModel.UpdateIndexResultTx(ctx, tx, v); err != nil {
+				return err
+			}
 		}
 		result = versionData(v)
 		return nil
@@ -410,15 +450,15 @@ func ValidateEvidence(ctx context.Context, s *svc.ServiceContext, req *types.Evi
 				continue
 			}
 			v := versions[match]
-			if !strings.Contains(v.Content, candidate.Excerpt) {
+			if !excerptOnPage(v, candidate) {
 				return errForbidden
 			}
 			id := uuid.NewSHA1(uuid.MustParse(run.Id), []byte(candidate.ChunkId)).String()
 			row, err := s.RunEvidenceModel.FindOneForRunTx(ctx, tx, run.TenantId, run.Id, id)
 			if errors.Is(err, model.ErrNotFound) {
-				row = &model.RunEvidence{Id: id, TenantId: run.TenantId, RunId: run.Id, VersionId: v.VersionId, ChunkId: candidate.ChunkId, Title: v.Title, Excerpt: candidate.Excerpt, ContentHash: candidate.ContentHash}
+				row = &model.RunEvidence{PageNumber: candidate.PageNumber, Id: id, TenantId: run.TenantId, RunId: run.Id, VersionId: v.VersionId, ChunkId: candidate.ChunkId, Title: v.Title, Excerpt: candidate.Excerpt, ContentHash: candidate.ContentHash}
 				err = s.RunEvidenceModel.InsertTx(ctx, tx, row)
-			} else if err == nil && (row.VersionId != candidate.VersionId || row.ContentHash != candidate.ContentHash) {
+			} else if err == nil && (row.VersionId != candidate.VersionId || row.ContentHash != candidate.ContentHash || row.PageNumber != candidate.PageNumber) {
 				return errForbidden
 			}
 			if err != nil {
@@ -466,7 +506,7 @@ func canonicalCitationsTx(ctx context.Context, s *svc.ServiceContext, tx sqlx.Se
 		if !slices.ContainsFunc(versions, func(v model.ActiveKnowledgeVersion) bool { return v.VersionId == row.VersionId }) {
 			return nil, failure(409, "EVIDENCE_REVOKED", "引用的政策已撤回或权限已变化")
 		}
-		result = append(result, map[string]any{"id": row.Id, "version_id": row.VersionId, "chunk_id": row.ChunkId, "title": row.Title})
+		result = append(result, map[string]any{"id": row.Id, "version_id": row.VersionId, "chunk_id": row.ChunkId, "title": row.Title, "page_number": row.PageNumber})
 	}
 	return result, nil
 }

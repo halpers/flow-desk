@@ -150,14 +150,15 @@ Agent 写工具和手工写 API 都进入同一 logic 业务校验，来源分�
 | GET/POST | `/knowledge-bases` | 读取授权知识库 / admin 创建 |
 | PATCH | `/knowledge-bases/{knowledge_base_id}` | admin 以 expected_revision 更新固定角色访问策略 |
 | GET | `/knowledge-bases/{knowledge_base_id}/documents` | 文档与当前索引状态 |
-| POST | `/knowledge-bases/{knowledge_base_id}/documents` | admin JSON 文本上传，创建文档和首版本，返回 202 |
+| POST | `/knowledge-bases/{knowledge_base_id}/documents` | admin JSON 文本/PDF 上传，创建文档和首版本，返回 202 |
 | POST | `/documents/{document_id}/versions` | admin 上传新版本，返回索引任务 |
 | GET | `/documents/{document_id}/versions` | admin 读取版本元数据与索引状态 |
+| GET | `/documents/{document_id}/versions/{version_id}/pages` | admin 读取已就绪版本的分页提取文本，不返回原 PDF |
 | POST | `/documents/{document_id}/activate` | admin 激活 ready 版本，携带 version_id 和 expected_version |
 | POST | `/documents/{document_id}/withdraw` | admin 撤回；即时停止可见性，异步清理索引 |
 | GET | `/citations/{evidence_id}` | run 所有者读取仍然授权、有效的引用片段 |
 
-M3 支持 UTF-8 Markdown/TXT，经 JSON 提交 filename/content；单文件最多 256 KiB、20,000 字符。不解析 PDF/OCR，扩展解析器属于后续范围。每租户 50 个知识库、每库 200 份文档、每文档 100 个版本。文档 expected_version 防止并发激活覆盖，索引回调仅标记 ready，从不自动切换指针。历史消息、run 快照与 SSE 回放会隐藏已撤回或失权的政策答复，已下载到客户端的既有数据无法远程删除。实现说明见 [M3](m3-rag.md)。
+M3 支持 UTF-8 Markdown/TXT，经 JSON 提交 filename/content；单文件最多 256 KiB、20,000 字符。M7.1 支持文本 PDF，经 filename/content_base64 提交，content 留空；原文件最多 2 MiB、50 页，提取正文最多 100,000 字符/512 KiB，请求 JSON 上限 4 MiB。扫描件需要先 OCR；异步错误通过版本 error_code 展示，见 [PDF 契约](m7-knowledge-files.md)。每租户 50 个知识库、每库 200 份文档、每文档 100 个版本。文档 expected_version 防止并发激活覆盖，索引回调仅标记 ready/failed，从不自动切换指针，终态结果不可覆盖。历史消息、run 快照与 SSE 回放会隐藏已撤回或失权的政策答复，已下载到客户端的既有数据无法远程删除。文本基线见 [M3](m3-rag.md)。
 
 知识库读写权限由租户成员及固定角色/ACL 决定，不能由上传者在文档文本中定义。
 

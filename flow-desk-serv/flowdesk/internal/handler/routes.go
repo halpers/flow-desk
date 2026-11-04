@@ -205,6 +205,12 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 					Handler: UploadDocumentVersionHandler(serverCtx),
 				},
 				{
+					// PreviewVersionPages | permission=knowledge:manage | auth=required
+					Method:  http.MethodGet,
+					Path:    "/documents/:document_id/versions/:version_id/pages",
+					Handler: PreviewVersionPagesHandler(serverCtx),
+				},
+				{
 					// WithdrawDocument | permission=knowledge:manage | auth=required
 					Method:  http.MethodPost,
 					Path:    "/documents/:document_id/withdraw",

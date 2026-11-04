@@ -143,6 +143,8 @@ id 为 Python 在副作用前生成并落盘的稳定 action_id。Go 对参数�
 
 ### Python knowledge 索引
 
+M7.1 实际迁移在 Go `document_versions` 追加 source_format、source_bytes（BYTEA）、page_texts（JSONB）及 parser_version，run_evidence 追加 page_number。PDF 原字节的 SHA256 固定为版本 content_hash；派生正文在首次成功索引时冻结。Goctl BYTEA 映射由生成脚本修正为 []byte，禁止直接编辑生成模型。Python 的 knowledge_manifests 保存同一分页结果和 parser_version，knowledge_chunks 保存 page_number，knowledge_jobs 保存可恢复的终止错误码。文本旧行通过默认值兼容，Go/Python 各自迁移自有表，见 [PDF 数据契约](m7-knowledge-files.md)。
+
 | 表 | 关键字段 |
 | --- | --- |
 | index_manifests | tenant_id、knowledge_base_id、document_id、version_id、embedding_model、dimension、splitter_version、content_hash、state、chunk_count |

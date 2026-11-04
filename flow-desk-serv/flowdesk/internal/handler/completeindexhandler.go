@@ -13,7 +13,7 @@ import (
 func CompleteIndexHandler(s *svc.ServiceContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req types.IndexCompleteReq
-		r.Body = http.MaxBytesReader(w, r.Body, 300*1024)
+		r.Body = http.MaxBytesReader(w, r.Body, logic.MaxKnowledgeRequestBytes)
 		if err := httpx.Parse(r, &req); err != nil {
 			writeBusiness(w, r, 400, nil, &logic.BusinessError{Status: 400, Code: "INVALID_ARGUMENT", Message: "输入格式不正确"})
 			return

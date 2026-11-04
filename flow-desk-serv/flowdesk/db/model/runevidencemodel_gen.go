@@ -47,6 +47,7 @@ type (
 		Excerpt     string    `db:"excerpt"`
 		ContentHash string    `db:"content_hash"`
 		CreatedAt   time.Time `db:"created_at"`
+		PageNumber  int64     `db:"page_number"`
 	}
 )
 
@@ -92,14 +93,14 @@ func (m *defaultRunEvidenceModel) FindOneByTenantIdRunIdChunkId(ctx context.Cont
 }
 
 func (m *defaultRunEvidenceModel) Insert(ctx context.Context, data *RunEvidence) (sql.Result, error) {
-	query := fmt.Sprintf("insert into %s (%s) values ($1, $2, $3, $4, $5, $6, $7, $8)", m.table, runEvidenceRowsExpectAutoSet)
-	ret, err := m.conn.ExecCtx(ctx, query, data.Id, data.TenantId, data.RunId, data.VersionId, data.ChunkId, data.Title, data.Excerpt, data.ContentHash)
+	query := fmt.Sprintf("insert into %s (%s) values ($1, $2, $3, $4, $5, $6, $7, $8, $9)", m.table, runEvidenceRowsExpectAutoSet)
+	ret, err := m.conn.ExecCtx(ctx, query, data.Id, data.TenantId, data.RunId, data.VersionId, data.ChunkId, data.Title, data.Excerpt, data.ContentHash, data.PageNumber)
 	return ret, err
 }
 
 func (m *defaultRunEvidenceModel) Update(ctx context.Context, newData *RunEvidence) error {
 	query := fmt.Sprintf("update %s set %s where id = $1", m.table, runEvidenceRowsWithPlaceHolder)
-	_, err := m.conn.ExecCtx(ctx, query, newData.Id, newData.TenantId, newData.RunId, newData.VersionId, newData.ChunkId, newData.Title, newData.Excerpt, newData.ContentHash)
+	_, err := m.conn.ExecCtx(ctx, query, newData.Id, newData.TenantId, newData.RunId, newData.VersionId, newData.ChunkId, newData.Title, newData.Excerpt, newData.ContentHash, newData.PageNumber)
 	return err
 }
 

@@ -207,6 +207,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/documents/{document_id}/versions/{version_id}/pages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** PreviewVersionPages | permission=knowledge:manage | auth=required */
+        get: operations["previewVersionPages"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/documents/{document_id}/withdraw": {
         parameters: {
             query?: never;
@@ -1117,6 +1134,7 @@ export interface operations {
                             chunk_id: string;
                             excerpt: string;
                             id: string;
+                            page_number: number;
                             title: string;
                             version_id: string;
                         };
@@ -1437,6 +1455,10 @@ export interface operations {
                                 filename: string;
                                 id: string;
                                 index_status: string;
+                                page_count: number;
+                                source_format: string;
+                                source_size: number;
+                                text_page_count: number;
                             }[];
                         };
                         request_id?: string;
@@ -1459,7 +1481,8 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
-                    content: string;
+                    content?: string;
+                    content_base64?: string;
                     filename: string;
                 };
             };
@@ -1480,6 +1503,43 @@ export interface operations {
                             filename: string;
                             id: string;
                             index_status: string;
+                            page_count: number;
+                            source_format: string;
+                            source_size: number;
+                            text_page_count: number;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    previewVersionPages: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document_id: string;
+                version_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            pages: {
+                                page_number: number;
+                                text: string;
+                            }[];
+                            parser_version: string;
+                            version_id: string;
                         };
                         request_id?: string;
                     };
@@ -1674,7 +1734,8 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
-                    content: string;
+                    content?: string;
+                    content_base64?: string;
                     filename: string;
                     title: string;
                 };
@@ -1696,6 +1757,10 @@ export interface operations {
                             filename: string;
                             id: string;
                             index_status: string;
+                            page_count: number;
+                            source_format: string;
+                            source_size: number;
+                            text_page_count: number;
                         };
                         request_id?: string;
                     };
@@ -2743,7 +2808,13 @@ export interface operations {
                 "application/json": {
                     chunk_count: number;
                     content_hash: string;
+                    error_code?: string;
                     job_id: string;
+                    page_texts?: {
+                        page_number: number;
+                        text: string;
+                    }[];
+                    parser_version?: string;
                     status: string;
                 };
             };
@@ -2764,6 +2835,10 @@ export interface operations {
                             filename: string;
                             id: string;
                             index_status: string;
+                            page_count: number;
+                            source_format: string;
+                            source_size: number;
+                            text_page_count: number;
                         };
                         request_id?: string;
                     };
@@ -2796,6 +2871,8 @@ export interface operations {
                             content_hash: string;
                             document_id: string;
                             knowledge_base_id: string;
+                            source_base64: string;
+                            source_format: string;
                             tenant_id: string;
                             version_id: string;
                         };
@@ -3012,6 +3089,7 @@ export interface operations {
                         chunk_id: string;
                         content_hash: string;
                         excerpt: string;
+                        page_number?: number;
                         version_id: string;
                     }[];
                 };
@@ -3030,6 +3108,7 @@ export interface operations {
                                 chunk_id: string;
                                 excerpt: string;
                                 id: string;
+                                page_number: number;
                                 title: string;
                                 version_id: string;
                             }[];

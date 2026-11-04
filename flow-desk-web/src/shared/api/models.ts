@@ -18,6 +18,9 @@ export type Models = {
     paths["/api/v1/knowledge-bases/{knowledge_base_id}/documents"]["get"]
   >;
   VersionPage: Data<paths["/api/v1/documents/{document_id}/versions"]["get"]>;
+  VersionPagesData: Data<
+    paths["/api/v1/documents/{document_id}/versions/{version_id}/pages"]["get"]
+  >;
   EvidenceData: Data<paths["/api/v1/citations/{evidence_id}"]["get"]>;
   ConversationData: Data<
     paths["/api/v1/conversations/{conversation_id}"]["get"]

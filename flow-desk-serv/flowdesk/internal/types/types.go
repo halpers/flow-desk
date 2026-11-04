@@ -193,6 +193,7 @@ type EventsReq struct {
 }
 
 type EvidenceCandidate struct {
+	PageNumber  int64  `json:"page_number,optional"`
 	VersionId   string `json:"version_id"`
 	ChunkId     string `json:"chunk_id"`
 	Excerpt     string `json:"excerpt"`
@@ -200,11 +201,12 @@ type EvidenceCandidate struct {
 }
 
 type EvidenceData struct {
-	Id        string `json:"id"`
-	VersionId string `json:"version_id"`
-	ChunkId   string `json:"chunk_id"`
-	Title     string `json:"title"`
-	Excerpt   string `json:"excerpt"`
+	PageNumber int64  `json:"page_number"`
+	Id         string `json:"id"`
+	VersionId  string `json:"version_id"`
+	ChunkId    string `json:"chunk_id"`
+	Title      string `json:"title"`
+	Excerpt    string `json:"excerpt"`
 }
 
 type EvidencePage struct {
@@ -241,14 +243,19 @@ type HealthResp struct {
 }
 
 type IndexCompleteReq struct {
-	VersionId   string `path:"version_id"`
-	JobId       string `json:"job_id"`
-	ContentHash string `json:"content_hash"`
-	ChunkCount  int64  `json:"chunk_count"`
-	Status      string `json:"status"`
+	PageTexts     []KnowledgePageText `json:"page_texts,optional"`
+	ParserVersion string              `json:"parser_version,optional"`
+	ErrorCode     string              `json:"error_code,optional"`
+	VersionId     string              `path:"version_id"`
+	JobId         string              `json:"job_id"`
+	ContentHash   string              `json:"content_hash"`
+	ChunkCount    int64               `json:"chunk_count"`
+	Status        string              `json:"status"`
 }
 
 type IndexSourceData struct {
+	SourceFormat    string `json:"source_format"`
+	SourceBase64    string `json:"source_base64"`
 	TenantId        string `json:"tenant_id"`
 	KnowledgeBaseId string `json:"knowledge_base_id"`
 	DocumentId      string `json:"document_id"`
@@ -306,6 +313,11 @@ type KnowledgeBasesResp struct {
 	Code      string            `json:"code"`
 	RequestId string            `json:"request_id"`
 	Data      KnowledgeBasePage `json:"data"`
+}
+
+type KnowledgePageText struct {
+	PageNumber int64  `json:"page_number"`
+	Text       string `json:"text"`
 }
 
 type KnowledgeScope struct {
@@ -686,14 +698,16 @@ type UploadDocumentReq struct {
 	KnowledgeBaseId string `path:"knowledge_base_id"`
 	Title           string `json:"title"`
 	Filename        string `json:"filename"`
-	Content         string `json:"content"`
+	Content         string `json:"content,optional"`
+	ContentBase64   string `json:"content_base64,optional"`
 	IdempotencyKey  string `header:"Idempotency-Key"`
 }
 
 type UploadVersionReq struct {
 	DocumentId     string `path:"document_id"`
 	Filename       string `json:"filename"`
-	Content        string `json:"content"`
+	Content        string `json:"content,optional"`
+	ContentBase64  string `json:"content_base64,optional"`
 	IdempotencyKey string `header:"Idempotency-Key"`
 }
 
@@ -714,17 +728,38 @@ type UserResp struct {
 }
 
 type VersionData struct {
-	Id          string `json:"id"`
-	DocumentId  string `json:"document_id"`
-	Filename    string `json:"filename"`
-	ContentHash string `json:"content_hash"`
-	IndexStatus string `json:"index_status"`
-	ChunkCount  int64  `json:"chunk_count"`
-	ErrorCode   string `json:"error_code"`
+	SourceFormat  string `json:"source_format"`
+	SourceSize    int64  `json:"source_size"`
+	PageCount     int64  `json:"page_count"`
+	TextPageCount int64  `json:"text_page_count"`
+	Id            string `json:"id"`
+	DocumentId    string `json:"document_id"`
+	Filename      string `json:"filename"`
+	ContentHash   string `json:"content_hash"`
+	IndexStatus   string `json:"index_status"`
+	ChunkCount    int64  `json:"chunk_count"`
+	ErrorCode     string `json:"error_code"`
 }
 
 type VersionPage struct {
 	Items []VersionData `json:"items"`
+}
+
+type VersionPagesData struct {
+	VersionId     string              `json:"version_id"`
+	ParserVersion string              `json:"parser_version"`
+	Pages         []KnowledgePageText `json:"pages"`
+}
+
+type VersionPagesReq struct {
+	DocumentId string `path:"document_id"`
+	VersionId  string `path:"version_id"`
+}
+
+type VersionPagesResp struct {
+	Code      string           `json:"code"`
+	RequestId string           `json:"request_id"`
+	Data      VersionPagesData `json:"data"`
 }
 
 type VersionResp struct {

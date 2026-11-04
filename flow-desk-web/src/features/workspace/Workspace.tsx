@@ -378,6 +378,7 @@ export function Workspace({ user }: { user: User }) {
                       key={citation.id || index}
                       id={citation.id}
                       title={String(citation.title || "政策片段")}
+                      pageNumber={Number(citation.page_number || 0)}
                     />
                   ),
               )}

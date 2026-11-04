@@ -16,6 +16,7 @@ import { api, type User } from "../../shared/api/client";
 import { newId } from "../../shared/id";
 import type { Models } from "../../shared/api/models";
 import { TeamScope } from "../teams/Teams";
+import { indexErrors, readKnowledgeFile } from "./files";
 
 type Document = Models["DocumentPage"]["items"][number];
 const roleOptions = [
@@ -41,6 +42,9 @@ function DocumentVersions({
 }) {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [preview, setPreview] = useState<Models["VersionPagesData"] | null>(
+    null,
+  );
   const versions = useQuery({
     queryKey: [...scope, "versions", document.id],
     queryFn: () =>
@@ -51,6 +55,7 @@ function DocumentVersions({
         : false,
   });
   const uploadKey = useRef(newId());
+  const uploadPayload = useRef("");
   const change = async (path: string, body: unknown) => {
     setBusy(true);
     setError("");
@@ -86,8 +91,31 @@ function DocumentVersions({
               ? `${version.chunk_count} 个片段`
               : version.index_status === "pending"
                 ? "正在索引"
-                : "索引失败"}
+                : indexErrors[version.error_code] || "索引失败"}
+            {version.source_format === "pdf" &&
+              version.index_status === "ready" &&
+              ` · ${version.page_count} 页（${version.text_page_count} 页有文字）`}
           </span>
+          {version.source_format === "pdf" &&
+            version.index_status === "ready" && (
+              <Button
+                size="small"
+                onClick={async () => {
+                  setError("");
+                  try {
+                    setPreview(
+                      await api(
+                        `/documents/${document.id}/versions/${version.id}/pages`,
+                      ),
+                    );
+                  } catch (reason) {
+                    setError((reason as Error).message);
+                  }
+                }}
+              >
+                预览提取文本
+              </Button>
+            )}
           <Button
             size="small"
             loading={busy}
@@ -114,7 +142,7 @@ function DocumentVersions({
           <input
             aria-label={`上传${document.title}新版本`}
             type="file"
-            accept=".txt,.md"
+            accept=".txt,.md,.pdf"
             disabled={busy}
             onChange={async (event) => {
               const element = event.currentTarget;
@@ -123,16 +151,17 @@ function DocumentVersions({
               setBusy(true);
               setError("");
               try {
-                if (file.size > 256 * 1024)
-                  throw new Error("文件不能超过 256 KiB");
+                const body = await readKnowledgeFile(file);
+                const serialized = JSON.stringify(body);
+                if (uploadPayload.current !== serialized)
+                  uploadKey.current = newId();
+                uploadPayload.current = serialized;
                 await api(
                   `/documents/${document.id}/versions`,
-                  post(
-                    { filename: file.name, content: await file.text() },
-                    uploadKey.current,
-                  ),
+                  post(body, uploadKey.current),
                 );
                 uploadKey.current = newId();
+                uploadPayload.current = "";
                 await versions.refetch();
               } catch (reason) {
                 setError((reason as Error).message);
@@ -157,6 +186,22 @@ function DocumentVersions({
         </Button>
       </Space>
       {error && <Alert title={error} type="error" />}
+      <Modal
+        title="PDF 提取文本"
+        open={preview !== null}
+        onCancel={() => setPreview(null)}
+        footer={null}
+      >
+        <p>以下为文本层；图片内容未识别，激活前请核对。</p>
+        {preview?.pages.map((item) => (
+          <section key={item.page_number}>
+            <strong>第 {item.page_number} 页</strong>
+            <p className="citation-excerpt">
+              {item.text || "此页未提取到文字"}
+            </p>
+          </section>
+        ))}
+      </Modal>
     </div>
   );
 }
@@ -321,8 +366,9 @@ export function Knowledge({ user }: { user: User }) {
         {admin && selected && (
           <Card size="small" title="上传政策文档" style={{ marginTop: 16 }}>
             <p className="muted">
-              UTF-8 TXT / Markdown，最多 256 KiB、20,000
-              字符。索引完成后需手动激活。
+              UTF-8 TXT / Markdown：256 KiB、20,000 字符。文本 PDF：2 MiB、50
+              页、100,000 字符。 扫描件需先
+              OCR；仅索引文本层。索引完成后需手动激活。
             </p>
             <Input
               aria-label="文档标题"
@@ -338,7 +384,7 @@ export function Knowledge({ user }: { user: User }) {
               style={{ margin: "12px 0" }}
               aria-label="知识文件"
               type="file"
-              accept=".txt,.md"
+              accept=".txt,.md,.pdf"
               onChange={(event) => {
                 setFile(event.target.files?.[0] || null);
                 key.current = newId();
@@ -350,15 +396,12 @@ export function Knowledge({ user }: { user: User }) {
               onClick={() =>
                 perform(async () => {
                   if (!file) return;
-                  if (file.size > 256 * 1024)
-                    throw new Error("文件不能超过 256 KiB");
                   await api(
                     `/knowledge-bases/${selected}/documents`,
                     post(
                       {
                         title,
-                        filename: file.name,
-                        content: await file.text(),
+                        ...(await readKnowledgeFile(file)),
                       },
                       key.current,
                     ),
@@ -396,7 +439,15 @@ export function Knowledge({ user }: { user: User }) {
   );
 }
 
-export function Citation({ id, title }: { id: string; title: string }) {
+export function Citation({
+  id,
+  title,
+  pageNumber = 0,
+}: {
+  id: string;
+  title: string;
+  pageNumber?: number;
+}) {
   const [open, setOpen] = useState(false);
   const [data, setData] = useState<Models["EvidenceData"] | null>(null);
   const [error, setError] = useState("");
@@ -422,6 +473,7 @@ export function Citation({ id, title }: { id: string; title: string }) {
         }}
       >
         依据：{title}
+        {pageNumber > 0 && ` · 第 ${pageNumber} 页`}
       </Button>
       <Modal
         title={data?.title || "政策引用"}
@@ -434,7 +486,8 @@ export function Citation({ id, title }: { id: string; title: string }) {
           <>
             <p className="citation-excerpt">{data.excerpt}</p>
             <small className="muted">
-              版本 {data.version_id} · 片段 {data.chunk_id}
+              {data.page_number > 0 && `第 ${data.page_number} 页 · `}版本{" "}
+              {data.version_id} · 片段 {data.chunk_id}
             </small>
           </>
         )}

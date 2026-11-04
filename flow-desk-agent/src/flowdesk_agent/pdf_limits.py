@@ -1,0 +1,10 @@
+"""Parser limits shared with the child without service dependencies."""
+
+MAX_PDF_BYTES = 2 * 1024 * 1024
+MAX_PDF_PAGES = 50
+MAX_TEXT_CHARACTERS = 100_000
+MAX_TEXT_BYTES = 512 * 1024
+PARSE_TIMEOUT_SECONDS = 8
+CPU_SECONDS = 5
+ADDRESS_SPACE_BYTES = 384 * 1024 * 1024
+PARSER_VERSION = "pypdf-6.21.4-text-v1"

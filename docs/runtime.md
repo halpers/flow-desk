@@ -67,4 +67,6 @@ pnpm.cmd --dir flow-desk-web test:e2e
 
 阶段状态以 [实施记录](progress.md) 为准。M1–M6.5 已交付身份、持久化任务、知识检索、兼容模型、经批准的工单办理、固定评测，以及语义 RAG、MCP、部署监控和团队权限。当前使用三个固定角色，`users.role` 保存单一角色；M6.4 的团队成员与资源范围已实现，多角色关联表仍未实现。远程单机部署见[服务器手册](../deploy/server.md)。
 
+M7.1 的 PDF 解析器随 Agent 镜像安装，无需额外解析服务或 API key。管理员上传有文本层的 PDF 后先预览文本再激活；错误状态、文件限制和页码规则见 [PDF 说明](m7-knowledge-files.md)。默认 Web 及两种 TLS 代理的请求上限与 Go 均为 4 MiB；自建代理也需保持一致。
+
 本地 HTTP Cookie 为 HttpOnly、SameSite=Strict。生产接入 TLS 反向代理时设置 `COOKIE_SECURE=true`、调整可信 Origin 并使用非 dev 模式；非 dev 模式会拒绝关闭 Secure Cookie 的配置。新建本地配置默认 `MODEL_PROVIDER=mock`；真实模型需在 `.env` 设置 `MODEL_PROVIDER=openai-compatible`、`MODEL_BASE_URL`、`MODEL_NAME` 和 `MODEL_API_KEY`。
