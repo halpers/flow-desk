@@ -98,6 +98,13 @@ func RenewLease(ctx context.Context, s *svc.ServiceContext, req *types.LeaseReq)
 		if err = authorizeRunTx(ctx, s, tx, run); err != nil {
 			return err
 		}
+		visible, err := runTicketsVisibleTx(ctx, s, tx, run)
+		if err != nil {
+			return err
+		}
+		if !visible {
+			return errMissing
+		}
 		if err = s.RunsModel.UpdateLeaseTx(ctx, tx, run.Id, run.LeaseGeneration); err != nil {
 			return err
 		}
@@ -168,6 +175,9 @@ func appendEventTx(ctx context.Context, s *svc.ServiceContext, tx sqlx.Session, 
 
 func IngestEvent(ctx context.Context, s *svc.ServiceContext, req *types.AgentEventReq, rawCapability string) (types.EventAck, error) {
 	var result types.EventAck
+	if req.Type == "resource.revoked" {
+		return result, errArgument
+	}
 	if !validID(req.RunId) || !validID(req.SourceEventId) || req.LeaseGeneration < 1 {
 		return result, errArgument
 	}
@@ -303,6 +313,9 @@ func ListRunEvents(ctx context.Context, s *svc.ServiceContext, runID string, aft
 	}
 	events := []types.EventData{}
 	for _, row := range rows {
+		if row.Seq > snapshot.LastEventSeq {
+			break
+		}
 		var payload map[string]any
 		if err = json.Unmarshal([]byte(row.Payload), &payload); err != nil {
 			return nil, err
@@ -310,6 +323,11 @@ func ListRunEvents(ctx context.Context, s *svc.ServiceContext, runID string, aft
 		if row.Type == domain.EventMessageCompleted {
 			payload["content"] = snapshot.CurrentMessage.Content
 			payload["citations"] = snapshot.CurrentMessage.Citations
+			payload["action_receipts"] = snapshot.CurrentMessage.ActionReceipts
+		}
+		if snapshot.CurrentMessage.Content == resourceHiddenMessage {
+			row.Type = "resource.revoked"
+			payload = map[string]any{"summary": resourceHiddenMessage}
 		}
 		events = append(events, types.EventData{SchemaVersion: "1", RunId: row.RunId, Seq: row.Seq, Type: row.Type, OccurredAt: row.OccurredAt.UTC().Format(time.RFC3339Nano), Payload: payload})
 	}
@@ -377,11 +395,17 @@ func CallTool(ctx context.Context, s *svc.ServiceContext, req *types.ToolReq, ra
 			}
 			result.Logistics = logisticsData(rows)
 		} else {
-			rows, err := s.TicketsModel.ListTenantTx(ctx, tx, run.TenantId, order.Id, "", "", 20)
+			if err = s.TeamsModel.LockAuthorizationForShareTx(ctx, tx, run.TenantId); err != nil {
+				return err
+			}
+			rows, err := s.TicketsModel.ListAccessibleTx(ctx, tx, run.TenantId, actor.Id, actor.Role, order.Id, "", "", 20)
 			if err != nil {
 				return err
 			}
 			for i := range rows {
+				if err = rememberTicketTx(ctx, s, tx, run, rows[i].Id); err != nil {
+					return err
+				}
 				result.Tickets = append(result.Tickets, ticketData(&rows[i]))
 			}
 		}

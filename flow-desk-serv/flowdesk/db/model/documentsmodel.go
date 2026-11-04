@@ -17,6 +17,7 @@ type (
 		InsertTx(context.Context, sqlx.Session, *Documents) error
 		CountByBaseTx(context.Context, sqlx.Session, string, string) (int64, error)
 		ListByBase(context.Context, string, string) ([]Documents, error)
+		ListByBaseTx(context.Context, sqlx.Session, string, string) ([]Documents, error)
 		FindOneForUpdateTx(context.Context, sqlx.Session, string, string) (*Documents, error)
 		UpdateActiveVersionTx(context.Context, sqlx.Session, string, string, int64, string, string) error
 	}
@@ -44,6 +45,11 @@ func (m *customDocumentsModel) CountByBaseTx(ctx context.Context, tx sqlx.Sessio
 func (m *customDocumentsModel) ListByBase(ctx context.Context, tenant, base string) ([]Documents, error) {
 	rows := []Documents{}
 	err := m.conn.QueryRowsCtx(ctx, &rows, fmt.Sprintf("select %s from %s where tenant_id=$1 and knowledge_base_id=$2 order by created_at,id limit 201", documentsRows, m.table), tenant, base)
+	return rows, err
+}
+func (m *customDocumentsModel) ListByBaseTx(ctx context.Context, tx sqlx.Session, tenant, base string) ([]Documents, error) {
+	rows := []Documents{}
+	err := tx.QueryRowsCtx(ctx, &rows, fmt.Sprintf("select %s from %s where tenant_id=$1 and knowledge_base_id=$2 order by created_at,id limit 201", documentsRows, m.table), tenant, base)
 	return rows, err
 }
 func (m *customDocumentsModel) FindOneForUpdateTx(ctx context.Context, tx sqlx.Session, tenant, id string) (*Documents, error) {

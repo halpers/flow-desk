@@ -55,6 +55,7 @@ type (
 		Version        int64          `db:"version"`
 		CreatedAt      time.Time      `db:"created_at"`
 		UpdatedAt      time.Time      `db:"updated_at"`
+		TeamId         sql.NullString `db:"team_id"`
 	}
 )
 
@@ -128,14 +129,14 @@ func (m *defaultTicketsModel) FindOneByTenantIdTicketNo(ctx context.Context, ten
 }
 
 func (m *defaultTicketsModel) Insert(ctx context.Context, data *Tickets) (sql.Result, error) {
-	query := fmt.Sprintf("insert into %s (%s) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)", m.table, ticketsRowsExpectAutoSet)
-	ret, err := m.conn.ExecCtx(ctx, query, data.Id, data.TenantId, data.TicketNo, data.OrderId, data.Title, data.Description, data.Category, data.Priority, data.Status, data.AssigneeUserId, data.CreatedBy, data.SourceActionId, data.Version)
+	query := fmt.Sprintf("insert into %s (%s) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)", m.table, ticketsRowsExpectAutoSet)
+	ret, err := m.conn.ExecCtx(ctx, query, data.Id, data.TenantId, data.TicketNo, data.OrderId, data.Title, data.Description, data.Category, data.Priority, data.Status, data.AssigneeUserId, data.CreatedBy, data.SourceActionId, data.Version, data.TeamId)
 	return ret, err
 }
 
 func (m *defaultTicketsModel) Update(ctx context.Context, newData *Tickets) error {
 	query := fmt.Sprintf("update %s set %s where id = $1", m.table, ticketsRowsWithPlaceHolder)
-	_, err := m.conn.ExecCtx(ctx, query, newData.Id, newData.TenantId, newData.TicketNo, newData.OrderId, newData.Title, newData.Description, newData.Category, newData.Priority, newData.Status, newData.AssigneeUserId, newData.CreatedBy, newData.SourceActionId, newData.Version)
+	_, err := m.conn.ExecCtx(ctx, query, newData.Id, newData.TenantId, newData.TicketNo, newData.OrderId, newData.Title, newData.Description, newData.Category, newData.Priority, newData.Status, newData.AssigneeUserId, newData.CreatedBy, newData.SourceActionId, newData.Version, newData.TeamId)
 	return err
 }
 

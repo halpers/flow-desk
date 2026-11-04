@@ -20,7 +20,7 @@ type (
 		FindOneForShareTx(context.Context, sqlx.Session, string, string) (*DocumentVersions, error)
 		FindOneByJobIdTx(context.Context, sqlx.Session, string) (*DocumentVersions, error)
 		UpdateIndexTx(context.Context, sqlx.Session, string, string, string, int64, string) error
-		ListActiveForShareTx(context.Context, sqlx.Session, string, string) ([]ActiveKnowledgeVersion, error)
+		ListActiveForShareTx(context.Context, sqlx.Session, string, string, string) ([]ActiveKnowledgeVersion, error)
 	}
 
 	customDocumentVersionsModel struct {
@@ -69,7 +69,10 @@ func (m *customDocumentVersionsModel) FindOneForShareTx(ctx context.Context, tx 
 func (m *customDocumentVersionsModel) UpdateIndexTx(ctx context.Context, tx sqlx.Session, version, job, hash string, count int64, status string) error {
 	return requireOne(tx.ExecCtx(ctx, fmt.Sprintf("update %s set index_status=$5,chunk_count=$4 where id=$1 and job_id=$2 and content_hash=$3 and (index_status='pending' or (index_status=$5 and chunk_count=$4))", m.table), version, job, hash, count, status))
 }
-func (m *customDocumentVersionsModel) ListActiveForShareTx(ctx context.Context, tx sqlx.Session, tenant, role string) ([]ActiveKnowledgeVersion, error) {
+func (m *customDocumentVersionsModel) ListActiveForShareTx(ctx context.Context, tx sqlx.Session, tenant, role, actor string) ([]ActiveKnowledgeVersion, error) {
+	if err := lockAuthorizationForShareTx(ctx, tx, tenant); err != nil {
+		return nil, err
+	}
 	rows := []ActiveKnowledgeVersion{}
 	// The version model owns this main-table query. Shared locks linearize ACL revocation,
 	// withdrawal and activation against evidence registration and final citation checks.
@@ -77,9 +80,9 @@ func (m *customDocumentVersionsModel) ListActiveForShareTx(ctx context.Context, 
  d.title,k.acl_revision,v.content from %s v join business.documents d
  on d.tenant_id=v.tenant_id and d.id=v.document_id and d.active_version_id=v.id
  join business.knowledge_bases k on k.tenant_id=d.tenant_id and k.id=d.knowledge_base_id
- where v.tenant_id=$1 and v.index_status='ready' and d.status='active' and k.read_roles ? $2
+ where v.tenant_id=$1 and v.index_status='ready' and d.status='active' and k.read_roles ? $2 and (k.team_id is null or $2='admin' or exists(select 1 from business.team_members tm where tm.tenant_id=k.tenant_id and tm.team_id=k.team_id and tm.user_id=$3))
  order by v.id for share of v,d,k`, m.table)
-	err := tx.QueryRowsCtx(ctx, &rows, query, tenant, role)
+	err := tx.QueryRowsCtx(ctx, &rows, query, tenant, role, actor)
 	return rows, err
 }
 

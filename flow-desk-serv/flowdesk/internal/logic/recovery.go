@@ -3,6 +3,7 @@ package logic
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -154,7 +155,7 @@ func CancelRun(ctx context.Context, s *svc.ServiceContext, req *types.CancelRunR
 	if !validID(req.RunId) || req.ExpectedVersion < 1 {
 		return types.RunData{}, errArgument
 	}
-	return idempotent(ctx, s, "run.cancel:"+req.RunId, req.IdempotencyKey, req, 200, func(ctx context.Context, tx sqlx.Session) (types.RunData, error) {
+	return idempotentRun(ctx, s, "run.cancel:"+req.RunId, req.IdempotencyKey, req, 200, func(ctx context.Context, tx sqlx.Session) (types.RunData, error) {
 		actor := Current(ctx).User
 		run, err := s.RunsModel.FindOneForUpdateTx(ctx, tx, actor.TenantId, req.RunId)
 		if err != nil {
@@ -187,7 +188,7 @@ func DecideApproval(ctx context.Context, s *svc.ServiceContext, req *types.Decis
 	if err != nil {
 		return types.RunData{}, err
 	}
-	return idempotent(ctx, s, "approval.decide:"+req.ApprovalId, req.IdempotencyKey, req, 200, func(ctx context.Context, tx sqlx.Session) (types.RunData, error) {
+	return idempotentRun(ctx, s, "approval.decide:"+req.ApprovalId, req.IdempotencyKey, req, 200, func(ctx context.Context, tx sqlx.Session) (types.RunData, error) {
 		actor := Current(ctx).User
 		run, err := s.RunsModel.FindOneForUpdateTx(ctx, tx, actor.TenantId, locator.RunId)
 		if err != nil {
@@ -216,6 +217,18 @@ func DecideApproval(ctx context.Context, s *svc.ServiceContext, req *types.Decis
 		}
 		if !fresh.Enabled || !permitted(fresh, actionPermission(action.ToolName)) {
 			return types.RunData{}, errForbidden
+		}
+		if req.Decision == "approve" {
+			if _, err = canonicalCitationsTx(ctx, s, tx, run, jsonObject(approval.DisplaySnapshot)["evidence"]); err != nil {
+				return types.RunData{}, err
+			}
+			visible, err := runTicketsVisibleTx(ctx, s, tx, run)
+			if err != nil {
+				return types.RunData{}, err
+			}
+			if !visible {
+				return types.RunData{}, errMissing
+			}
 		}
 		approval.Status = stateApproved
 		if req.Decision == "reject" {
@@ -256,7 +269,7 @@ func SubmitInput(ctx context.Context, s *svc.ServiceContext, req *types.SubmitIn
 	if err != nil {
 		return types.RunData{}, err
 	}
-	return idempotent(ctx, s, "run.input:"+req.RunId, req.IdempotencyKey, req, 202, func(ctx context.Context, tx sqlx.Session) (types.RunData, error) {
+	return idempotentRun(ctx, s, "run.input:"+req.RunId, req.IdempotencyKey, req, 202, func(ctx context.Context, tx sqlx.Session) (types.RunData, error) {
 		actor := Current(ctx).User
 		conversation, err := s.ConversationsModel.FindOneOwnedForUpdateTx(ctx, tx, actor.TenantId, actor.Id, locator.ConversationId)
 		if err != nil {
@@ -316,6 +329,13 @@ func addRunControlsTx(ctx context.Context, s *svc.ServiceContext, tx sqlx.Sessio
 	result.PendingInputs = []types.PendingInputData{}
 	result.Approvals = []types.ApprovalData{}
 	result.ActionReceipts = []types.ReceiptData{}
+	visible, err := runTicketsVisibleTx(ctx, s, tx, row)
+	if err != nil {
+		return err
+	}
+	if !visible {
+		return nil
+	}
 	inputs, err := s.PendingInputsModel.ListPendingByRunTx(ctx, tx, row.TenantId, row.Id)
 	if err != nil {
 		return err
@@ -328,6 +348,14 @@ func addRunControlsTx(ctx context.Context, s *svc.ServiceContext, tx sqlx.Sessio
 		return err
 	}
 	for i := range approvals {
+		_, checkErr := canonicalCitationsTx(ctx, s, tx, row, jsonObject(approvals[i].DisplaySnapshot)["evidence"])
+		if checkErr != nil {
+			var business *BusinessError
+			if errors.As(checkErr, &business) && (business.Code == "EVIDENCE_REVOKED" || business.Code == "PERMISSION_DENIED") {
+				continue
+			}
+			return checkErr
+		}
 		result.Approvals = append(result.Approvals, approvalData(&approvals[i]))
 	}
 	receipts, err := s.ActionReceiptsModel.ListByRunTx(ctx, tx, row.TenantId, row.Id)

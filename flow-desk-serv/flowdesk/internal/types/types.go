@@ -110,6 +110,11 @@ type CreateConversationReq struct {
 	IdempotencyKey string `header:"Idempotency-Key"`
 }
 
+type CreateTeamReq struct {
+	IdempotencyKey string `header:"Idempotency-Key"`
+	Name           string `json:"name"`
+}
+
 type CreateTicketReq struct {
 	IdempotencyKey  string `header:"Idempotency-Key"`
 	OrderId         string `json:"order_id"`
@@ -270,6 +275,7 @@ type KnowledgeAclReq struct {
 }
 
 type KnowledgeBaseData struct {
+	TeamId      string   `json:"team_id"`
 	Id          string   `json:"id"`
 	Name        string   `json:"name"`
 	ReadRoles   []string `json:"read_roles"`
@@ -311,6 +317,13 @@ type KnowledgeScopeResp struct {
 	Code      string         `json:"code"`
 	RequestId string         `json:"request_id"`
 	Data      KnowledgeScope `json:"data"`
+}
+
+type KnowledgeTeamReq struct {
+	KnowledgeBaseId  string `path:"knowledge_base_id"`
+	IdempotencyKey   string `header:"Idempotency-Key"`
+	TeamId           string `json:"team_id"`
+	ExpectedRevision int64  `json:"expected_revision"`
 }
 
 type LeaseReq struct {
@@ -502,6 +515,57 @@ type SubmitInputReq struct {
 	Content         string `json:"content"`
 }
 
+type TeamData struct {
+	Id       string `json:"id"`
+	Name     string `json:"name"`
+	Revision int64  `json:"revision"`
+}
+
+type TeamMembershipReq struct {
+	TeamId           string `path:"team_id"`
+	UserId           string `path:"user_id"`
+	IdempotencyKey   string `header:"Idempotency-Key"`
+	ExpectedRevision int64  `json:"expected_revision"`
+	Member           bool   `json:"member"`
+}
+
+type TeamPage struct {
+	Items []TeamData `json:"items"`
+}
+
+type TeamReq struct {
+	TeamId string `path:"team_id"`
+}
+
+type TeamResp struct {
+	Code      string   `json:"code"`
+	RequestId string   `json:"request_id"`
+	Data      TeamData `json:"data"`
+}
+
+type TeamUserData struct {
+	Id          string `json:"id"`
+	DisplayName string `json:"display_name"`
+	Role        string `json:"role"`
+	Enabled     bool   `json:"enabled"`
+}
+
+type TeamUserPage struct {
+	Items []TeamUserData `json:"items"`
+}
+
+type TeamUsersResp struct {
+	Code      string       `json:"code"`
+	RequestId string       `json:"request_id"`
+	Data      TeamUserPage `json:"data"`
+}
+
+type TeamsResp struct {
+	Code      string   `json:"code"`
+	RequestId string   `json:"request_id"`
+	Data      TeamPage `json:"data"`
+}
+
 type TicketChangeReq struct {
 	TicketId        string `path:"ticket_id"`
 	IdempotencyKey  string `header:"Idempotency-Key"`
@@ -511,6 +575,7 @@ type TicketChangeReq struct {
 }
 
 type TicketData struct {
+	TeamId         string `json:"team_id"`
 	Id             string `json:"id"`
 	TicketNo       string `json:"ticket_no"`
 	OrderId        string `json:"order_id"`
@@ -538,6 +603,13 @@ type TicketResp struct {
 	Code      string     `json:"code"`
 	RequestId string     `json:"request_id"`
 	Data      TicketData `json:"data"`
+}
+
+type TicketTeamReq struct {
+	TicketId        string `path:"ticket_id"`
+	IdempotencyKey  string `header:"Idempotency-Key"`
+	TeamId          string `json:"team_id"`
+	ExpectedVersion int64  `json:"expected_version"`
 }
 
 type TicketsReq struct {

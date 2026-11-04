@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Alert, Button, Drawer, Input, Modal, Select, Space, Tag } from "antd";
 import { api, type User } from "../../shared/api/client";
 import type { Models } from "../../shared/api/models";
+import { TeamScope } from "../teams/Teams";
 
 type Ticket = Models["TicketData"];
 const labels: Record<string, string> = {
@@ -59,7 +60,7 @@ export function TicketDetail({
       void cache.invalidateQueries({ queryKey: ["tickets"] });
     }
   }
-  const item = ticket.data;
+  const item = ticket.isError ? undefined : ticket.data;
   const allowed: Record<string, string[]> = {
     open: ["in_progress", "closed"],
     in_progress: ["resolved", "closed"],
@@ -84,6 +85,22 @@ export function TicketDetail({
           <h3>{item.title}</h3>
           <Tag>{labels[item.status]}</Tag>
           <p className="message-content">{item.description}</p>
+          {user?.permissions.includes("team:manage") && (
+            <Space>
+              <span>共享范围</span>
+              <TeamScope
+                value={item.team_id}
+                disabled={busy}
+                onChange={(team_id) =>
+                  mutate(
+                    "/team",
+                    { team_id, expected_version: item.version },
+                    "PATCH",
+                  )
+                }
+              />
+            </Space>
+          )}
           {user?.permissions.includes("ticket:manage") && (
             <Space wrap>
               <Button

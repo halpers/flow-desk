@@ -1,0 +1,78 @@
+syntax = "v1"
+
+type TeamData {
+    Id string `json:"id"`
+    Name string `json:"name"`
+    Revision int64 `json:"revision"`
+}
+type TeamPage { Items []TeamData `json:"items"` }
+type TeamsResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data TeamPage `json:"data"`
+}
+type TeamResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data TeamData `json:"data"`
+}
+type CreateTeamReq {
+    IdempotencyKey string `header:"Idempotency-Key"`
+    Name string `json:"name"`
+}
+type TeamReq { TeamId string `path:"team_id"` }
+type TeamUserData {
+    Id string `json:"id"`
+    DisplayName string `json:"display_name"`
+    Role string `json:"role"`
+    Enabled bool `json:"enabled"`
+}
+type TeamUserPage { Items []TeamUserData `json:"items"` }
+type TeamUsersResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data TeamUserPage `json:"data"`
+}
+type TeamMembershipReq {
+    TeamId string `path:"team_id"`
+    UserId string `path:"user_id"`
+    IdempotencyKey string `header:"Idempotency-Key"`
+    ExpectedRevision int64 `json:"expected_revision"`
+    Member bool `json:"member"`
+}
+type TicketTeamReq {
+    TicketId string `path:"ticket_id"`
+    IdempotencyKey string `header:"Idempotency-Key"`
+    TeamId string `json:"team_id"`
+    ExpectedVersion int64 `json:"expected_version"`
+}
+type KnowledgeTeamReq {
+    KnowledgeBaseId string `path:"knowledge_base_id"`
+    IdempotencyKey string `header:"Idempotency-Key"`
+    TeamId string `json:"team_id"`
+    ExpectedRevision int64 `json:"expected_revision"`
+}
+@server(prefix: /api/v1 middleware: SessionAuth)
+service flowdesk-api {
+    @doc "List accessible teams | permission=authenticated | auth=required"
+    @handler ListTeams
+    get /teams returns (TeamsResp)
+    @doc "Create team | permission=team:manage | auth=required"
+    @handler CreateTeam
+    post /teams (CreateTeamReq) returns (TeamResp)
+    @doc "Tenant member directory | permission=team:manage | auth=required"
+    @handler ListTeamUsers
+    get /team-users returns (TeamUsersResp)
+    @doc "Team members | permission=team:manage | auth=required"
+    @handler ListTeamMembers
+    get /teams/:team_id/members (TeamReq) returns (TeamUsersResp)
+    @doc "Update membership | permission=team:manage | auth=required"
+    @handler UpdateTeamMembership
+    put /teams/:team_id/members/:user_id (TeamMembershipReq) returns (TeamResp)
+    @doc "Set ticket resource scope | permission=team:manage | auth=required"
+    @handler SetTicketTeam
+    patch /tickets/:ticket_id/team (TicketTeamReq) returns (TicketResp)
+    @doc "Set knowledge resource scope | permission=team:manage | auth=required"
+    @handler SetKnowledgeTeam
+    patch /knowledge-bases/:knowledge_base_id/team (KnowledgeTeamReq) returns (KnowledgeBaseResp)
+}

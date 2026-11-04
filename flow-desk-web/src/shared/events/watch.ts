@@ -83,6 +83,7 @@ export async function watchRun(
               "message.completed",
               "approval.decided",
               "action.executed",
+              "resource.revoked",
             ].includes(event.type)
           )
             needsSnapshot = true;

@@ -21,6 +21,7 @@ export default defineConfig({
       `http://localhost:${settings.WEB_HOST_PORT}`,
     channel: "chrome",
     headless: true,
+    ignoreHTTPSErrors: process.env.FLOWDESK_E2E_INSECURE_TLS === "1",
     trace: "off",
     screenshot: "only-on-failure",
   },

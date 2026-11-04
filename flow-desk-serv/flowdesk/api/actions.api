@@ -73,6 +73,7 @@ type ReceiptResp {
     Data ReceiptData `json:"data"`
 }
 type TicketData {
+    TeamId string `json:"team_id"`
     Id string `json:"id"`
     TicketNo string `json:"ticket_no"`
     OrderId string `json:"order_id"`

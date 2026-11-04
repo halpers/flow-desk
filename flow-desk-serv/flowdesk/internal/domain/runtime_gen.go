@@ -24,6 +24,7 @@ const (
 	EventApprovalDecided    = "approval.decided"
 	EventActionExecuted     = "action.executed"
 	EventRunCancelled       = "run.cancelled"
+	EventResourceRevoked    = "resource.revoked"
 	ToolOrderLookup         = "order.lookup"
 	ToolLogisticsTrack      = "logistics.track"
 	ToolTicketSearch        = "ticket.search"

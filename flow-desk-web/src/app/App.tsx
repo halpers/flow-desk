@@ -5,6 +5,7 @@ import { clearSession } from "../shared/api/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { Workspace } from "../features/workspace/Workspace";
 import { Knowledge } from "../features/knowledge/Knowledge";
+import { Teams } from "../features/teams/Teams";
 
 export function App() {
   const cache = useQueryClient();
@@ -89,6 +90,7 @@ export function App() {
           <p className="subtitle">从问题到解决，让流程清晰可见。</p>
         </div>
         <Space>
+          <Teams key={`teams:${user.tenant_id}:${user.id}`} user={user} />
           <Knowledge key={`${user.tenant_id}:${user.id}`} user={user} />
           <Tag>{user.role}</Tag>
           <span>{user.display_name}</span>

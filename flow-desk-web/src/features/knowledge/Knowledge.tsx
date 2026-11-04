@@ -14,6 +14,7 @@ import {
 } from "antd";
 import { api, type User } from "../../shared/api/client";
 import type { Models } from "../../shared/api/models";
+import { TeamScope } from "../teams/Teams";
 
 type Document = Models["DocumentPage"]["items"][number];
 const roleOptions = [
@@ -261,6 +262,25 @@ export function Knowledge({ user }: { user: User }) {
         )}
         {admin && base && (
           <Card size="small" title="访问权限" style={{ marginTop: 16 }}>
+            <Space>
+              <span>共享范围</span>
+              <TeamScope
+                value={base.team_id}
+                disabled={busy}
+                onChange={(team_id) =>
+                  perform(async () => {
+                    await api(
+                      `/knowledge-bases/${base.id}/team`,
+                      post(
+                        { team_id, expected_revision: base.acl_revision },
+                        key.current,
+                        "PATCH",
+                      ),
+                    );
+                  })
+                }
+              />
+            </Space>
             <p>
               当前角色：{base.read_roles.join("、")} · 权限修订{" "}
               {base.acl_revision}

@@ -18,8 +18,11 @@ type (
 		CountByTenantTx(context.Context, sqlx.Session, string) (int64, error)
 		LockTenantQuotaTx(context.Context, sqlx.Session, string) error
 		ListByTenant(context.Context, string) ([]KnowledgeBases, error)
+		ListAccessibleTx(context.Context, sqlx.Session, string, string, string) ([]KnowledgeBases, error)
+		FindOneForShareTx(context.Context, sqlx.Session, string, string) (*KnowledgeBases, error)
 		FindOneForUpdateTx(context.Context, sqlx.Session, string, string) (*KnowledgeBases, error)
 		UpdateAclTx(context.Context, sqlx.Session, string, string, int64, string) error
+		UpdateTeamTx(context.Context, sqlx.Session, *KnowledgeBases) error
 	}
 
 	customKnowledgeBasesModel struct {
@@ -52,6 +55,16 @@ func (m *customKnowledgeBasesModel) ListByTenant(ctx context.Context, tenant str
 	err := m.conn.QueryRowsCtx(ctx, &rows, fmt.Sprintf("select %s from %s where tenant_id=$1 order by created_at,id limit 51", knowledgeBasesRows, m.table), tenant)
 	return rows, err
 }
+func (m *customKnowledgeBasesModel) ListAccessibleTx(ctx context.Context, tx sqlx.Session, tenant, actor, role string) ([]KnowledgeBases, error) {
+	rows := []KnowledgeBases{}
+	err := tx.QueryRowsCtx(ctx, &rows, fmt.Sprintf("select %s from %s where tenant_id=$1 and read_roles ? $2 and %s order by created_at,id limit 51 for share", knowledgeBasesRows, m.table, fmt.Sprintf(teamAccessPredicate, 2, "knowledge_bases", 3)), tenant, role, actor)
+	return rows, err
+}
+func (m *customKnowledgeBasesModel) FindOneForShareTx(ctx context.Context, tx sqlx.Session, tenant, id string) (*KnowledgeBases, error) {
+	var row KnowledgeBases
+	err := tx.QueryRowCtx(ctx, &row, fmt.Sprintf("select %s from %s where tenant_id=$1 and id=$2 for share", knowledgeBasesRows, m.table), tenant, id)
+	return &row, err
+}
 func (m *customKnowledgeBasesModel) FindOneForUpdateTx(ctx context.Context, tx sqlx.Session, tenant, id string) (*KnowledgeBases, error) {
 	var row KnowledgeBases
 	err := tx.QueryRowCtx(ctx, &row, fmt.Sprintf("select %s from %s where tenant_id=$1 and id=$2 for update", knowledgeBasesRows, m.table), tenant, id)
@@ -63,4 +76,7 @@ func (m *customKnowledgeBasesModel) UpdateAclTx(ctx context.Context, tx sqlx.Ses
 
 func (m *customKnowledgeBasesModel) withSession(session sqlx.Session) KnowledgeBasesModel {
 	return NewKnowledgeBasesModel(sqlx.NewSqlConnFromSession(session))
+}
+func (m *customKnowledgeBasesModel) UpdateTeamTx(ctx context.Context, tx sqlx.Session, row *KnowledgeBases) error {
+	return requireOne(tx.ExecCtx(ctx, fmt.Sprintf("update %s set team_id=$3,acl_revision=acl_revision+1 where tenant_id=$1 and id=$2 and acl_revision=$4", m.table), row.TenantId, row.Id, row.TeamId, row.AclRevision))
 }

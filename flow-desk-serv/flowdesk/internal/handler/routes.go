@@ -14,6 +14,169 @@ import (
 
 func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 	server.AddRoutes(
+		[]rest.Route{
+			{
+				// Liveness | permission=- | auth=public
+				Method:  http.MethodGet,
+				Path:    "/health/live",
+				Handler: LiveHandler(serverCtx),
+			},
+			{
+				// Readiness | permission=- | auth=public
+				Method:  http.MethodGet,
+				Path:    "/health/ready",
+				Handler: ReadyHandler(serverCtx),
+			},
+		},
+	)
+
+	server.AddRoutes(
+		[]rest.Route{
+			{
+				// Login | permission=- | auth=public
+				Method:  http.MethodPost,
+				Path:    "/login",
+				Handler: LoginHandler(serverCtx),
+			},
+			{
+				// Logout | permission=- | auth=refresh_cookie
+				Method:  http.MethodPost,
+				Path:    "/logout",
+				Handler: LogoutHandler(serverCtx),
+			},
+			{
+				// Refresh | permission=- | auth=refresh_cookie
+				Method:  http.MethodPost,
+				Path:    "/refresh",
+				Handler: RefreshHandler(serverCtx),
+			},
+		},
+		rest.WithPrefix("/api/v1/auth"),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.SessionAuth},
+			[]rest.Route{
+				{
+					// Current user | permission=- | auth=required
+					Method:  http.MethodGet,
+					Path:    "/me",
+					Handler: MeHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithPrefix("/api/v1/auth"),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.SessionAuth},
+			[]rest.Route{
+				{
+					// Create conversation | permission=conversation:use | auth=required
+					Method:  http.MethodPost,
+					Path:    "/conversations",
+					Handler: CreateConversationHandler(serverCtx),
+				},
+				{
+					// List own conversations | permission=conversation:use | auth=required
+					Method:  http.MethodGet,
+					Path:    "/conversations",
+					Handler: ListConversationsHandler(serverCtx),
+				},
+				{
+					// Get own conversation | permission=conversation:use | auth=required
+					Method:  http.MethodGet,
+					Path:    "/conversations/:conversation_id",
+					Handler: GetConversationHandler(serverCtx),
+				},
+				{
+					// List messages | permission=conversation:use | auth=required
+					Method:  http.MethodGet,
+					Path:    "/conversations/:conversation_id/messages",
+					Handler: ListMessagesHandler(serverCtx),
+				},
+				{
+					// Send message | permission=conversation:use | auth=required
+					Method:  http.MethodPost,
+					Path:    "/conversations/:conversation_id/messages",
+					Handler: SendMessageHandler(serverCtx),
+				},
+				{
+					// List orders | permission=order:read | auth=required
+					Method:  http.MethodGet,
+					Path:    "/orders",
+					Handler: ListOrdersHandler(serverCtx),
+				},
+				{
+					// Get order | permission=order:read | auth=required
+					Method:  http.MethodGet,
+					Path:    "/orders/:order_id",
+					Handler: GetOrderHandler(serverCtx),
+				},
+				{
+					// Get logistics | permission=order:read | auth=required
+					Method:  http.MethodGet,
+					Path:    "/orders/:order_id/logistics",
+					Handler: GetLogisticsHandler(serverCtx),
+				},
+				{
+					// Run snapshot | permission=conversation:use | auth=required
+					Method:  http.MethodGet,
+					Path:    "/runs/:run_id",
+					Handler: GetRunHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithPrefix("/api/v1"),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.SessionAuth},
+			[]rest.Route{
+				{
+					// Persisted event stream | permission=conversation:use | auth=required
+					Method:  http.MethodGet,
+					Path:    "/runs/:run_id/events",
+					Handler: StreamEventsHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithPrefix("/api/v1"),
+		rest.WithTimeout(0*time.Nanosecond),
+		rest.WithSSE(),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.ServiceAuth},
+			[]rest.Route{
+				{
+					// Persist agent event | permission=- | auth=run_capability
+					Method:  http.MethodPost,
+					Path:    "/runs/:run_id/events",
+					Handler: IngestEventHandler(serverCtx),
+				},
+				{
+					// Renew run capability | permission=- | auth=service
+					Method:  http.MethodPost,
+					Path:    "/runs/:run_id/lease",
+					Handler: RenewLeaseHandler(serverCtx),
+				},
+				{
+					// Read business tool | permission=order:read | auth=run_capability
+					Method:  http.MethodPost,
+					Path:    "/tools/:tool_name",
+					Handler: CallToolHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithPrefix("/internal/v1"),
+	)
+
+	server.AddRoutes(
 		rest.WithMiddlewares(
 			[]rest.Middleware{serverCtx.SessionAuth},
 			[]rest.Route{
@@ -224,165 +387,53 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 	)
 
 	server.AddRoutes(
-		[]rest.Route{
-			{
-				// Liveness | permission=- | auth=public
-				Method:  http.MethodGet,
-				Path:    "/health/live",
-				Handler: LiveHandler(serverCtx),
-			},
-			{
-				// Readiness | permission=- | auth=public
-				Method:  http.MethodGet,
-				Path:    "/health/ready",
-				Handler: ReadyHandler(serverCtx),
-			},
-		},
-	)
-
-	server.AddRoutes(
-		[]rest.Route{
-			{
-				// Login | permission=- | auth=public
-				Method:  http.MethodPost,
-				Path:    "/login",
-				Handler: LoginHandler(serverCtx),
-			},
-			{
-				// Logout | permission=- | auth=refresh_cookie
-				Method:  http.MethodPost,
-				Path:    "/logout",
-				Handler: LogoutHandler(serverCtx),
-			},
-			{
-				// Refresh | permission=- | auth=refresh_cookie
-				Method:  http.MethodPost,
-				Path:    "/refresh",
-				Handler: RefreshHandler(serverCtx),
-			},
-		},
-		rest.WithPrefix("/api/v1/auth"),
-	)
-
-	server.AddRoutes(
 		rest.WithMiddlewares(
 			[]rest.Middleware{serverCtx.SessionAuth},
 			[]rest.Route{
 				{
-					// Current user | permission=- | auth=required
-					Method:  http.MethodGet,
-					Path:    "/me",
-					Handler: MeHandler(serverCtx),
+					// Set knowledge resource scope | permission=team:manage | auth=required
+					Method:  http.MethodPatch,
+					Path:    "/knowledge-bases/:knowledge_base_id/team",
+					Handler: SetKnowledgeTeamHandler(serverCtx),
 				},
-			}...,
-		),
-		rest.WithPrefix("/api/v1/auth"),
-	)
-
-	server.AddRoutes(
-		rest.WithMiddlewares(
-			[]rest.Middleware{serverCtx.SessionAuth},
-			[]rest.Route{
 				{
-					// Create conversation | permission=conversation:use | auth=required
+					// Tenant member directory | permission=team:manage | auth=required
+					Method:  http.MethodGet,
+					Path:    "/team-users",
+					Handler: ListTeamUsersHandler(serverCtx),
+				},
+				{
+					// List accessible teams | permission=authenticated | auth=required
+					Method:  http.MethodGet,
+					Path:    "/teams",
+					Handler: ListTeamsHandler(serverCtx),
+				},
+				{
+					// Create team | permission=team:manage | auth=required
 					Method:  http.MethodPost,
-					Path:    "/conversations",
-					Handler: CreateConversationHandler(serverCtx),
+					Path:    "/teams",
+					Handler: CreateTeamHandler(serverCtx),
 				},
 				{
-					// List own conversations | permission=conversation:use | auth=required
+					// Team members | permission=team:manage | auth=required
 					Method:  http.MethodGet,
-					Path:    "/conversations",
-					Handler: ListConversationsHandler(serverCtx),
+					Path:    "/teams/:team_id/members",
+					Handler: ListTeamMembersHandler(serverCtx),
 				},
 				{
-					// Get own conversation | permission=conversation:use | auth=required
-					Method:  http.MethodGet,
-					Path:    "/conversations/:conversation_id",
-					Handler: GetConversationHandler(serverCtx),
+					// Update membership | permission=team:manage | auth=required
+					Method:  http.MethodPut,
+					Path:    "/teams/:team_id/members/:user_id",
+					Handler: UpdateTeamMembershipHandler(serverCtx),
 				},
 				{
-					// List messages | permission=conversation:use | auth=required
-					Method:  http.MethodGet,
-					Path:    "/conversations/:conversation_id/messages",
-					Handler: ListMessagesHandler(serverCtx),
-				},
-				{
-					// Send message | permission=conversation:use | auth=required
-					Method:  http.MethodPost,
-					Path:    "/conversations/:conversation_id/messages",
-					Handler: SendMessageHandler(serverCtx),
-				},
-				{
-					// List orders | permission=order:read | auth=required
-					Method:  http.MethodGet,
-					Path:    "/orders",
-					Handler: ListOrdersHandler(serverCtx),
-				},
-				{
-					// Get order | permission=order:read | auth=required
-					Method:  http.MethodGet,
-					Path:    "/orders/:order_id",
-					Handler: GetOrderHandler(serverCtx),
-				},
-				{
-					// Get logistics | permission=order:read | auth=required
-					Method:  http.MethodGet,
-					Path:    "/orders/:order_id/logistics",
-					Handler: GetLogisticsHandler(serverCtx),
-				},
-				{
-					// Run snapshot | permission=conversation:use | auth=required
-					Method:  http.MethodGet,
-					Path:    "/runs/:run_id",
-					Handler: GetRunHandler(serverCtx),
+					// Set ticket resource scope | permission=team:manage | auth=required
+					Method:  http.MethodPatch,
+					Path:    "/tickets/:ticket_id/team",
+					Handler: SetTicketTeamHandler(serverCtx),
 				},
 			}...,
 		),
 		rest.WithPrefix("/api/v1"),
-	)
-
-	server.AddRoutes(
-		rest.WithMiddlewares(
-			[]rest.Middleware{serverCtx.SessionAuth},
-			[]rest.Route{
-				{
-					// Persisted event stream | permission=conversation:use | auth=required
-					Method:  http.MethodGet,
-					Path:    "/runs/:run_id/events",
-					Handler: StreamEventsHandler(serverCtx),
-				},
-			}...,
-		),
-		rest.WithPrefix("/api/v1"),
-		rest.WithTimeout(0*time.Nanosecond),
-		rest.WithSSE(),
-	)
-
-	server.AddRoutes(
-		rest.WithMiddlewares(
-			[]rest.Middleware{serverCtx.ServiceAuth},
-			[]rest.Route{
-				{
-					// Persist agent event | permission=- | auth=run_capability
-					Method:  http.MethodPost,
-					Path:    "/runs/:run_id/events",
-					Handler: IngestEventHandler(serverCtx),
-				},
-				{
-					// Renew run capability | permission=- | auth=service
-					Method:  http.MethodPost,
-					Path:    "/runs/:run_id/lease",
-					Handler: RenewLeaseHandler(serverCtx),
-				},
-				{
-					// Read business tool | permission=order:read | auth=run_capability
-					Method:  http.MethodPost,
-					Path:    "/tools/:tool_name",
-					Handler: CallToolHandler(serverCtx),
-				},
-			}...,
-		),
-		rest.WithPrefix("/internal/v1"),
 	)
 }

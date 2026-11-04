@@ -46,7 +46,7 @@ func validRoles(roles []string) bool {
 func baseData(row *model.KnowledgeBases) types.KnowledgeBaseData {
 	roles := []string{}
 	_ = json.Unmarshal([]byte(row.ReadRoles), &roles)
-	return types.KnowledgeBaseData{Id: row.Id, Name: row.Name, ReadRoles: roles, AclRevision: row.AclRevision}
+	return types.KnowledgeBaseData{TeamId: row.TeamId.String, Id: row.Id, Name: row.Name, ReadRoles: roles, AclRevision: row.AclRevision}
 }
 func documentData(row *model.Documents) types.DocumentData {
 	return types.DocumentData{Id: row.Id, KnowledgeBaseId: row.KnowledgeBaseId, Title: row.Title, ActiveVersionId: row.ActiveVersionId.String, Version: row.Version, Status: row.Status}
@@ -69,17 +69,22 @@ func ListKnowledgeBases(ctx context.Context, s *svc.ServiceContext) (types.Knowl
 	if err != nil {
 		return result, err
 	}
-	rows, err := s.KnowledgeBasesModel.ListByTenant(ctx, current.User.TenantId)
-	if err != nil {
-		return result, err
-	}
-	for _, row := range rows {
-		if readableBase(&row, current.User.Role) {
+	err = s.Conn.TransactCtx(ctx, func(ctx context.Context, tx sqlx.Session) error {
+		if err := s.TeamsModel.LockAuthorizationForShareTx(ctx, tx, current.User.TenantId); err != nil {
+			return err
+		}
+		rows, err := s.KnowledgeBasesModel.ListAccessibleTx(ctx, tx, current.User.TenantId, current.User.Id, current.User.Role)
+		if err != nil {
+			return err
+		}
+		for _, row := range rows {
 			result.Items = append(result.Items, baseData(&row))
 		}
-	}
-	return result, nil
+		return nil
+	})
+	return result, err
 }
+
 func CreateKnowledgeBase(ctx context.Context, s *svc.ServiceContext, req *types.KnowledgeBaseWriteReq) (types.KnowledgeBaseData, error) {
 	actor, err := knowledgeAdmin(ctx)
 	if err != nil {
@@ -143,22 +148,29 @@ func ListDocuments(ctx context.Context, s *svc.ServiceContext, baseID string) (t
 	if !validID(baseID) {
 		return result, errArgument
 	}
-	base, err := s.KnowledgeBasesModel.FindOneByTenantIdId(ctx, current.User.TenantId, baseID)
-	if err != nil {
-		return result, err
-	}
-	if !readableBase(base, current.User.Role) {
-		return result, errMissing
-	}
-	rows, err := s.DocumentsModel.ListByBase(ctx, current.User.TenantId, baseID)
-	if err != nil {
-		return result, err
-	}
-	for _, row := range rows {
-		result.Items = append(result.Items, documentData(&row))
-	}
-	return result, nil
+	err = s.Conn.TransactCtx(ctx, func(ctx context.Context, tx sqlx.Session) error {
+		base, err := s.KnowledgeBasesModel.FindOneForShareTx(ctx, tx, current.User.TenantId, baseID)
+		if err != nil {
+			return err
+		}
+		if !readableBase(base, current.User.Role) {
+			return errMissing
+		}
+		if err = teamAccessTx(ctx, s, tx, current.User, base.TeamId); err != nil {
+			return err
+		}
+		rows, err := s.DocumentsModel.ListByBaseTx(ctx, tx, current.User.TenantId, baseID)
+		if err != nil {
+			return err
+		}
+		for _, row := range rows {
+			result.Items = append(result.Items, documentData(&row))
+		}
+		return nil
+	})
+	return result, err
 }
+
 func validateUpload(filename, content string) bool {
 	extension := strings.ToLower(filepath.Ext(filename))
 	return (extension == ".txt" || extension == ".md") && len(filename) <= 180 && filepath.Base(filename) == filename && !strings.ContainsAny(filename, "/\\\x00") && utf8.ValidString(content) && len(content) <= 256*1024 && utf8.RuneCountInString(content) <= 20000 && strings.TrimSpace(content) != "" && !strings.ContainsRune(content, 0)
@@ -364,7 +376,7 @@ func GetKnowledgeScope(ctx context.Context, s *svc.ServiceContext, runID, capabi
 			return err
 		}
 		result.TenantId = run.TenantId
-		versions, err := s.DocumentVersionsModel.ListActiveForShareTx(ctx, tx, run.TenantId, actor.Role)
+		versions, err := s.DocumentVersionsModel.ListActiveForShareTx(ctx, tx, run.TenantId, actor.Role, actor.Id)
 		if err != nil {
 			return err
 		}
@@ -385,7 +397,7 @@ func ValidateEvidence(ctx context.Context, s *svc.ServiceContext, req *types.Evi
 		if err != nil {
 			return err
 		}
-		versions, err := s.DocumentVersionsModel.ListActiveForShareTx(ctx, tx, run.TenantId, actor.Role)
+		versions, err := s.DocumentVersionsModel.ListActiveForShareTx(ctx, tx, run.TenantId, actor.Role, actor.Id)
 		if err != nil {
 			return err
 		}
@@ -432,7 +444,7 @@ func canonicalCitationsTx(ctx context.Context, s *svc.ServiceContext, tx sqlx.Se
 	if err != nil {
 		return nil, err
 	}
-	versions, err := s.DocumentVersionsModel.ListActiveForShareTx(ctx, tx, run.TenantId, actor.Role)
+	versions, err := s.DocumentVersionsModel.ListActiveForShareTx(ctx, tx, run.TenantId, actor.Role, actor.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -491,6 +503,16 @@ func GetCitation(ctx context.Context, s *svc.ServiceContext, id string) (types.E
 }
 
 func redactMessageTx(ctx context.Context, s *svc.ServiceContext, tx sqlx.Session, run *model.Runs, message *types.MessageData) error {
+	visible, err := runTicketsVisibleTx(ctx, s, tx, run)
+	if err != nil {
+		return err
+	}
+	if !visible {
+		message.Content = resourceHiddenMessage
+		message.Citations = []map[string]any{}
+		message.ActionReceipts = []map[string]any{}
+		return nil
+	}
 	if len(message.Citations) == 0 {
 		return nil
 	}
@@ -498,7 +520,7 @@ func redactMessageTx(ctx context.Context, s *svc.ServiceContext, tx sqlx.Session
 	if err := json.Unmarshal([]byte(marshal(message.Citations)), &citations); err != nil {
 		return err
 	}
-	_, err := canonicalCitationsTx(ctx, s, tx, run, citations)
+	_, err = canonicalCitationsTx(ctx, s, tx, run, citations)
 	if err == nil {
 		return nil
 	}

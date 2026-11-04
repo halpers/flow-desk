@@ -1,5 +1,7 @@
 # 数据模型与一致性设计
 
+M6.4 新增 `teams`、`team_members`、`run_ticket_resources`，在 `tickets` 和 `knowledge_bases` 增加可空的 `team_id`。成员与资源采用 `(tenant_id,id)` 复合外键；成员变更更新团队 revision，资源范围变更更新工单 version 或知识库 acl_revision。历史回填与授权锁语义见[团队设计](m6-teams.md)。固定角色仍存于 users.role，自定义多角色尚未实现。
+
 版本：v0.1；本文描述完整逻辑模型及约束。M1–M4 已实现身份、会话/任务、知识版本/证据、动作/审批/输入、工单/备注/事件、回执和审计迁移；users.role 保存单一固定角色，扩展多角色关联表留待团队权限专项。完整字段以有序迁移为准，实际范围见[实施记录](progress.md)与 [M4 约束](m4-actions.md)。下文包含尚未实现的完整目标，不应直接当作当前表结构使用。
 
 ## 1. 数据库与公共字段

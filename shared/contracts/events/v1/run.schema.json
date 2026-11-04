@@ -64,7 +64,8 @@
         "run.waiting_approval",
         "approval.decided",
         "action.executed",
-        "run.cancelled"
+        "run.cancelled",
+        "resource.revoked"
       ]
     },
     "toolName": {
@@ -328,6 +329,10 @@
     }
   },
   "allOf": [
+    {
+      "if": {"properties": {"type": {"const": "resource.revoked"}}},
+      "then": {"properties": {"payload": {"type": "object", "additionalProperties": false, "required": ["summary"], "properties": {"summary": {"type": "string", "maxLength": 500}}}}}
+    },
     {
       "if": {
         "properties": {

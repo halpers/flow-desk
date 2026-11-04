@@ -277,6 +277,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/knowledge-bases/{knowledge_base_id}/team": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Set knowledge resource scope | permission=team:manage | auth=required */
+        patch: operations["setKnowledgeTeam"];
+        trace?: never;
+    };
     "/api/v1/orders": {
         parameters: {
             query?: never;
@@ -413,6 +430,75 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/team-users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Tenant member directory | permission=team:manage | auth=required */
+        get: operations["listTeamUsers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/teams": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List accessible teams | permission=authenticated | auth=required */
+        get: operations["listTeams"];
+        put?: never;
+        /** Create team | permission=team:manage | auth=required */
+        post: operations["createTeam"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/teams/{team_id}/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Team members | permission=team:manage | auth=required */
+        get: operations["listTeamMembers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/teams/{team_id}/members/{user_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Update membership | permission=team:manage | auth=required */
+        put: operations["updateTeamMembership"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/tickets": {
         parameters: {
             query?: never;
@@ -514,6 +600,23 @@ export interface paths {
         head?: never;
         /** Change ticket status | permission=ticket:manage | auth=required */
         patch: operations["changeTicketStatus"];
+        trace?: never;
+    };
+    "/api/v1/tickets/{ticket_id}/team": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Set ticket resource scope | permission=team:manage | auth=required */
+        patch: operations["setTicketTeam"];
         trace?: never;
     };
     "/health/live": {
@@ -1438,6 +1541,7 @@ export interface operations {
                                 id: string;
                                 name: string;
                                 read_roles: string[];
+                                team_id: string;
                             }[];
                         };
                         request_id?: string;
@@ -1476,6 +1580,7 @@ export interface operations {
                             id: string;
                             name: string;
                             read_roles: string[];
+                            team_id: string;
                         };
                         request_id?: string;
                     };
@@ -1513,6 +1618,7 @@ export interface operations {
                             id: string;
                             name: string;
                             read_roles: string[];
+                            team_id: string;
                         };
                         request_id?: string;
                     };
@@ -1590,6 +1696,46 @@ export interface operations {
                             filename: string;
                             id: string;
                             index_status: string;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    setKnowledgeTeam: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                knowledge_base_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    expected_revision: number;
+                    team_id: string;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            acl_revision: number;
+                            id: string;
+                            name: string;
+                            read_roles: string[];
+                            team_id: string;
                         };
                         request_id?: string;
                     };
@@ -2026,6 +2172,171 @@ export interface operations {
             };
         };
     };
+    listTeamUsers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            items: {
+                                display_name: string;
+                                enabled: boolean;
+                                id: string;
+                                role: string;
+                            }[];
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    listTeams: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            items: {
+                                id: string;
+                                name: string;
+                                revision: number;
+                            }[];
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    createTeam: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    name: string;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            id: string;
+                            name: string;
+                            revision: number;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    listTeamMembers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                team_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            items: {
+                                display_name: string;
+                                enabled: boolean;
+                                id: string;
+                                role: string;
+                            }[];
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    updateTeamMembership: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                team_id: string;
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    expected_revision: number;
+                    member: boolean;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            id: string;
+                            name: string;
+                            revision: number;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
     listTickets: {
         parameters: {
             query: {
@@ -2059,6 +2370,7 @@ export interface operations {
                                 order_id: string;
                                 priority: string;
                                 status: string;
+                                team_id: string;
                                 ticket_no: string;
                                 title: string;
                                 version: number;
@@ -2109,6 +2421,7 @@ export interface operations {
                             order_id: string;
                             priority: string;
                             status: string;
+                            team_id: string;
                             ticket_no: string;
                             title: string;
                             version: number;
@@ -2146,6 +2459,7 @@ export interface operations {
                             order_id: string;
                             priority: string;
                             status: string;
+                            team_id: string;
                             ticket_no: string;
                             title: string;
                             version: number;
@@ -2185,6 +2499,7 @@ export interface operations {
                             order_id: string;
                             priority: string;
                             status: string;
+                            team_id: string;
                             ticket_no: string;
                             title: string;
                             version: number;
@@ -2272,6 +2587,7 @@ export interface operations {
                             order_id: string;
                             priority: string;
                             status: string;
+                            team_id: string;
                             ticket_no: string;
                             title: string;
                             version: number;
@@ -2311,6 +2627,54 @@ export interface operations {
                             order_id: string;
                             priority: string;
                             status: string;
+                            team_id: string;
+                            ticket_no: string;
+                            title: string;
+                            version: number;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    setTicketTeam: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                ticket_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    expected_version: number;
+                    team_id: string;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            assignee_user_id: string;
+                            category: string;
+                            created_at: string;
+                            description: string;
+                            id: string;
+                            order_id: string;
+                            priority: string;
+                            status: string;
+                            team_id: string;
                             ticket_no: string;
                             title: string;
                             version: number;
@@ -2774,6 +3138,7 @@ export interface operations {
                                 order_id: string;
                                 priority: string;
                                 status: string;
+                                team_id: string;
                                 ticket_no: string;
                                 title: string;
                                 version: number;

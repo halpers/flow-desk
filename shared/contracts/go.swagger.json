@@ -1695,6 +1695,7 @@
                       "items": {
                         "type": "object",
                         "required": [
+                          "team_id",
                           "id",
                           "name",
                           "read_roles",
@@ -1715,6 +1716,9 @@
                             "items": {
                               "type": "string"
                             }
+                          },
+                          "team_id": {
+                            "type": "string"
                           }
                         }
                       }
@@ -1783,6 +1787,7 @@
                 "data": {
                   "type": "object",
                   "required": [
+                    "team_id",
                     "id",
                     "name",
                     "read_roles",
@@ -1803,6 +1808,9 @@
                       "items": {
                         "type": "string"
                       }
+                    },
+                    "team_id": {
+                      "type": "string"
                     }
                   }
                 },
@@ -1871,6 +1879,7 @@
                 "data": {
                   "type": "object",
                   "required": [
+                    "team_id",
                     "id",
                     "name",
                     "read_roles",
@@ -1891,6 +1900,9 @@
                       "items": {
                         "type": "string"
                       }
+                    },
+                    "team_id": {
+                      "type": "string"
                     }
                   }
                 },
@@ -2069,6 +2081,100 @@
                       "type": "string"
                     },
                     "index_status": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/knowledge-bases/{knowledge_base_id}/team": {
+      "patch": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "Set knowledge resource scope | permission=team:manage | auth=required",
+        "operationId": "setKnowledgeTeam",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "knowledge_base_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "Idempotency-Key",
+            "in": "header"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": [
+                "team_id",
+                "expected_revision"
+              ],
+              "properties": {
+                "expected_revision": {
+                  "type": "integer"
+                },
+                "team_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "team_id",
+                    "id",
+                    "name",
+                    "read_roles",
+                    "acl_revision"
+                  ],
+                  "properties": {
+                    "acl_revision": {
+                      "type": "integer"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "read_roles": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "team_id": {
                       "type": "string"
                     }
                   }
@@ -3271,6 +3377,356 @@
         }
       }
     },
+    "/api/v1/team-users": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "Tenant member directory | permission=team:manage | auth=required",
+        "operationId": "listTeamUsers",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "items"
+                  ],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "display_name",
+                          "role",
+                          "enabled"
+                        ],
+                        "properties": {
+                          "display_name": {
+                            "type": "string"
+                          },
+                          "enabled": {
+                            "type": "boolean"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "role": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/teams": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "List accessible teams | permission=authenticated | auth=required",
+        "operationId": "listTeams",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "items"
+                  ],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "name",
+                          "revision"
+                        ],
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "revision": {
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "Create team | permission=team:manage | auth=required",
+        "operationId": "createTeam",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "Idempotency-Key",
+            "in": "header"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": [
+                "name"
+              ],
+              "properties": {
+                "name": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "name",
+                    "revision"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "revision": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/teams/{team_id}/members": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "Team members | permission=team:manage | auth=required",
+        "operationId": "listTeamMembers",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "team_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "items"
+                  ],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "display_name",
+                          "role",
+                          "enabled"
+                        ],
+                        "properties": {
+                          "display_name": {
+                            "type": "string"
+                          },
+                          "enabled": {
+                            "type": "boolean"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "role": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/teams/{team_id}/members/{user_id}": {
+      "put": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "Update membership | permission=team:manage | auth=required",
+        "operationId": "updateTeamMembership",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "team_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "user_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "Idempotency-Key",
+            "in": "header"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": [
+                "expected_revision",
+                "member"
+              ],
+              "properties": {
+                "expected_revision": {
+                  "type": "integer"
+                },
+                "member": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "name",
+                    "revision"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "revision": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/tickets": {
       "get": {
         "produces": [
@@ -3336,6 +3792,7 @@
                       "items": {
                         "type": "object",
                         "required": [
+                          "team_id",
                           "id",
                           "ticket_no",
                           "order_id",
@@ -3371,6 +3828,9 @@
                             "type": "string"
                           },
                           "status": {
+                            "type": "string"
+                          },
+                          "team_id": {
                             "type": "string"
                           },
                           "ticket_no": {
@@ -3465,6 +3925,7 @@
                 "data": {
                   "type": "object",
                   "required": [
+                    "team_id",
                     "id",
                     "ticket_no",
                     "order_id",
@@ -3500,6 +3961,9 @@
                       "type": "string"
                     },
                     "status": {
+                      "type": "string"
+                    },
+                    "team_id": {
                       "type": "string"
                     },
                     "ticket_no": {
@@ -3552,6 +4016,7 @@
                 "data": {
                   "type": "object",
                   "required": [
+                    "team_id",
                     "id",
                     "ticket_no",
                     "order_id",
@@ -3587,6 +4052,9 @@
                       "type": "string"
                     },
                     "status": {
+                      "type": "string"
+                    },
+                    "team_id": {
                       "type": "string"
                     },
                     "ticket_no": {
@@ -3669,6 +4137,7 @@
                 "data": {
                   "type": "object",
                   "required": [
+                    "team_id",
                     "id",
                     "ticket_no",
                     "order_id",
@@ -3704,6 +4173,9 @@
                       "type": "string"
                     },
                     "status": {
+                      "type": "string"
+                    },
+                    "team_id": {
                       "type": "string"
                     },
                     "ticket_no": {
@@ -3890,6 +4362,7 @@
                 "data": {
                   "type": "object",
                   "required": [
+                    "team_id",
                     "id",
                     "ticket_no",
                     "order_id",
@@ -3925,6 +4398,9 @@
                       "type": "string"
                     },
                     "status": {
+                      "type": "string"
+                    },
+                    "team_id": {
                       "type": "string"
                     },
                     "ticket_no": {
@@ -4007,6 +4483,7 @@
                 "data": {
                   "type": "object",
                   "required": [
+                    "team_id",
                     "id",
                     "ticket_no",
                     "order_id",
@@ -4042,6 +4519,128 @@
                       "type": "string"
                     },
                     "status": {
+                      "type": "string"
+                    },
+                    "team_id": {
+                      "type": "string"
+                    },
+                    "ticket_no": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "version": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tickets/{ticket_id}/team": {
+      "patch": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "Set ticket resource scope | permission=team:manage | auth=required",
+        "operationId": "setTicketTeam",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "ticket_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "Idempotency-Key",
+            "in": "header"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": [
+                "team_id",
+                "expected_version"
+              ],
+              "properties": {
+                "expected_version": {
+                  "type": "integer"
+                },
+                "team_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "team_id",
+                    "id",
+                    "ticket_no",
+                    "order_id",
+                    "title",
+                    "description",
+                    "category",
+                    "priority",
+                    "status",
+                    "assignee_user_id",
+                    "version",
+                    "created_at"
+                  ],
+                  "properties": {
+                    "assignee_user_id": {
+                      "type": "string"
+                    },
+                    "category": {
+                      "type": "string"
+                    },
+                    "created_at": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "order_id": {
+                      "type": "string"
+                    },
+                    "priority": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "team_id": {
                       "type": "string"
                     },
                     "ticket_no": {
@@ -5072,6 +5671,7 @@
                       "items": {
                         "type": "object",
                         "required": [
+                          "team_id",
                           "id",
                           "ticket_no",
                           "order_id",
@@ -5107,6 +5707,9 @@
                             "type": "string"
                           },
                           "status": {
+                            "type": "string"
+                          },
+                          "team_id": {
                             "type": "string"
                           },
                           "ticket_no": {

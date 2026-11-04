@@ -1,6 +1,7 @@
 syntax = "v1"
 
 type KnowledgeBaseData {
+    TeamId string `json:"team_id"`
     Id string `json:"id"`
     Name string `json:"name"`
     ReadRoles []string `json:"read_roles"`

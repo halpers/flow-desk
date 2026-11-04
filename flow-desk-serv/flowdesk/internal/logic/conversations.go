@@ -174,7 +174,7 @@ func ListMessages(ctx context.Context, s *svc.ServiceContext, req *types.Message
 	}
 	for index := range rows {
 		message := messageData(&rows[index])
-		if len(message.Citations) > 0 {
+		if message.Role == "assistant" {
 			err = s.Conn.TransactCtx(ctx, func(ctx context.Context, tx sqlx.Session) error {
 				run, err := s.RunsModel.FindOneOwnedForShareTx(ctx, tx, actor.TenantId, actor.Id, message.RunId)
 				if err != nil {
@@ -220,7 +220,7 @@ func SendMessage(ctx context.Context, s *svc.ServiceContext, req *types.SendMess
 	if !validID(req.ConversationId) || !validID(req.ClientMessageId) || utf8.RuneCountInString(req.Content) < 1 || utf8.RuneCountInString(req.Content) > 8000 || len(req.Attachments) > 0 {
 		return types.RunData{}, errArgument
 	}
-	return idempotent(ctx, s, "message.send:"+req.ConversationId, req.IdempotencyKey, req, 202, func(ctx context.Context, tx sqlx.Session) (types.RunData, error) {
+	return idempotentRun(ctx, s, "message.send:"+req.ConversationId, req.IdempotencyKey, req, 202, func(ctx context.Context, tx sqlx.Session) (types.RunData, error) {
 		actor := Current(ctx).User
 		conversation, err := s.ConversationsModel.FindOneOwnedForUpdateTx(ctx, tx, actor.TenantId, actor.Id, req.ConversationId)
 		if err != nil {

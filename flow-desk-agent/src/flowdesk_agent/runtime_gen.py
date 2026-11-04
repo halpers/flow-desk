@@ -29,6 +29,7 @@ class EventType(StrEnum):
     APPROVAL_DECIDED = "approval.decided"
     ACTION_EXECUTED = "action.executed"
     RUN_CANCELLED = "run.cancelled"
+    RESOURCE_REVOKED = "resource.revoked"
 
 
 class ToolName(StrEnum):

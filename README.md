@@ -4,6 +4,8 @@
 
 ## 当前交付
 
+M6.1–M6.4 已完成本地验收：语义检索、MCP、固定镜像发布/回滚、TLS/监控，以及团队成员管理与工单/知识库范围。团队权限撤销同时作用于新操作和历史响应，见[验收报告](reports/m6/teams.md)。M6.5 业务场景扩展正在推进。
+
 M1–M4 已交付：登录与租户权限、持久化任务/SSE、版本化知识与有效引用、兼容 OpenAI 协议的模型接入，以及经批准的建单/备注、幂等回执、取消和重启恢复。Go 工程最初按要求使用 `goctl api new flowdesk` 生成。M5 的固定任务、质量/性能报告及实际证据见 [实施记录](docs/progress.md)和[评测报告](reports/m5/summary.md)。
 
 用户已确定 Go 业务后端使用 **go-zero**，Agent 使用独立 Python 服务，数据库使用 **PostgreSQL**。前端选用 React + TypeScript；向量检索设计使用 pgvector。所有代码集中存放在当前 `flow-desk/` 工作区。

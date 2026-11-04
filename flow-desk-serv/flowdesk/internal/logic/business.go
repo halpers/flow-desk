@@ -91,6 +91,9 @@ func pageLimit(limit int64) (int64, error) {
 func marshal(value any) string { encoded, _ := json.Marshal(value); return string(encoded) }
 
 func idempotent[T any](ctx context.Context, s *svc.ServiceContext, operation, key string, request any, status int, work func(context.Context, sqlx.Session) (T, error)) (T, error) {
+	return idempotentAuthorized(ctx, s, operation, key, request, status, work, func(context.Context, sqlx.Session, *T) error { return nil })
+}
+func idempotentAuthorized[T any](ctx context.Context, s *svc.ServiceContext, operation, key string, request any, status int, work func(context.Context, sqlx.Session) (T, error), validate func(context.Context, sqlx.Session, *T) error) (T, error) {
 	var result T
 	current, err := identityRequired(ctx)
 	if err != nil {
@@ -114,13 +117,19 @@ func idempotent[T any](ctx context.Context, s *svc.ServiceContext, operation, ke
 			if time.Now().After(previous.ExpiresAt) {
 				return failure(410, "IDEMPOTENCY_EXPIRED", "请求键已过期，请重新发起")
 			}
-			return json.Unmarshal([]byte(previous.ResponseBody), &result)
+			if err = json.Unmarshal([]byte(previous.ResponseBody), &result); err != nil {
+				return err
+			}
+			return validate(ctx, tx, &result)
 		}
 		if !errors.Is(err, model.ErrNotFound) {
 			return err
 		}
 		result, err = work(ctx, tx)
 		if err != nil {
+			return err
+		}
+		if err = validate(ctx, tx, &result); err != nil {
 			return err
 		}
 		return s.ApiIdempotencyModel.InsertTx(ctx, tx, &model.ApiIdempotency{Id: uuid.NewString(), TenantId: actor.TenantId, ActorUserId: actor.Id, Operation: operation, KeyHash: keyHash, RequestHash: requestHash, ResponseStatus: int64(status), ResponseBody: marshal(result), ExpiresAt: time.Now().Add(idempotencyLifetime)})

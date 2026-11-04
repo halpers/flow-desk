@@ -100,6 +100,20 @@ func PrepareAction(ctx context.Context, s *svc.ServiceContext, req *types.Prepar
 				return err
 			}
 			result = approvalData(approval)
+			var citations []interface{}
+			if err = json.Unmarshal([]byte(previous.EvidenceVersions), &citations); err != nil {
+				return err
+			}
+			if _, err = canonicalCitationsTx(ctx, s, tx, run, citations); err != nil {
+				return err
+			}
+			visible, err := runTicketsVisibleTx(ctx, s, tx, run)
+			if err != nil {
+				return err
+			}
+			if !visible {
+				return errMissing
+			}
 			return nil
 		}
 		if !errors.Is(err, model.ErrNotFound) {
@@ -151,6 +165,12 @@ func PrepareAction(ctx context.Context, s *svc.ServiceContext, req *types.Prepar
 			}
 			ticket, err := s.TicketsModel.FindOneForUpdateTx(ctx, tx, run.TenantId, input.TicketId)
 			if err != nil {
+				return err
+			}
+			if err = teamAccessTx(ctx, s, tx, actor, ticket.TeamId); err != nil {
+				return err
+			}
+			if err = rememberTicketTx(ctx, s, tx, run, ticket.Id); err != nil {
 				return err
 			}
 			if ticket.Version != input.ExpectedVersion {
@@ -207,6 +227,9 @@ func receiptForRunTx(ctx context.Context, s *svc.ServiceContext, tx sqlx.Session
 		return types.ReceiptData{}, errForbidden
 	}
 	if err = authorizeRunTx(ctx, s, tx, run); err != nil {
+		return types.ReceiptData{}, err
+	}
+	if _, err = ticketAccessTx(ctx, s, tx, actor, row.BusinessObjectId); err != nil {
 		return types.ReceiptData{}, err
 	}
 	return receiptData(row), nil
@@ -308,12 +331,15 @@ func executeAction(ctx context.Context, s *svc.ServiceContext, req *types.Action
 		}
 		if err != nil {
 			var business *BusinessError
-			if errors.As(err, &business) && (business.Code == "RESOURCE_CHANGED" || business.Code == "ORDER_CANCELLED" || business.Code == "TICKET_CLOSED") {
+			if errors.As(err, &business) && (business.Code == "RESOURCE_CHANGED" || business.Code == "ORDER_CANCELLED" || business.Code == "TICKET_CLOSED" || business.Code == "RESOURCE_NOT_FOUND" || business.Code == "PERMISSION_DENIED") {
 				return invalidate(err)
 			}
 			return err
 		}
 		values := map[string]any{"ticket_id": ticket.Id, "ticket_no": ticket.TicketNo, "ticket_version": ticket.Version}
+		if err = rememberTicketTx(ctx, s, tx, run, ticket.Id); err != nil {
+			return err
+		}
 		if noteID != "" {
 			values["note_id"] = noteID
 		}

@@ -177,7 +177,7 @@ func Permissions(role string) []string {
 		permissions = append(permissions, "ticket:manage", "audit:read")
 	}
 	if role == "admin" {
-		permissions = append(permissions, "knowledge:manage")
+		permissions = append(permissions, "knowledge:manage", "team:manage")
 	}
 	return permissions
 }

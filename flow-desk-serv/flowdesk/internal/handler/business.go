@@ -27,6 +27,8 @@ func writeBusiness(w http.ResponseWriter, r *http.Request, status int, data any,
 		problem = &logic.BusinessError{Status: 404, Code: "RESOURCE_NOT_FOUND", Message: "资源不存在或不可访问"}
 	case errors.Is(err, model.ErrVersionConflict):
 		problem = &logic.BusinessError{Status: 409, Code: "VERSION_CONFLICT", Message: "状态已变化，请刷新后重试"}
+	case errors.Is(err, model.ErrAuthorizationBusy):
+		problem = &logic.BusinessError{Status: 409, Code: "AUTHORIZATION_BUSY", Message: "团队权限正在更新，请稍后重试", Data: map[string]any{"retryable": true}}
 	case errors.As(err, &postgresError) && postgresError.Code == "23505":
 		problem = &logic.BusinessError{Status: 409, Code: "VERSION_CONFLICT", Message: "请求与现有记录冲突"}
 	}

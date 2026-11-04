@@ -4,6 +4,8 @@
 
 ## 1. 通用约定
 
+M6.4 团队 API 和资源范围、撤权及历史可见性语义见[团队权限契约](m6-teams.md)，机器源为 `api/teams.api`。
+
 - 浏览器前缀 `/api/v1`；Go 内部接口 `/internal/v1`；Python 内部接口 `/internal/v1`。
 - JSON 字段使用 snake_case；路径中的 `{id}` 为文档占位，`.api` 使用框架支持的参数语法。
 - ID 使用 UUID 字符串，时间使用 UTC RFC 3339。显示时按用户时区转换。

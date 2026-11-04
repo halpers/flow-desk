@@ -22,7 +22,7 @@ const maxTicketText = 4000
 
 func orderedID() string { return uuid.Must(uuid.NewV7()).String() }
 func ticketData(row *model.Tickets) types.TicketData {
-	return types.TicketData{Id: row.Id, TicketNo: row.TicketNo, OrderId: row.OrderId, Title: row.Title, Description: row.Description, Category: row.Category, Priority: row.Priority, Status: row.Status, AssigneeUserId: row.AssigneeUserId.String, Version: row.Version, CreatedAt: row.CreatedAt.UTC().Format(time.RFC3339Nano)}
+	return types.TicketData{TeamId: row.TeamId.String, Id: row.Id, TicketNo: row.TicketNo, OrderId: row.OrderId, Title: row.Title, Description: row.Description, Category: row.Category, Priority: row.Priority, Status: row.Status, AssigneeUserId: row.AssigneeUserId.String, Version: row.Version, CreatedAt: row.CreatedAt.UTC().Format(time.RFC3339Nano)}
 }
 func requirePermission(ctx context.Context, permission string) (*model.Users, error) {
 	current, err := identityRequired(ctx)
@@ -99,6 +99,9 @@ func addNoteTx(ctx context.Context, s *svc.ServiceContext, tx sqlx.Session, acto
 	if err != nil {
 		return result, "", err
 	}
+	if err = teamAccessTx(ctx, s, tx, actor, row.TeamId); err != nil {
+		return result, "", err
+	}
 	if row.Version != req.ExpectedVersion {
 		return result, "", failure(409, "RESOURCE_CHANGED", "工单版本已变化，请重新确认")
 	}
@@ -126,7 +129,7 @@ func CreateTicket(ctx context.Context, s *svc.ServiceContext, req *types.CreateT
 	if err != nil {
 		return types.TicketData{}, err
 	}
-	return idempotent(ctx, s, "ticket.create", req.IdempotencyKey, req, 201, func(ctx context.Context, tx sqlx.Session) (types.TicketData, error) {
+	return idempotentTicket(ctx, s, "ticket.create", req.IdempotencyKey, req, 201, func(ctx context.Context, tx sqlx.Session) (types.TicketData, error) {
 		return createTicketTx(ctx, s, tx, actor, req, "")
 	})
 }
@@ -135,7 +138,7 @@ func AddTicketNote(ctx context.Context, s *svc.ServiceContext, req *types.AddNot
 	if err != nil {
 		return types.TicketData{}, err
 	}
-	return idempotent(ctx, s, "ticket.note:"+req.TicketId, req.IdempotencyKey, req, 200, func(ctx context.Context, tx sqlx.Session) (types.TicketData, error) {
+	return idempotentTicket(ctx, s, "ticket.note:"+req.TicketId, req.IdempotencyKey, req, 200, func(ctx context.Context, tx sqlx.Session) (types.TicketData, error) {
 		row, _, err := addNoteTx(ctx, s, tx, actor, req, "")
 		return row, err
 	})
@@ -148,11 +151,15 @@ func GetTicket(ctx context.Context, s *svc.ServiceContext, id string) (types.Tic
 	if !validID(id) {
 		return types.TicketData{}, errArgument
 	}
-	row, err := s.TicketsModel.FindOneByTenant(ctx, actor.TenantId, id)
-	if err != nil {
-		return types.TicketData{}, err
-	}
-	return ticketData(row), nil
+	var result types.TicketData
+	err = s.Conn.TransactCtx(ctx, func(ctx context.Context, tx sqlx.Session) error {
+		row, err := ticketAccessTx(ctx, s, tx, actor, id)
+		if err == nil {
+			result = ticketData(row)
+		}
+		return err
+	})
+	return result, err
 }
 func ListTickets(ctx context.Context, s *svc.ServiceContext, req *types.TicketsReq) (types.TicketPage, error) {
 	result := types.TicketPage{Items: []types.TicketData{}}
@@ -167,13 +174,16 @@ func ListTickets(ctx context.Context, s *svc.ServiceContext, req *types.TicketsR
 	if err != nil {
 		return result, err
 	}
-	scope := "tickets:" + actor.TenantId + ":" + req.OrderId + ":" + req.Status
+	scope := "tickets:" + actor.TenantId + ":" + actor.Id + ":" + req.OrderId + ":" + req.Status
 	before, err := decodeCursor(req.Cursor, scope)
 	if err != nil {
 		return result, err
 	}
 	err = s.Conn.TransactCtx(ctx, func(ctx context.Context, tx sqlx.Session) error {
-		rows, err := s.TicketsModel.ListTenantTx(ctx, tx, actor.TenantId, req.OrderId, req.Status, before, limit+1)
+		if err := s.TeamsModel.LockAuthorizationForShareTx(ctx, tx, actor.TenantId); err != nil {
+			return err
+		}
+		rows, err := s.TicketsModel.ListAccessibleTx(ctx, tx, actor.TenantId, actor.Id, actor.Role, req.OrderId, req.Status, before, limit+1)
 		if err != nil {
 			return err
 		}
@@ -203,9 +213,12 @@ func changeTicket(ctx context.Context, s *svc.ServiceContext, req *types.TicketC
 	if assignment {
 		operation = "ticket.assignment"
 	}
-	return idempotent(ctx, s, operation+":"+req.TicketId, req.IdempotencyKey, req, 200, func(ctx context.Context, tx sqlx.Session) (types.TicketData, error) {
+	return idempotentTicket(ctx, s, operation+":"+req.TicketId, req.IdempotencyKey, req, 200, func(ctx context.Context, tx sqlx.Session) (types.TicketData, error) {
 		row, err := s.TicketsModel.FindOneForUpdateTx(ctx, tx, actor.TenantId, req.TicketId)
 		if err != nil {
+			return types.TicketData{}, err
+		}
+		if err = teamAccessTx(ctx, s, tx, actor, row.TeamId); err != nil {
 			return types.TicketData{}, err
 		}
 		if row.Version != req.ExpectedVersion {
@@ -222,6 +235,9 @@ func changeTicket(ctx context.Context, s *svc.ServiceContext, req *types.TicketC
 			}
 			if !assignee.Enabled || assignee.TenantId != actor.TenantId {
 				return types.TicketData{}, errForbidden
+			}
+			if err = teamAccessTx(ctx, s, tx, assignee, row.TeamId); err != nil {
+				return types.TicketData{}, err
 			}
 			row.AssigneeUserId = sql.NullString{String: assignee.Id, Valid: true}
 			summary = "负责人：" + assignee.DisplayName
@@ -265,6 +281,9 @@ func ListTicketEvents(ctx context.Context, s *svc.ServiceContext, req *types.Tim
 		return result, err
 	}
 	err = s.Conn.TransactCtx(ctx, func(ctx context.Context, tx sqlx.Session) error {
+		if _, err := ticketAccessTx(ctx, s, tx, actor, req.TicketId); err != nil {
+			return err
+		}
 		rows, err := s.TicketEventsModel.ListByTicketTx(ctx, tx, actor.TenantId, req.TicketId, after, limit+1)
 		if err != nil {
 			return err
