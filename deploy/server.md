@@ -14,7 +14,7 @@
 | 工作目录 | `/opt/flow-desk`；同一目录只运行一个 `flowdesk` Compose 项目 |
 | HTTP 入口 | `http://203.0.113.10:13000`；受控网络演示，`APP_MODE=dev`、非 Secure Cookie |
 | HTTPS 入口 | `https://203.0.113.10:13443`；`APP_MODE=pro`、Secure Cookie、证书含对应 IP SAN |
-| 发布版本 | GitHub Actions 全部通过且三个镜像均已发布的完整 40 位提交 SHA |
+| 发布版本 | `v*` tag 对应 Actions 检查及三个发布任务成功后的完整 40 位提交 SHA |
 | 镜像仓库 | GHCR 或阿里云 ACR 公网地址，三服务必须选择同一仓库和 SHA |
 | 模型 | 首次用 mock 验证部署；接真实模型时另备兼容接口地址、模型名及密钥 |
 | 建议起步资源 | 4 vCPU、8 GB 内存、40 GB 可用磁盘；这是小规模演示起点，需按知识量和并发测量扩容 |
@@ -50,7 +50,7 @@ docker compose version
 
 ## 3. 获取与镜像匹配的配置版本
 
-先在 [Actions](https://github.com/halpers/flow-desk/actions) 确认目标提交的检查及 API/Agent/Web 三个发布任务全部成功，记录完整 SHA。目标版本必须包含本手册和 `scripts/bootstrap-server.py`，不能用更早版本的镜像替代 HTTP IP 兼容版本。
+先由研发按 [CI/CD 发布步骤](ci-cd.md)推送 `v*` tag，在 [Actions](https://github.com/halpers/flow-desk/actions) 确认该 tag 运行的检查及 API/Agent/Web 三个发布任务全部成功，记录完整提交 SHA。`main` 的日常检查和手动运行不发布镜像，不能仅凭绿色检查选择尚未发布的提交。目标版本必须包含本手册和 `scripts/bootstrap-server.py`，不能用更早版本的镜像替代 HTTP IP 兼容版本。
 
 ```bash
 sudo install -d -m 0750 -o "$USER" -g "$(id -gn)" /opt/flow-desk

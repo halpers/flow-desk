@@ -131,8 +131,7 @@ jobs:
     name: Publish ${{ matrix.service }} to GHCR and Aliyun
     needs: checks
     if: >-
-      github.event_name != 'pull_request' &&
-      (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+      github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     permissions:
@@ -175,16 +174,14 @@ jobs:
           acr_image="${ACR_REGISTRY}/${ACR_NAMESPACE}/${GITHUB_REPOSITORY#*/}-${SERVICE}"
           acr_image="${acr_image,,}"
           version="sha-${GITHUB_SHA}"
-          alias=latest
-          if [[ "$GITHUB_REF_TYPE" == tag ]]; then
-            alias="$GITHUB_REF_NAME"
-            [[ "$alias" =~ ^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$ ]]
-          fi
+          [[ "$GITHUB_REF_TYPE" == tag && "$GITHUB_REF_NAME" == v* ]]
+          release_tag="$GITHUB_REF_NAME"
+          [[ "$release_tag" =~ ^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$ ]]
           {
             echo "ghcr=$ghcr_image"
             echo "acr=$acr_image"
             echo 'tags<<FLOWDESK_TAGS'
-            printf '%s\n' "$ghcr_image:$version" "$acr_image:$version" "$ghcr_image:$alias" "$acr_image:$alias"
+            printf '%s\n' "$ghcr_image:$version" "$acr_image:$version" "$ghcr_image:$release_tag" "$acr_image:$release_tag"
             echo 'FLOWDESK_TAGS'
           } >> "$GITHUB_OUTPUT"
       - name: Set up Docker Buildx

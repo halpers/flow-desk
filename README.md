@@ -42,7 +42,7 @@ M1–M4 已交付：登录与租户权限、持久化任务/SSE、版本化知�
 
 根目录 [docker-compose.yaml](docker-compose.yaml) 编排 PostgreSQL/pgvector、一次性迁移、Python Agent、Go API 和 Web；启动脚本等待服务健康后返回。已有 `.env` 且本机可使用 Docker 时，也可执行 `docker compose up --detach --build --wait`。各服务默认端口及操作见 [部署说明](deploy/README.md)。
 
-[CI/CD](deploy/ci-cd.md) 使用 GitHub Actions 执行测试与 Compose 启动检查，成功后将三个服务镜像推送到 GHCR 和阿里云 ACR。启用阿里云推送前，在仓库 Secrets 设置 `ACR_USERNAME`、`ACR_PASSWORD`；公网地址和命名空间已配置默认值。
+[CI/CD](deploy/ci-cd.md) 在 PR 和 `main` 推送时执行测试与 Compose 启动检查；仅推送 `v*` tag 且检查通过后，才将三个服务镜像发布到 GHCR 和阿里云 ACR，同时保留版本和完整 SHA 标签。手动运行只检查，不发布；`latest` 不再更新。发布步骤见 CI/CD 文档。阿里云推送凭据使用仓库 Secrets `ACR_USERNAME`、`ACR_PASSWORD`；公网地址和命名空间已配置默认值。
 
 运行、生成、测试和故障排查见 [本地运行说明](docs/runtime.md)。M6.1–M6.5 已按[专项计划](docs/m6-plan.md)完成本地验收并分别提交。设计文档包含完整目标范围，尚未实现的内容不代表当前功能。
 

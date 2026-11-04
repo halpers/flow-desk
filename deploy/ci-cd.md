@@ -2,6 +2,15 @@
 
 [GitHub Actions 工作流](../.github/workflows/ci-cd.yaml) 在 PR、`main` 推送、`v*` 标签和手动触发时运行。所有引用的 Action 固定到官方版本的完整提交 SHA。
 
+| 触发方式 | 检查与 Compose 验收 | 构建并推送发布镜像 |
+| --- | --- | --- |
+| PR | 执行 | 跳过 |
+| 推送 `main` | 执行 | 跳过 |
+| 推送 `v*` tag，例如 `v0.1.0` | 执行 | 检查通过后发布到 GHCR 和阿里云 |
+| 手动 Run workflow（包括选择 tag） | 执行 | 跳过 |
+
+检查保留用于及时发现问题；只有推送版本 tag 才进入镜像发布。日常检查仍会构建 Compose 所需的本地镜像进行启动验收，不会登录镜像仓库或推送发布镜像。其他分支的单独 push 不触发本工作流；存在 PR 时通过 PR 事件检查。触发器和 job 条件语义见 [GitHub 工作流语法](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax)。
+
 ## 验证与发布
 
 验证任务使用 Ubuntu 24.04、Go 模块声明的版本、Python 3.12、Node 24 和前端声明的 pnpm 版本，执行：
@@ -14,7 +23,7 @@
 
 测试库是 runner 上的临时 PostgreSQL，测试使用合成数据；模型使用 mock，不需要业务数据库或真实模型密钥。无论成功失败，清理临时 Compose 容器和卷。
 
-验证通过后，`main`、`v*` 标签或在这些 ref 上手动执行会构建 `linux/amd64` 的 API、Agent、Web 镜像。PR 仅验证，不登录或推送镜像。Go 镜像同时包含 API 与迁移程序，Compose 的 `migrate` 和 `api` 使用同一发布镜像。
+仅在 `push` 事件且 ref 为 `refs/tags/v*` 时，验证通过后构建 `linux/amd64` 的 API、Agent、Web 发布镜像。Go 镜像同时包含 API 与迁移程序，Compose 的 `migrate` 和 `api` 使用同一发布镜像。
 
 每个镜像单次构建，输出到 GHCR 和阿里云 ACR；任一仓库失败，发布任务失败。跨仓库推送没有原子性，失败时可能已有一个仓库完成，应重跑失败任务。
 
@@ -41,7 +50,22 @@ GHCR 使用 Actions 自动提供的 `GITHUB_TOKEN` 和任务级 `packages: write
 | Agent | `ghcr.io/halpers/flow-desk-agent` | `crpi-1bbvvu1xvdtg7e0p.cn-hangzhou.personal.cr.aliyuncs.com/flow-desk/flow-desk-agent` |
 | Web | `ghcr.io/halpers/flow-desk-web` | `crpi-1bbvvu1xvdtg7e0p.cn-hangzhou.personal.cr.aliyuncs.com/flow-desk/flow-desk-web` |
 
-两个仓库使用相同标签：每次发布都有 `sha-<完整提交 SHA>`；`main` 额外更新 `latest`；`v1.0.0` 等标签推送额外生成同名版本标签，不更新 `latest`。发布摘要记录镜像地址和 digest。部署和回滚优先选择确定的 SHA 标签或 digest。
+两个仓库使用相同标签：每次版本发布同时生成 `sha-<完整提交 SHA>` 和 tag 同名版本标签，例如 `v0.1.0`。不再生成或更新 `latest`；仓库中已有的历史 `latest` 保持原值。发布摘要记录镜像地址和 digest。部署和回滚优先选择确定的 SHA 标签或 digest。
+
+## 发布一个版本
+
+在已同步远端的 `main` 上确认目标代码检查通过，选择尚未使用的新版本号。以下为命令示例，需将 `v0.1.0` 替换为本次版本；此文档不会自动创建或推送 tag：
+
+```sh
+git pull --ff-only origin main
+git tag -a v0.1.0 -m "Release v0.1.0"
+git push origin v0.1.0
+git rev-parse "v0.1.0^{commit}"
+```
+
+tag 推送会重新执行检查，全部通过后发布三服务镜像。到 Actions 查看**该 tag 对应运行**，确认检查和三个 publish job 全部成功，再将最后一条命令得到的完整提交 SHA 交给运维。`main` 的检查通过只代表代码通过验收，不代表该提交已有发布镜像。
+
+已发布 tag 不应移动或覆盖；修改代码后使用新版本号。若某仓库推送暂时失败，重跑该 tag 运行中失败的 publish job；无需移动 tag 或重复发布相同版本。手动新建 workflow_dispatch 运行仅执行检查。
 
 ## 使用已发布镜像
 

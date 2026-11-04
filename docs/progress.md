@@ -13,6 +13,12 @@
 
 M6.1–M6.5 按用户选定范围在本地实施，未连接或部署服务器。设计及验收见 [M6 专项计划](m6-plan.md)和[M6.3 运维说明](m6-deployment-monitoring.md)。
 
+## CI/CD 发布策略调整（2026-11-04）
+
+- PR、main 推送及手动运行保留全部检查和 Compose 验收；只有推送 `v*` tag 且检查通过后才发布 API/Agent/Web 镜像到 GHCR 和阿里云。
+- 版本发布同时保留 `v*` 和 `sha-<完整提交SHA>` 标签，不再更新 latest；历史镜像保留。没有创建新版本 tag。
+- 同步 README、[CI/CD 发版步骤](../deploy/ci-cd.md)和[服务器部署手册](../deploy/server.md)，区分代码检查通过与镜像已经发布。
+
 ## 运维交付与 IP 入口补充（2026-11-04）
 
 - 整理[单机服务器部署手册](../deploy/server.md)，覆盖 Ubuntu 准备、GHCR/阿里云固定镜像、初始化、HTTP/HTTPS IP 入口、模型配置、监控、验收、升级回滚、备份恢复和排障。
