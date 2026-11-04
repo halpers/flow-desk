@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { Alert, Button, Input, Space, Tag } from "antd";
 import { api } from "../../shared/api/client";
+import { newId } from "../../shared/id";
 import type { Run } from "../../shared/events/watch";
 import { terminal } from "../../shared/events/watch";
 import { TicketDetail } from "./Tickets";
@@ -65,7 +66,7 @@ export function RunControls({
     const payload = JSON.stringify(body);
     const signature = path + payload;
     if (pending.current?.payload !== signature)
-      pending.current = { payload: signature, key: crypto.randomUUID() };
+      pending.current = { payload: signature, key: newId() };
     try {
       const updated = await api<Run>(path, {
         method: "POST",

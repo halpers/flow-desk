@@ -6,6 +6,7 @@ import {
 } from "@tanstack/react-query";
 import { Alert, Button, Empty, Input, Space, Spin, Tag } from "antd";
 import { api, ApiError, type User } from "../../shared/api/client";
+import { newId } from "../../shared/id";
 import type { Models as Schemas } from "../../shared/api/models";
 import { terminal, watchRun, type Run } from "../../shared/events/watch";
 import type { RunEvent } from "../../shared/events/sse";
@@ -226,7 +227,7 @@ export function Workspace({ user }: { user: User }) {
   async function create() {
     setCreating(true);
     setError("");
-    createKey.current ??= crypto.randomUUID();
+    createKey.current ??= newId();
     try {
       const result = await api<Conversation>("/conversations", {
         method: "POST",
@@ -255,8 +256,8 @@ export function Workspace({ user }: { user: User }) {
       pending.current = {
         conversation: selected,
         content,
-        key: crypto.randomUUID(),
-        message: crypto.randomUUID(),
+        key: newId(),
+        message: newId(),
       };
     const request = pending.current;
     try {

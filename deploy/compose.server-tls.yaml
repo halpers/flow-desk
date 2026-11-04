@@ -1,0 +1,15 @@
+# Server HTTPS entry; certificate may contain an IP SAN or DNS SAN.
+services:
+  api:
+    environment:
+      APP_MODE: pro
+      COOKIE_SECURE: "true"
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:?run bootstrap-server with the HTTPS browser origin}
+  web:
+    ports: !override
+      - "${WEB_BIND_ADDRESS:-0.0.0.0}:${WEB_HOST_PORT:-13443}:443"
+    volumes:
+      - ./deploy/nginx-server-tls.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./runtime/server-tls:/etc/nginx/tls:ro
+    healthcheck:
+      test: ["CMD", "wget", "--no-check-certificate", "-q", "-O", "-", "https://127.0.0.1/"]

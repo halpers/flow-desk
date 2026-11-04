@@ -1,0 +1,10 @@
+# Server HTTP entry. Requires Docker Compose 2.24.4+ for !override.
+services:
+  api:
+    environment:
+      APP_MODE: dev
+      COOKIE_SECURE: "false"
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:?run bootstrap-server with the browser origin}
+  web:
+    ports: !override
+      - "${WEB_BIND_ADDRESS:-0.0.0.0}:${WEB_HOST_PORT:-13000}:80"

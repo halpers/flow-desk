@@ -2,6 +2,8 @@
 
 交付范围是可运行的部署配置、固定镜像发布/回滚脚本和本地合成数据验收。没有连接服务器或执行远程上线。基础拓扑见[部署说明](../deploy/README.md)，镜像发布见[CI/CD](../deploy/ci-cd.md)。
 
+服务器运维请使用[独立部署手册](../deploy/server.md)：`--server` 支持 HTTP IP:端口，`--server --tls` 支持 HTTPS IP/域名。下文的 localhost 证书和 `compose.tls.yaml` 继续用于本地验收，不能直接作为服务器入口。
+
 ## 本地启动
 
 已有根目录 `.env`，并已安装 Agent 锁定依赖后，在仓库根目录执行：

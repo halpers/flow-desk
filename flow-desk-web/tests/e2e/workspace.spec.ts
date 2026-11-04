@@ -6,6 +6,12 @@ test("query survives a broken progress stream, reload and logout", async ({
   const pageErrors: string[] = [];
   page.on("pageerror", (error) => pageErrors.push(error.name));
   await page.goto("/");
+  if (process.env.FLOWDESK_E2E_EXPECT_INSECURE === "1") {
+    expect(await page.evaluate(() => window.isSecureContext)).toBe(false);
+    expect(await page.evaluate(() => typeof crypto.randomUUID)).toBe(
+      "undefined",
+    );
+  }
   await page.getByLabel("工作账号").fill("demo.operator");
   await page
     .getByLabel("密码", { exact: true })

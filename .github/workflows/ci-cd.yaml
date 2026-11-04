@@ -105,6 +105,8 @@ jobs:
       - name: Generate disposable local configuration
         shell: pwsh
         run: ./scripts/bootstrap-local.ps1
+      - name: Validate server IP entry and credential bootstrap
+        run: python scripts/check-server-entry.py
       - name: Validate and start Compose
         run: |
           docker compose config --quiet

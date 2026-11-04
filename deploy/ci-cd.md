@@ -10,6 +10,7 @@
 2. 在临时测试库初始化 `knowledge` schema 和 pgvector 扩展，执行 Agent Ruff 静态检查和临时 schema 测试。
 3. 前端锁文件安装、单元测试和 TypeScript/Vite 构建。
 4. 生成临时随机 `.env`，验证 Compose，构建并启动完整服务，通过 Web 代理检查认证、Cookie 和权限。
+5. 执行固定业务场景验收，验证服务器 HTTP/HTTPS Compose 入口配置、Prometheus 规则和 Collector 配置。
 
 测试库是 runner 上的临时 PostgreSQL，测试使用合成数据；模型使用 mock，不需要业务数据库或真实模型密钥。无论成功失败，清理临时 Compose 容器和卷。
 
@@ -44,6 +45,8 @@ GHCR 使用 Actions 自动提供的 `GITHUB_TOKEN` 和任务级 `packages: write
 
 ## 使用已发布镜像
 
+运维部署首选[服务器手册](server.md)的 `release.py --server` 流程，支持 HTTP/HTTPS IP:端口、配置校验及成功版本记录。以下手动配置方式适用于本地镜像检查；不包含服务器入口覆盖。
+
 目标主机先完成 Docker Compose 安装、仓库登录及本地 `.env` 配置。私有 GHCR 拉取需使用具有包读取权限的凭据；阿里云使用 ACR 访问凭据。登录密码通过交互或标准输入传递。
 
 在目标机器的 `.env` 设置三个变量，并为它们选择同一个已成功发布的 SHA 或版本标签：
@@ -68,5 +71,7 @@ Windows/WSL 可将 `docker compose` 替换为 `.\scripts\compose.ps1`。`migrate
 当前 CD 交付到镜像仓库。尚未配置目标服务器、SSH 凭据或自动上线作业；目标机执行上述拉取和更新命令。应用镜像回滚需要确认数据库迁移兼容，不自动回滚数据库 schema。
 
 M6.3 新增完整 SHA 的 `scripts/release.py`，按迁移/服务 readiness gate 更新并保留成功版本，支持显式应用回滚；TLS、OTel、Prometheus/Grafana/Jaeger override 和本地验收见[部署与监控](../docs/m6-deployment-monitoring.md)。CI 同时验证 Compose/TLS 配置、Prometheus 规则及 Collector 配置；当前不会自动连接服务器。
+
+release.py 的固定镜像变量仅作用于本次发布，不写回根 `.env`。发布后重建容器应继续使用相同 SHA 和入口参数调用 release.py，避免裸 Compose up 切换到默认本地镜像。
 
 镜像只构建一次并加载到 runner，再依次推送同一镜像的 GHCR/ACR 标签。每个标签推送最多三次、每次最多十分钟，失败明确标记所在仓库和标签；全部成功才生成发布摘要。这样单个仓库暂时超时不会立即丢失整轮构建结果。

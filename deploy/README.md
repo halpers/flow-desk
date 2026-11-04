@@ -1,5 +1,9 @@
 # 部署说明
 
+运维上服务器请从 **[单机服务器部署手册（IP:端口）](server.md)** 开始：包含 Ubuntu 环境准备、随机凭据初始化、GHCR/阿里云镜像、HTTP/HTTPS IP 入口、健康/登录验收、监控、升级回滚、备份恢复与排障。域名为可选配置。服务器发布使用 `release.py --server`，HTTPS 再加 `--tls`。
+
+以下内容描述本地开发拓扑；服务器端口由 `compose.server.yaml` 或 `compose.server-tls.yaml` 覆盖。
+
 根目录 [docker-compose.yaml](../docker-compose.yaml) 是统一运行配置，提供服务构建、PostgreSQL 角色初始化、健康检查、依赖顺序和数据库持久化。PowerShell 启动入口为 `scripts/start.ps1`，操作步骤见 [本地运行说明](../docs/runtime.md)。镜像自动发布和配置方法见 [CI/CD](ci-cd.md)。固定版本发布/回滚、TLS override 及监控启动见 [M6.3 运维说明](../docs/m6-deployment-monitoring.md)，当前只完成本地验收，未部署服务器。
 
 ## 1. 本地拓扑

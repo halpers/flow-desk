@@ -13,6 +13,14 @@
 
 M6.1–M6.5 按用户选定范围在本地实施，未连接或部署服务器。设计及验收见 [M6 专项计划](m6-plan.md)和[M6.3 运维说明](m6-deployment-monitoring.md)。
 
+## 运维交付与 IP 入口补充（2026-11-04）
+
+- 整理[单机服务器部署手册](../deploy/server.md)，覆盖 Ubuntu 准备、GHCR/阿里云固定镜像、初始化、HTTP/HTTPS IP 入口、模型配置、监控、验收、升级回滚、备份恢复和排障。
+- 新增服务器 HTTP/TLS Compose 覆盖、随机凭据初始化及 release.py `--server`，发布前检查 Origin、端口、Cookie 模式及证书文件；旧 localhost TLS 路径保留。
+- 修复普通 HTTP IP 下缺少 randomUUID 导致的前端请求失败；使用随机字节 UUID v4，不引入依赖，不改变幂等语义。
+- 隔离空库发布 HTTP→HTTPS→HTTP 回滚通过；HTTP Chrome 5/5、HTTPS Chrome 1/1、前端单测 4/4 与构建、脚本/工作流检查通过；实际备份恢复到新库，5 条回执/84 条检查点一致。CI 新增入口配置检查。
+- [验收范围与证据](../reports/m6/server-entry.md)仅为本地合成环境，不代表远程服务器已上线；现有本地运行环境未修改。
+
 ## M6.5 物流跟进与售后办结（2026-11-04）
 
 - 新增接手及办结工具，Go 校验 ticket:manage、当前团队、状态、负责人及版本；办结的结论备注、状态、事件、审计及回执同事务提交。模型无法指定办理身份、任意目标状态或批准决定。

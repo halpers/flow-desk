@@ -22,7 +22,7 @@
 
 环境配置、数据库密码、JWT/服务令牌和模型 key 均保留在忽略的 `.env`。运行角色分别限制在 business 与 agent/knowledge；备份及迁移使用 owner，不能把 owner 连接串作为应用配置。当前本地 Agent 运行角色还承担自身 schema 迁移，生产需独立迁移作业，这是部署改造项。
 
-升级前先备份，记录代码/镜像和迁移版本；先部署兼容旧字段的程序，再开放新接口。禁止自动执行 destructive Down。当前保留 `read-v1`/`ticket-v1` 命令兼容，但没有提供任意图版本迁移器；变更图结构或模型 profile 前先处理活跃/待确认任务，不能假定旧检查点可跨任意版本恢复。
+升级前先备份，记录代码/镜像和迁移版本；先部署兼容旧字段的程序，再开放新接口。禁止自动执行 destructive Down。当前保留 `read-v1`/`ticket-v1`/`ticket-v2` 命令兼容，但没有提供任意图版本迁移器；变更图结构或模型 profile 前先处理活跃/待确认任务，不能假定旧检查点可跨任意版本恢复。Linux 运维的 IP 入口、固定镜像和备份命令见[服务器部署手册](../deploy/server.md)。
 
 本地演练命令 `flow-desk-agent/.venv/Scripts/python.exe scripts/check-backup.py` 使用一致性快照，恢复到新建临时库并验证内容，再清理临时库。dump 只留在 `storage/backups`，不会进入 Git；演示备份不等同异地备份、加密或生产 RPO/RTO 承诺。真正恢复应始终先进入新数据库，验证角色、约束、回执、检查点和索引，再显式切换服务配置。不要覆盖原库或用 `compose down --volumes` 排障。
 
@@ -36,4 +36,4 @@ Go `outbox_events` 和 Agent `callback_outbox` 负责重试；等待审批不会
 
 ## 招聘展示证据
 
-可展示 go-zero 生成源与模型、跨表事务/租户授权、LangGraph 中断/恢复、RAG 过滤/有效引用、审批/幂等回执、固定评测/改进和实际时延。引用[实测报告](../reports/m5/summary.md)中的分子/分母和环境，不把 mock 得分写成真实模型得分，也不填写未实现的 MCP、语义 embedding 或训练经验。
+可展示 go-zero 生成源与模型、跨表事务/租户及团队授权、LangGraph 中断/恢复、RAG 过滤/有效引用、审批/幂等回执、固定评测/改进、MCP 和语义 embedding。引用[M5](../reports/m5/summary.md)及[M6 实测报告](../reports/m6/summary.md)中的分子/分母和环境，不把 mock 得分写成真实模型得分，也不填写未实施的训练经验或远程上线经历。

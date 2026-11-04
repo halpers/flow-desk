@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Alert, Button, Card, Drawer, Input, Select, Space, Tag } from "antd";
 import { api, type User } from "../../shared/api/client";
+import { newId } from "../../shared/id";
 import type { Models } from "../../shared/api/models";
 
 export function TeamScope({
@@ -64,7 +65,7 @@ export function Teams({ user }: { user: User }) {
   async function mutate(path: string, body: object, method = "PUT") {
     const signature = path + JSON.stringify(body);
     if (pending.current?.signature !== signature)
-      pending.current = { signature, key: crypto.randomUUID() };
+      pending.current = { signature, key: newId() };
     setError("");
     setBusy(true);
     try {

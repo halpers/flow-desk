@@ -13,6 +13,7 @@ import {
   Tag,
 } from "antd";
 import { api, type User } from "../../shared/api/client";
+import { newId } from "../../shared/id";
 import type { Models } from "../../shared/api/models";
 import { TeamScope } from "../teams/Teams";
 
@@ -49,7 +50,7 @@ function DocumentVersions({
         ? 2000
         : false,
   });
-  const uploadKey = useRef(crypto.randomUUID());
+  const uploadKey = useRef(newId());
   const change = async (path: string, body: unknown) => {
     setBusy(true);
     setError("");
@@ -131,7 +132,7 @@ function DocumentVersions({
                     uploadKey.current,
                   ),
                 );
-                uploadKey.current = crypto.randomUUID();
+                uploadKey.current = newId();
                 await versions.refetch();
               } catch (reason) {
                 setError((reason as Error).message);
@@ -172,7 +173,7 @@ export function Knowledge({ user }: { user: User }) {
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const key = useRef(crypto.randomUUID());
+  const key = useRef(newId());
   const bases = useQuery({
     queryKey: [...scope, "bases"],
     queryFn: () => api<Models["KnowledgeBasePage"]>("/knowledge-bases"),
@@ -197,7 +198,7 @@ export function Knowledge({ user }: { user: User }) {
     setBusy(true);
     try {
       await action();
-      key.current = crypto.randomUUID();
+      key.current = newId();
       await refresh();
     } catch (reason) {
       setError((reason as Error).message);
@@ -239,7 +240,7 @@ export function Knowledge({ user }: { user: User }) {
                 value={name}
                 onChange={(event) => {
                   setName(event.target.value);
-                  key.current = crypto.randomUUID();
+                  key.current = newId();
                 }}
               />
               <Button
@@ -330,7 +331,7 @@ export function Knowledge({ user }: { user: User }) {
               maxLength={120}
               onChange={(event) => {
                 setTitle(event.target.value);
-                key.current = crypto.randomUUID();
+                key.current = newId();
               }}
             />
             <input
@@ -340,7 +341,7 @@ export function Knowledge({ user }: { user: User }) {
               accept=".txt,.md"
               onChange={(event) => {
                 setFile(event.target.files?.[0] || null);
-                key.current = crypto.randomUUID();
+                key.current = newId();
               }}
             />
             <Button

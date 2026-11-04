@@ -49,7 +49,7 @@ M6.5 新任务使用 ticket-v2，增加接手及办结意图；准备参数和�
 - 登录返回 15 分钟 access token，包含 session_id、subject、tenant_id 和必要版本信息；每个请求仍校验会话和当前权限。
 - Refresh Token 为随机不透明值，服务端只存 hash，最长 8 小时；放入 HttpOnly cookie，生产使用 Secure、SameSite=Strict、Path=/api/v1/auth。
 - access token 只保存在前端内存，通过 `Authorization: Bearer ...` 传递。刷新接口检查可信 Origin 和固定的客户端请求头，限制跨站请求；刷新令牌逐次轮换并检测复用。
-- 本地通过开发代理形成同源访问；本地 HTTP 的 cookie Secure 例外只能在明确 dev 配置下使用。
+- 本地通过开发代理形成同源访问；本地或受控网络 HTTP IP 演示的 cookie Secure 例外只能在明确 dev 配置下使用。服务器 HTTPS/IP SAN 证书和 Origin 配置见[部署手册](../deploy/server.md)。
 - logout、账号停用和角色权限变化需要撤销会话或更新权限修订号；SSE 定期重验会话，失效时关闭。
 - 错误 401 在前端单次刷新并重放安全请求；写请求必须复用原幂等键。403 不自动刷新或重试。
 

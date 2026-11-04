@@ -2,7 +2,10 @@ import { defineConfig } from "@playwright/test";
 import fs from "node:fs";
 const settings = Object.fromEntries(
   fs
-    .readFileSync(new URL("../.env", import.meta.url), "utf8")
+    .readFileSync(
+      process.env.FLOWDESK_E2E_ENV_FILE || new URL("../.env", import.meta.url),
+      "utf8",
+    )
     .split(/\r?\n/)
     .filter((line) => line && !line.startsWith("#"))
     .map((line) => {

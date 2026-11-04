@@ -1,0 +1,333 @@
+# FlowDesk 单机服务器部署手册
+
+本文供运维人员从空白 Linux 服务器部署已发布镜像，默认使用 **IP:端口**，无需先准备域名。支持 HTTP 和 HTTPS 两种入口；浏览器始终同源访问 Web，Nginx 将 `/api/` 代理到 Go，Python 仅在容器网络内提供服务。
+
+适用范围：Ubuntu 24.04 LTS、x86_64、单机 Docker Compose。当前提供配置及本地隔离验收，未在真实远程服务器执行安装或上线。高可用、多副本、外部数据库、自动证书续期及自动 SSH 部署另需方案。镜像交付流程见 [CI/CD](ci-cd.md)，Windows 开发见[本地运行](../docs/runtime.md)。
+
+## 1. 交接信息与部署方式
+
+开始前准备以下信息。文中的 `203.0.113.10` 是文档示例地址，必须替换为用户实际访问的服务器 IPv4 地址。
+
+| 项目 | 本文约定 |
+| --- | --- |
+| SSH | 运维账号可 sudo；事先确认 SSH 管理端口和来源地址 |
+| 工作目录 | `/opt/flow-desk`；同一目录只运行一个 `flowdesk` Compose 项目 |
+| HTTP 入口 | `http://203.0.113.10:13000`；受控网络演示，`APP_MODE=dev`、非 Secure Cookie |
+| HTTPS 入口 | `https://203.0.113.10:13443`；`APP_MODE=pro`、Secure Cookie、证书含对应 IP SAN |
+| 发布版本 | GitHub Actions 全部通过且三个镜像均已发布的完整 40 位提交 SHA |
+| 镜像仓库 | GHCR 或阿里云 ACR 公网地址，三服务必须选择同一仓库和 SHA |
+| 模型 | 首次用 mock 验证部署；接真实模型时另备兼容接口地址、模型名及密钥 |
+| 建议起步资源 | 4 vCPU、8 GB 内存、40 GB 可用磁盘；这是小规模演示起点，需按知识量和并发测量扩容 |
+
+HTTP 会明文传输登录和业务数据，适用于内网、VPN 或限制来源的演示环境。需要加密时选择 HTTPS IP 入口。IP 访问与域名访问的业务功能相同。
+
+## 2. 安装基础软件
+
+已安装 Docker 的机器先检查版本，不要混装 Ubuntu Docker 包与 Docker 官方 CE 包。以下命令用于全新 Ubuntu 24.04，以普通 sudo 运维账号执行：
+
+```bash
+sudo apt-get update
+sudo apt-get install -y software-properties-common ca-certificates curl git python3 openssl
+sudo add-apt-repository -y universe
+sudo apt-get update
+sudo apt-get install -y docker.io docker-compose-v2
+sudo systemctl enable --now docker
+sudo usermod -aG docker "$USER"
+```
+
+退出 SSH 并重新登录，使 docker 组生效，再检查：
+
+```bash
+uname -m
+python3 --version
+docker info >/dev/null
+docker compose version
+```
+
+预期架构 `x86_64`、Python 3.12 或以上、Docker 服务可用、Compose **2.24.4 或以上**。新入口利用 `!override` 替换端口映射，旧版 Compose 会报标签解析错误；不能删除标签后继续部署。Ubuntu 包来源见[软件包说明](https://packages.ubuntu.com/noble/docker-compose-v2)，端口替换语义见 [Compose 合并文档](https://docs.docker.com/reference/compose-file/merge/)。docker 组拥有高权限，成员应限于运维账号，参见[官方说明](https://docs.docker.com/engine/install/linux-postinstall/)。
+
+部署已发布镜像不需要宿主机 Go、Node、pnpm、Python 虚拟环境或模型 SDK。
+
+## 3. 获取与镜像匹配的配置版本
+
+先在 [Actions](https://github.com/halpers/flow-desk/actions) 确认目标提交的检查及 API/Agent/Web 三个发布任务全部成功，记录完整 SHA。目标版本必须包含本手册和 `scripts/bootstrap-server.py`，不能用更早版本的镜像替代 HTTP IP 兼容版本。
+
+```bash
+sudo install -d -m 0750 -o "$USER" -g "$(id -gn)" /opt/flow-desk
+git clone https://github.com/halpers/flow-desk.git /opt/flow-desk
+cd /opt/flow-desk
+FLOWDESK_REVISION=REPLACE_WITH_PUBLISHED_40_CHAR_SHA
+git fetch origin
+git checkout --detach "$FLOWDESK_REVISION"
+test "$(git rev-parse HEAD)" = "$FLOWDESK_REVISION"
+```
+
+将变量值替换为真实 SHA 后再执行，勿保留 `REPLACE_WITH_...`。已有目录升级时不重新 clone、不覆盖 `.env`，按第 10 节操作。配置与镜像须来自同一版本，不能只拉取 `main` 配置配旧镜像。
+
+## 4. 创建服务器配置
+
+### 4.1 默认：HTTP IP:端口
+
+在仓库根目录执行，地址替换为浏览器将使用的实际地址：
+
+```bash
+python3 scripts/bootstrap-server.py --origin http://203.0.113.10:13000
+chmod 600 .env
+```
+
+脚本从 `.env.example` 创建忽略提交的 `.env`，为数据库三个角色、JWT、服务间令牌、演示账号和 Grafana 生成独立随机凭据，不打印密钥。已有 `.env` 时拒绝覆盖。HTTP 入口自动配置：
+
+```dotenv
+WEB_BIND_ADDRESS=0.0.0.0
+WEB_HOST_PORT=13000
+ALLOWED_ORIGINS=http://203.0.113.10:13000
+APP_MODE=dev
+COOKIE_SECURE=false
+```
+
+`0.0.0.0` 是监听地址，不能当作浏览器地址或 Origin；有公网 NAT 时，Origin 用用户实际访问的公网 IP，监听仍可使用 `0.0.0.0`。也可用 `--bind-address <服务器本机IPv4>` 限制监听网卡。当前脚本支持 IPv4 或域名，不支持 IPv6 入口。
+
+更换地址或端口时，必须同时修改 `.env` 的 `WEB_HOST_PORT`、`ALLOWED_ORIGINS`，以及对应防火墙规则，再按原 SHA 重新执行发布命令。Origin 包含协议、主机和非默认端口，不含路径、尾部斜杠或多个地址。浏览器只能使用这个已配置的入口登录和刷新会话。
+
+### 4.2 可选：HTTPS IP:端口
+
+尚未创建 `.env` 时，改用以下初始化命令；已创建时手工调整表中四项，脚本不会覆盖旧文件：
+
+```bash
+python3 scripts/bootstrap-server.py --origin https://203.0.113.10:13443
+chmod 600 .env
+```
+
+| 配置 | HTTPS IP 示例 |
+| --- | --- |
+| `WEB_HOST_PORT` | `13443` |
+| `ALLOWED_ORIGINS` | `https://203.0.113.10:13443` |
+| `APP_MODE` | `pro` |
+| `COOKIE_SECURE` | `true` |
+
+证书路径固定为 `runtime/server-tls/server.crt`、`runtime/server-tls/server.key`。正式使用时放入客户端信任的证书链和私钥；证书的 SAN 必须包含访问 IP。若暂用自签证书进行受控验收，可按以下方式生成 30 天证书，已有证书时命令会停止：
+
+```bash
+FLOWDESK_SERVER_IP=203.0.113.10
+mkdir -p runtime/server-tls
+test ! -e runtime/server-tls/server.crt && test ! -e runtime/server-tls/server.key && (
+  umask 077
+  openssl req -x509 -newkey rsa:2048 -nodes -days 30 \
+    -keyout runtime/server-tls/server.key -out runtime/server-tls/server.crt \
+    -subj "/CN=$FLOWDESK_SERVER_IP" -addext "subjectAltName=IP:$FLOWDESK_SERVER_IP"
+)
+chmod 600 runtime/server-tls/server.key
+openssl x509 -in runtime/server-tls/server.crt -noout -dates -ext subjectAltName
+```
+
+客户端需信任自签证书；仅绕过浏览器警告不等于安装信任。不要分发私钥。证书续期后执行 `docker compose restart web` 重新加载；发行脚本只读证书，不签发或自动续期。
+
+如将来改用域名，替换 Origin、证书 DNS SAN 和端口即可，Web 无需重新构建。`deploy/compose.tls.yaml` 和 `configure-monitoring.py` 是 **localhost 开发模板**；服务器应使用下文 `--server --tls`，不能混用。
+
+### 4.3 配置项核对
+
+| 配置 | 运维要求 |
+| --- | --- |
+| `POSTGRES_PASSWORD` / `BUSINESS_PASSWORD` / `AGENT_PASSWORD` | 空数据卷首次初始化三个角色；已有卷不会因修改 `.env` 自动改密码，轮换需同时修改数据库角色密码与容器配置 |
+| `JWT_SECRET` / `INTERNAL_TOKEN` | 所有服务保持一致；轮换会影响会话或服务间调用，需安排窗口 |
+| `DEMO_PASSWORD` | 六个合成演示账号首次创建时的密码，重复迁移不重置已有账号密码 |
+| `PG_HOST_PORT` / `API_HOST_PORT` | 默认 55432 / 18080，只绑定 127.0.0.1；同机多个应用注意冲突 |
+| `MODEL_PROVIDER` | 首次保留 `mock`，部署验收不调用外部付费模型 |
+| `MODEL_BASE_URL` / `MODEL_NAME` / `MODEL_API_KEY` | 真模型使用 `MODEL_PROVIDER=openai-compatible`，endpoint 一般到 `/v1`，密钥仅写服务器 `.env` |
+| `EMBEDDING_BASE_URL` / `EMBEDDING_MODEL` / `EMBEDDING_API_KEY` | 独立 embeddings 接口；聊天接口不能自动充当 embedding 接口 |
+| `EMBEDDING_DIMENSIONS` / `EMBEDDING_REVISION` | 默认 0 / 1；0 使用模型原生维度，变更模型或维度后需重建索引 |
+| `RETRIEVAL_PROFILE` / `RERANK_PROVIDER` | 默认 `baseline` / `none`；先完成语义索引再切换 `semantic`，可选 `chat` 重排会产生聊天模型调用 |
+| `TOOL_TRANSPORT` | `http` 或 `mcp`；二者都由 Go 执行当前授权、审批和业务事务 |
+| `GRAFANA_ADMIN_PASSWORD` | 初始化脚本随机生成，监控首次启动使用；已有 Grafana 数据卷的密码不会随环境变量自动重置 |
+| `FLOWDESK_*_IMAGE` | 使用 release.py 时由本次发布专用 env 文件统一覆盖；勿混合不同版本 |
+
+自动生成密码使用十六进制，适合当前 DSN 拼接；不要随意替换为含 `@`、`$` 等字符的未编码密码。不要将 `.env`、`docker compose config` 的完整输出或容器环境发到工单和聊天中。
+
+## 5. 开放网络与镜像拉取
+
+云安全组和宿主机访问策略只放行选择的 Web TCP 端口（13000 或 13443）及 SSH 管理端口，尽量限制来源。数据库、API、Agent、监控不需要公网端口；Docker 发布端口应同时通过云安全组/宿主机 Docker 转发规则核查，不能只根据 UFW 界面判断。HTTPS 证书已准备好时，无需额外开放 80 端口。
+
+服务器需要出站访问镜像仓库；使用真模型时还需访问相应聊天/embedding endpoint。浏览器直接访问服务器 Web 端口，无需跨域、API 地址或 Python 地址配置。
+
+选择一个仓库前缀，私有仓库先交互登录，不把密码放进命令行：
+
+```bash
+# GHCR
+FLOWDESK_REGISTRY=ghcr.io/halpers
+docker login ghcr.io
+```
+
+或使用已配置的阿里云公网仓库：
+
+```bash
+FLOWDESK_REGISTRY=crpi-1bbvvu1xvdtg7e0p.cn-hangzhou.personal.cr.aliyuncs.com/flow-desk
+docker login crpi-1bbvvu1xvdtg7e0p.cn-hangzhou.personal.cr.aliyuncs.com
+```
+
+GHCR 需要具备包读取权限的凭据；阿里云使用 ACR 仓库访问凭据。不要使用带 `-vpc` 的地址，除非另行部署了匹配的网络环境。GitHub Secrets 用于 CI 推送，不会自动登录目标服务器。
+
+## 6. 首次发布
+
+确认仍位于仓库根目录，`FLOWDESK_REVISION`、`FLOWDESK_REGISTRY` 已在当前 shell 设置。HTTP IP 入口：
+
+```bash
+python3 scripts/release.py --revision "$FLOWDESK_REVISION" --registry "$FLOWDESK_REGISTRY" --server --plan
+python3 scripts/release.py --revision "$FLOWDESK_REVISION" --registry "$FLOWDESK_REGISTRY" --server
+```
+
+HTTPS IP 入口增加 `--tls`：
+
+```bash
+python3 scripts/release.py --revision "$FLOWDESK_REVISION" --registry "$FLOWDESK_REGISTRY" --server --tls --plan
+python3 scripts/release.py --revision "$FLOWDESK_REVISION" --registry "$FLOWDESK_REGISTRY" --server --tls
+```
+
+需要监控时，在实际发布命令中同时加 `--monitoring`。`--plan` 只输出固定镜像与 Compose 文件选择，不拉取、不迁移，也不代表配置或证书已经通过验收。
+
+实际发布依次验证配置、拉取三个 `sha-<完整SHA>` 镜像、启动 PostgreSQL、执行 owner 业务迁移、启动 Agent 并迁移自身 schema、等待 Go 和 Web readiness。所有门禁通过后写入 `runtime/releases/state.json` 的 current/previous；失败保留 pending 与上次成功记录，不执行数据库 Down 或删除数据卷。
+
+Go 运行账号为 `fd_business`，Python 为 `fd_agent`；owner 仅用于初始化/业务迁移。当前 Python 运行角色仍负责自身 DDL，独立迁移作业和进一步收紧 DDL 属于后续运维改造。四个基础常驻服务使用 `restart: unless-stopped`，Docker 服务设为开机启动后会恢复未手工停止的容器。
+
+**后续重新创建容器仍使用 release.py 并重复相同入口/监控参数。** 本次固定镜像 env 记录在 `runtime/releases/`，不会改写根 `.env`；直接运行裸 `docker compose up` 或 `scripts/start.ps1` 可能换成本地 latest/源码镜像并丢失入口选项。`ps`、`logs`、`exec`、`stop`、`restart` 可用根 Compose 操作已有同名服务。
+
+## 7. 上线验收
+
+服务器本机先检查：
+
+```bash
+docker compose ps --all
+curl --fail http://127.0.0.1:18080/health/ready
+docker compose exec -T agent python -c "import urllib.request; print(urllib.request.urlopen('http://127.0.0.1:8000/health/ready').status)"
+```
+
+常驻服务应为 running/healthy；首次发布脚本通过 `run --rm migrate` 运行迁移，`ps` 不一定显示已退出的 migrate 容器。HTTP 入口检查：
+
+```bash
+curl --fail http://203.0.113.10:13000/ -o /dev/null
+curl -s -o /dev/null -w '%{http_code}\n' http://203.0.113.10:13000/api/v1/auth/me
+```
+
+预期页面 200，未登录 `/auth/me` 为 401。HTTPS 使用对应入口；自签证书的命令示例：
+
+```bash
+curl --cacert runtime/server-tls/server.crt --fail https://203.0.113.10:13443/ -o /dev/null
+```
+
+在实际客户端浏览器完成以下检查，并记录镜像 SHA、入口、时间和结果：
+
+1. 用 `demo.operator` 和服务器 `.env` 的 `DEMO_PASSWORD` 登录；新建会话，发送“查询 FD202611020002 的订单状态和物流”，等待结果和流式进度。
+2. 刷新页面，登录态和会话仍可恢复，说明 Origin、Cookie 和代理可用。
+3. 发起物流跟进工单，检查确认卡；只批准一次，确认出现唯一回执，刷新后可查看工单。
+4. 使用 `demo.supervisor`、`demo.admin` 检查主管与知识/团队管理入口；`other.operator`、`other.supervisor`、`other.admin` 是另一个合成租户，不能读取第一租户对象。
+5. 从未放行来源检查服务访问策略，确认数据库、API 及监控端口没有对公网开放。
+
+这六个账号用于合成演示，当前不提供完整的生产用户入职、统一身份接入和密码管理平台。接入真实客户前需另行确定身份接入与账号治理。
+
+普通 HTTP 的非 localhost 浏览器环境可能没有 `crypto.randomUUID()`；前端已通过 `crypto.getRandomValues()` 生成 UUID v4，保持请求幂等身份。部署时必须使用包含该修复的 Web 镜像。浏览器 API 的限制见 [randomUUID](https://developer.mozilla.org/en-US/docs/Web/API/Crypto/randomUUID) 与 [getRandomValues](https://developer.mozilla.org/en-US/docs/Web/API/Crypto/getRandomValues)。
+
+## 8. 接入真模型和语义检索
+
+先用 mock 完成上节验收，再编辑 `.env` 设置聊天和 embedding 配置。真模型输出与供应商可用性需要单独联调，部署成功不代表真实模型质量验收通过。
+
+变更配置后，使用当前发布 SHA 和原入口/监控参数再执行一次第 6 节发布命令；无需构建镜像。保留 `RETRIEVAL_PROFILE=baseline`，待 Agent 加载 embedding 配置后，由可信运维人员按实际租户逐个重建：
+
+```bash
+docker compose exec -T agent python -m flowdesk_agent.reindex --tenant-id REPLACE_WITH_TENANT_UUID --all
+```
+
+租户 UUID 从已登录账号的 `/api/v1/auth/me` 结果确认，替换占位符；不要依靠模型输出决定租户。重建成功后再将 `RETRIEVAL_PROFILE=semantic`，可选 `RERANK_PROVIDER=chat`，使用相同发布参数重建容器。发生检索问题时改回 baseline/none 并重新发布，旧索引保留。详细预算、重建和错误码见[语义 RAG](../docs/m6-semantic-rag.md)。不直接在真实服务器运行会激活/撤回合成文档的本地 smoke 脚本。
+
+## 9. 监控与日常操作
+
+发布时加 `--monitoring` 后，Grafana/Prometheus/Jaeger 分别只绑定服务器 127.0.0.1 的 13001/19090/16686。客户端通过 SSH 隧道访问：
+
+```bash
+ssh -N -L 13001:127.0.0.1:13001 -L 19090:127.0.0.1:19090 -L 16686:127.0.0.1:16686 YOUR_USER@YOUR_SERVER_IP
+```
+
+如 SSH 不是 22 端口，加 `-p <实际端口>`。浏览器打开 `http://localhost:13001`，Grafana 账号 `admin`、密码为服务器 `GRAFANA_ADMIN_PASSWORD`。检查 Prometheus Targets、FlowDesk Dashboard 和 Jaeger 的 flowdesk-agent trace。当前有指标规则和面板，未配置外部通知接收方；Jaeger 使用内存存储，重启会丢失 trace，业务回执与检查点仍在 PostgreSQL。
+
+日常命令在服务器仓库根目录执行：
+
+```bash
+docker compose ps --all
+docker compose logs --tail 100 api agent web
+docker compose logs --tail 100 postgres
+docker compose stop web api agent
+```
+
+停止后恢复，使用第 6 节相同固定 SHA 的发布命令。排障日志按 request_id/run_id/trace_id 关联，不向外复制原始敏感数据。SSE 代理保持无缓冲；前面另有负载均衡器时，也应关闭 `/api/v1/runs/*/events` 缓冲并允许长连接。
+
+## 10. 升级与回滚
+
+升级前记录 current SHA、配置与证书版本，执行第 11 节备份；确认迁移和图版本兼容，并在维护窗口处理仍运行/待批准任务。当前支持 read-v1/ticket-v1/ticket-v2，但旧镜像不一定识别较新的图和动作，不能仅凭数据库兼容决定可回滚。
+
+在原目录更新配置到目标 SHA，保留 `.env`、runtime、数据卷：
+
+```bash
+FLOWDESK_REVISION=REPLACE_WITH_NEW_PUBLISHED_40_CHAR_SHA
+git fetch origin
+git checkout --detach "$FLOWDESK_REVISION"
+python3 scripts/release.py --revision "$FLOWDESK_REVISION" --registry "$FLOWDESK_REGISTRY" --server --plan
+python3 scripts/release.py --revision "$FLOWDESK_REVISION" --registry "$FLOWDESK_REGISTRY" --server
+```
+
+HTTPS/监控部署须在上述两条命令中继续携带 `--tls` / `--monitoring`。发布存在短暂重建窗口，当前不承诺无停机。
+
+```bash
+python3 scripts/release.py --rollback --plan
+python3 scripts/release.py --rollback
+```
+
+完整成功后 rollback 恢复 previous；失败且存在 pending 时优先恢复上次成功的 current。首次发布没有任何成功记录时不能回滚。回滚恢复记录中的仓库、SHA、服务器/TLS/监控选项，不回滚数据库、`.env`、证书或仓库文件；如这些配置发生变化，先恢复匹配配置并确认当前脚本/Compose 可表达目标版本，再执行回滚。强制关机留下 release.lock 时，先确认没有发布进程，再人工清理该锁；不要删除 state.json/pending.json 来绕过诊断。
+
+## 11. 数据备份与恢复演练
+
+默认数据库持久化在 `flowdesk_pgdata` 命名卷，PostgreSQL 18 挂载 `/var/lib/postgresql`。禁止删除卷来解决迁移、密码或权限问题。迁移不会重置已有数据。
+
+以下命令适用于 Linux bash，在仓库根目录创建一致性逻辑备份；不需要在宿主机安装 PostgreSQL 客户端：
+
+```bash
+umask 077
+FLOWDESK_BACKUP="/opt/flow-desk/storage/backups/$(date -u +%Y%m%dT%H%M%SZ)"
+mkdir -p "$FLOWDESK_BACKUP"
+docker compose exec -T postgres pg_dump -U flowdesk_owner -Fc flowdesk > "$FLOWDESK_BACKUP/flowdesk.dump"
+test -s "$FLOWDESK_BACKUP/flowdesk.dump"
+docker compose exec -T postgres pg_restore --list < "$FLOWDESK_BACKUP/flowdesk.dump" > "$FLOWDESK_BACKUP/contents.txt"
+sha256sum "$FLOWDESK_BACKUP/flowdesk.dump" > "$FLOWDESK_BACKUP/SHA256SUMS"
+```
+
+`pg_dump` 包含 business/agent/knowledge 和检查点，使用同一数据库快照；它不包含集群角色、环境密钥、证书、镜像或发布记录。应另外加密备份 `.env`、`runtime/releases/`、服务器证书及角色恢复方案，保留匹配的源码 SHA/镜像 digest，将备份复制到独立受控存储并配置保留周期。备份中含业务和认证数据，权限与密钥同级管理。若另有外部原文件存储，也要纳入一致性备份；当前 Compose 没有独立原文件挂载卷。
+
+恢复演练必须进入全新数据库，原数据库保持不变。以下在同一个 PostgreSQL 实例使用已有角色/扩展安装；先设置上一步的实际备份目录：
+
+```bash
+FLOWDESK_RESTORE_DB="flowdesk_restore_$(date -u +%Y%m%d%H%M%S)"
+docker compose exec -T postgres createdb -U flowdesk_owner "$FLOWDESK_RESTORE_DB"
+docker compose exec -T postgres pg_restore -U flowdesk_owner --exit-on-error -d "$FLOWDESK_RESTORE_DB" < "$FLOWDESK_BACKUP/flowdesk.dump"
+docker compose exec -T postgres psql -U flowdesk_owner -d "$FLOWDESK_RESTORE_DB" -v ON_ERROR_STOP=1 \
+  -c 'SELECT count(*) AS receipts FROM business.action_receipts; SELECT count(*) AS checkpoints FROM agent.checkpoints;'
+```
+
+`createdb` 遇到已有数据库应失败，不继续覆盖。比对关键表行数、约束、回执、检查点和知识索引，记录演练时间；新机器恢复时须先创建同名角色和所需 pgvector 扩展环境。通过验证后，另行安排停写和数据库切换窗口，当前 Compose DSN 固定使用 `flowdesk`，不能只改一个未经支持的数据库名变量就声称切换完成。本节不自动执行切换或删除演练库。
+
+`scripts/check-backup.py` 是带 PowerShell 依赖的本地合成环境演练，不能作为上述 Linux 服务器恢复步骤的替代。应用镜像回滚不能代替数据库恢复。
+
+## 12. 常见问题
+
+| 现象 | 检查和处理 |
+| --- | --- |
+| IP 页面无法连接 | Web 容器是否 healthy；访问 IP 是否实际可路由；云安全组/防火墙是否放行对应 TCP 端口；是否使用了 `--server` |
+| Compose 不识别 `!override` | 升级 Compose 至 2.24.4+，不要修改端口替换语义 |
+| 镜像拉取 401/403 或 manifest 不存在 | 目标机重新确认仓库登录、读取权限、公网仓库及完整 SHA；三个 publish job 是否全部成功；CPU 是否 x86_64 |
+| 登录后刷新退回登录页 | Origin 的协议/IP/端口必须与浏览器一致；HTTP 用 dev/false，HTTPS 用 pro/true；不要混用 localhost 模板 |
+| IP 页面新建/审批失败且提示 randomUUID | Web 镜像版本过旧，使用包含 HTTP UUID 兼容修复的完整发布版本 |
+| HTTPS 名称不匹配/证书不受信任 | 检查 IP SAN、有效期、完整链及客户端信任；不要把 localhost 证书复制到服务器 |
+| 数据库密码错误 | 已有卷不会重新执行初始化；不要只改 `.env`，应协调修改角色密码并重建相关容器，不能删卷 |
+| readiness 失败或迁移失败 | `logs --tail 100` 检查失败服务；保留 pending、上次成功 SHA 和错误码；不对业务表手工补 SQL“修状态” |
+| 模型失败但页面健康 | 检查出站网络、兼容 endpoint/模型名、预算和脱敏错误；服务 ready 不代表供应商可用 |
+| RETRIEVAL_INDEX_NOT_READY | 使用当前 embedding profile 完成该租户知识重建，或回退 baseline 后重新发布 |
+| SSE 一次性返回或频繁断开 | 检查额外代理的缓冲/超时，浏览器刷新后应从持久快照恢复；不要重发新 action 代替原任务恢复 |
+| 已有回执但总结失败 | 先按回执检查真实工单，业务可能已提交，不能新建 action 重复执行 |
+
+交付时附上：服务器/入口、源码与镜像 SHA、启用的 TLS/监控/模型选项、配置与备份保管位置、验收结果、值守人及回滚目标。实际本地验收记录见[服务器入口配置验收](../reports/m6/server-entry.md)；该记录不代表已执行远程上线。

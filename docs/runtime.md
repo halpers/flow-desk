@@ -65,6 +65,6 @@ pnpm.cmd --dir flow-desk-web test:e2e
 
 ## 当前边界
 
-阶段状态以 [实施记录](progress.md) 为准。M1–M5 已交付身份、持久化任务、知识检索、兼容模型、经批准的工单办理和固定评测。当前使用三个固定角色，`users.role` 保存单一角色；多角色关联表属于后续团队权限扩展。
+阶段状态以 [实施记录](progress.md) 为准。M1–M6.5 已交付身份、持久化任务、知识检索、兼容模型、经批准的工单办理、固定评测，以及语义 RAG、MCP、部署监控和团队权限。当前使用三个固定角色，`users.role` 保存单一角色；M6.4 的团队成员与资源范围已实现，多角色关联表仍未实现。远程单机部署见[服务器手册](../deploy/server.md)。
 
 本地 HTTP Cookie 为 HttpOnly、SameSite=Strict。生产接入 TLS 反向代理时设置 `COOKIE_SECURE=true`、调整可信 Origin 并使用非 dev 模式；非 dev 模式会拒绝关闭 Secure Cookie 的配置。新建本地配置默认 `MODEL_PROVIDER=mock`；真实模型需在 `.env` 设置 `MODEL_PROVIDER=openai-compatible`、`MODEL_BASE_URL`、`MODEL_NAME` 和 `MODEL_API_KEY`。

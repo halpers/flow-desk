@@ -1,6 +1,6 @@
 # 设计文档索引
 
-版本：v0.1；状态：详细设计基线与 M1–M4 业务实现，M5 提供固定评测与展示。实际功能及验收以 [实施记录](progress.md) 为准；启动步骤见 [本地运行说明](runtime.md)。
+版本：v0.1；状态：M1–M5 业务实现与评测、M6.1–M6.5 本地专项已交付。实际功能及验收以 [实施记录](progress.md) 为准；开发见[本地运行](runtime.md)，服务器运维见[部署手册](../deploy/server.md)。
 
 | 文档 | 内容 |
 | --- | --- |
@@ -11,7 +11,7 @@
 | [前端详细设计](../flow-desk-web/docs/design.md) | 路由、页面交互、状态、事件恢复、确认卡片和前端测试 |
 | [Go 服务详细设计](../flow-desk-serv/flowdesk/docs/design.md) | go-zero 分层、模型、事务、调度器、鉴权与配置 |
 | [Python 服务详细设计](../flow-desk-agent/docs/design.md) | 图节点、工具适配、检索、检查点、模型调用与评测实现 |
-| [部署规划](../deploy/README.md) | 端口、数据卷、健康检查、服务发现与发布顺序 |
+| [服务器部署手册](../deploy/server.md) | Ubuntu 单机、IP:端口、HTTP/HTTPS、初始化、发布、验收、监控及恢复 |
 | [协议来源](../shared/contracts/README.md) | 契约唯一来源与生成流水线 |
 | [M5 评测](m5-evaluation.md) | 固定任务、评分断言、模型/检索/性能报告及复跑方式 |
 | [演示与运维](demo-and-operations.md) | 正常办理、失败恢复、备份恢复和排障边界 |

@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Alert, Button, Drawer, Input, Modal, Select, Space, Tag } from "antd";
 import { api, type User } from "../../shared/api/client";
+import { newId } from "../../shared/id";
 import type { Models } from "../../shared/api/models";
 import { TeamScope } from "../teams/Teams";
 
@@ -44,7 +45,7 @@ export function TicketDetail({
     const payload = JSON.stringify(body);
     const signature = path + payload;
     if (pending.current?.body !== signature)
-      pending.current = { body: signature, key: crypto.randomUUID() };
+      pending.current = { body: signature, key: newId() };
     try {
       await api(`/tickets/${id}${path}`, {
         method,
@@ -214,7 +215,7 @@ export function Tickets({ user }: { user: User }) {
         priority: "normal",
       });
       if (pending.current?.body !== body)
-        pending.current = { body, key: crypto.randomUUID() };
+        pending.current = { body, key: newId() };
       const result = await api<Ticket>("/tickets", {
         method: "POST",
         headers: { "Idempotency-Key": pending.current.key },
