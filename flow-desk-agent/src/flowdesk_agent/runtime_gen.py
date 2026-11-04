@@ -38,3 +38,5 @@ class ToolName(StrEnum):
     TICKET_SEARCH = "ticket.search"
     TICKET_CREATE = "ticket.create"
     TICKET_ADD_NOTE = "ticket.add_note"
+    TICKET_START_PROCESSING = "ticket.start_processing"
+    TICKET_RESOLVE = "ticket.resolve"

@@ -15,6 +15,7 @@ type OutboxEventsModel interface {
 	UpdateClaimTx(context.Context, sqlx.Session, string) error
 	UpdateDelivered(context.Context, string, int64) error
 	UpdateRetry(context.Context, string, int64, string) error
+	FindGraphVersionTx(context.Context, sqlx.Session, string, string) (string, error)
 }
 type customOutboxEventsModel struct{ *defaultOutboxEventsModel }
 
@@ -28,6 +29,13 @@ func (m *customOutboxEventsModel) withSession(tx sqlx.Session) OutboxEventsModel
 func (m *customOutboxEventsModel) InsertTx(ctx context.Context, tx sqlx.Session, row *OutboxEvents) error {
 	_, err := m.withSession(tx).Insert(ctx, row)
 	return err
+}
+func (m *customOutboxEventsModel) FindGraphVersionTx(ctx context.Context, tx sqlx.Session, tenant, run string) (string, error) {
+	var row struct {
+		GraphVersion string `db:"graph_version"`
+	}
+	err := tx.QueryRowCtx(ctx, &row, fmt.Sprintf("select coalesce(payload->>'graph_version','read-v1') as graph_version from %s where tenant_id=$1 and aggregate_id=$2 and topic='run.execute' order by created_at,id limit 1", m.table), tenant, run)
+	return row.GraphVersion, err
 }
 func (m *customOutboxEventsModel) FindClaimableForUpdateTx(ctx context.Context, tx sqlx.Session) (*OutboxEvents, error) {
 	var row OutboxEvents

@@ -1,0 +1,104 @@
+{
+  "phase": "M6.5",
+  "profile": "mock",
+  "tool_transport": "mcp",
+  "tls_verified": true,
+  "started_at": "2026-11-04T03:10:01.527826+00:00",
+  "dataset_sha256": "2a3d2114d93665037bddfc0c2fc2ddf890f665def2121d49e1f21e43b4e3d863",
+  "restart_verified": true,
+  "cases": [
+    {
+      "id": "M65-001",
+      "scenario": "logistics_create",
+      "passed": true,
+      "action_id": "0a5038b1-3b4a-5508-a99c-a54a540a257b",
+      "run_id": "921c619c-f966-4b6e-8c98-75214cf622ef",
+      "duration_ms": 10859
+    },
+    {
+      "id": "M65-002",
+      "scenario": "start_processing",
+      "passed": true,
+      "action_id": "adf2552e-a88b-5ea1-8862-5ff021b70c85",
+      "run_id": "fbb1e84e-4852-40d8-9a63-d14b906551d0",
+      "duration_ms": 15453
+    },
+    {
+      "id": "M65-003",
+      "scenario": "resolve",
+      "passed": true,
+      "action_id": "4f44e567-b49c-5aac-9bf3-aca422f87cb5",
+      "run_id": "7803fc72-fbf0-41dc-96ff-d90f615336fd",
+      "duration_ms": 10828
+    },
+    {
+      "id": "M65-004",
+      "scenario": "ambiguous_selection",
+      "passed": true,
+      "run_id": "25d3fb85-f698-4977-9a25-a66645f29fab",
+      "duration_ms": 13359
+    },
+    {
+      "id": "M65-005",
+      "scenario": "reject",
+      "passed": true,
+      "run_id": "e3357cec-463d-4020-b49f-54378968c554",
+      "duration_ms": 8344
+    },
+    {
+      "id": "M65-006",
+      "scenario": "cancel",
+      "passed": false,
+      "error_type": "AssertionError",
+      "error": "Run failed: TICKET_ASSIGNED",
+      "duration_ms": 5813
+    },
+    {
+      "id": "M65-007",
+      "scenario": "invalid_state",
+      "passed": true,
+      "run_id": "241f006f-bd97-43bd-b533-2bd2d971bc4c",
+      "duration_ms": 9750
+    },
+    {
+      "id": "M65-008",
+      "scenario": "operator_denied",
+      "passed": true,
+      "run_id": "13c3c671-6d57-45e4-af0a-a7b079517940",
+      "duration_ms": 10188
+    },
+    {
+      "id": "M65-009",
+      "scenario": "stale_proposal",
+      "passed": false,
+      "error_type": "AssertionError",
+      "error": "",
+      "duration_ms": 9781
+    },
+    {
+      "id": "M65-010",
+      "scenario": "team_and_tenant_denied",
+      "passed": true,
+      "run_id": "4052a5bd-325d-4689-9934-5ed860eabdc6",
+      "duration_ms": 10781
+    },
+    {
+      "id": "M65-011",
+      "scenario": "assigned_elsewhere",
+      "passed": true,
+      "run_id": "deb22568-0930-4ee7-86af-f86b1f94d87a",
+      "duration_ms": 7969
+    },
+    {
+      "id": "M65-012",
+      "scenario": "resolve_other_assignee",
+      "passed": true,
+      "run_id": "6fbbbaa3-e502-4298-ac4b-3912b76f8495",
+      "duration_ms": 8297
+    }
+  ],
+  "restart_to_completed_ms": 7578,
+  "completed_at": "2026-11-04T03:12:20.560420+00:00",
+  "passed": 10,
+  "total": 12
+}

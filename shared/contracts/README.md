@@ -16,3 +16,5 @@ M2 新增 `events/v1/run.schema.json` 和 `tools/v1/read.schema.json`。`scripts
 兼容策略：v1 只增加可选字段；删除字段、改变含义、修改枚举或改变鉴权语义需要显式兼容评估，必要时发布 v2。生成产物标明来源和工具版本；禁止手改产物。
 
 M6 的 retrieval/v1 定义供应商 embedding 响应和受限重排输出。权威来源是 Python 的 EmbeddingResponse / Ranking，由 Agent 契约导出脚本生成；运行时使用同一 Pydantic 模型验证，不手改 JSON 产物。
+
+M6.5 对 v1 追加两个工具名、相应严格参数和可选回执结果字段，既有事件仍可验证。新增工具名要求 Go/Python/Web 一同升级，旧消费者可能拒绝新枚举；原图版本继续保留，恢复不改写旧动作。回退旧镜像前需停止接收新任务并妥善完成 ticket-v2 等待任务，不能把旧版本能启动视为新动作也可恢复。

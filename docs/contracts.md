@@ -6,6 +6,8 @@
 
 M6.4 团队 API 和资源范围、撤权及历史可见性语义见[团队权限契约](m6-teams.md)，机器源为 `api/teams.api`。
 
+M6.5 新任务使用 ticket-v2，增加接手及办结意图；准备参数和事件回执从 `shared/contracts/tools/v1/actions.schema.json` 与 `events/v1/run.schema.json` 生成。历史任务恢复沿用首次 outbox 的 read-v1/ticket-v1/ticket-v2，不升级已保存的计划。精确状态、负责人和确认规则见[业务场景契约](m6-business-scenarios.md)。
+
 - 浏览器前缀 `/api/v1`；Go 内部接口 `/internal/v1`；Python 内部接口 `/internal/v1`。
 - JSON 字段使用 snake_case；路径中的 `{id}` 为文档占位，`.api` 使用框架支持的参数语法。
 - ID 使用 UUID 字符串，时间使用 UTC RFC 3339。显示时按用户时区转换。
@@ -260,6 +262,8 @@ command 枚举 execute/resume；取消使用独立接口。接收去重键是 di
 | knowledge.search | Python 本地检索 + Go 授权 | query、受限 top_k | 有效证据片段和引用 | 无 |
 | ticket.create | Go action executor | order_id、title、description、category、priority、依据引用 | 工单 ID/编号、action 回执 | 必须 |
 | ticket.add_note | Go action executor | ticket_id、content、expected_version | 备注 ID、工单版本、action 回执 | 必须 |
+| ticket.start_processing | Go action executor | ticket_id、expected_version、reason | 当前 actor 接手、in_progress、工单版本、action 回执 | 必须 |
+| ticket.resolve | Go action executor | ticket_id、expected_version、reason | 处理结论备注、resolved、工单版本、action 回执 | 必须 |
 
 读工具统一入口：`POST /internal/v1/tools/{tool_name}/invoke`，body 包含 tool_version、tool_call_id、arguments。tool_call_id 供追踪，不替代写操作 action_id。工具注册与路由 allowlist 对应，不允许按用户提供 URL 发起通用 HTTP 请求。
 

@@ -23,12 +23,21 @@ from mcp.types import (
 
 from flowdesk_agent.api.schemas import ExecutionCommand
 from flowdesk_agent.observability.telemetry import safe_traceparent
-from flowdesk_agent.tools.go_client import GoTools, ToolError, argument_validator, result_validator
+from flowdesk_agent.tools.go_client import (
+    GoTools,
+    ToolError,
+    action_validator,
+    argument_validator,
+    result_validator,
+)
 
 ACTION_NAME = "actions.execute"
 action_schema = json.loads((Path(__file__).parent / "mcp-action.schema.json").read_text())
 action_arguments = Draft202012Validator(action_schema)
 READ_NAMES = argument_validator.schema["properties"]["tool_name"]["enum"]
+WRITE_NAMES = {
+    item["properties"]["tool_name"]["const"] for item in action_validator.schema["oneOf"]
+}
 
 
 def error_result(code: str) -> CallToolResult:
@@ -46,7 +55,7 @@ def create_server(gateway: GoTools) -> Server:
     async def available():
         context = await gateway.authorize()
         names = [name for name in READ_NAMES if name in context.tools]
-        if {"ticket.create", "ticket.add_note"}.intersection(context.tools):
+        if WRITE_NAMES.intersection(context.tools):
             names.append(ACTION_NAME)
         return names
 

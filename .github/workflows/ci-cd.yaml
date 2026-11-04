@@ -112,6 +112,8 @@ jobs:
           docker compose ps --all
       - name: Check HTTP authentication through Web proxy
         run: python scripts/smoke.py
+      - name: Check fixed business scenarios through public API
+        run: python scripts/check-business-scenarios.py --output work/business-scenarios-ci.json
       - name: Validate local monitoring and TLS configuration
         run: |
           python scripts/configure-monitoring.py
@@ -241,6 +243,8 @@ jobs:
           GHCR_IMAGE: ${{ steps.images.outputs.ghcr }}
           ACR_IMAGE: ${{ steps.images.outputs.acr }}
         run: |
+          # Backticks below are literal Markdown in printf format strings.
+          # shellcheck disable=SC2016
           {
             printf '### %s\n\n' "$SERVICE"
             printf -- '- `%s:sha-%s`\n' "$GHCR_IMAGE" "$GITHUB_SHA"

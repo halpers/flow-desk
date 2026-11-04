@@ -1,0 +1,12 @@
+{"id":"M65-001","scenario":"logistics_create","expected_tool":"ticket.create","expected_status":"open"}
+{"id":"M65-002","scenario":"start_processing","expected_tool":"ticket.start_processing","expected_status":"in_progress"}
+{"id":"M65-003","scenario":"resolve","expected_tool":"ticket.resolve","expected_status":"resolved"}
+{"id":"M65-004","scenario":"ambiguous_selection","expected_status":"open"}
+{"id":"M65-005","scenario":"reject","expected_status":"open"}
+{"id":"M65-006","scenario":"cancel","expected_status":"in_progress"}
+{"id":"M65-007","scenario":"invalid_state","expected_status":"open","expected_error":"INVALID_TRANSITION"}
+{"id":"M65-008","scenario":"operator_denied","expected_status":"open","expected_error":"PERMISSION_DENIED"}
+{"id":"M65-009","scenario":"stale_proposal","expected_status":"in_progress","expected_error":"RESOURCE_CHANGED"}
+{"id":"M65-010","scenario":"team_and_tenant_denied","expected_status":"open"}
+{"id":"M65-011","scenario":"assigned_elsewhere","expected_status":"open","expected_error":"TICKET_ASSIGNED"}
+{"id":"M65-012","scenario":"resolve_other_assignee","expected_status":"in_progress","expected_error":"TICKET_ASSIGNED"}

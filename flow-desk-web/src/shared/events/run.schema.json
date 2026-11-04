@@ -74,7 +74,9 @@
         "logistics.track",
         "ticket.search",
         "ticket.create",
-        "ticket.add_note"
+        "ticket.add_note",
+        "ticket.start_processing",
+        "ticket.resolve"
       ]
     },
     "statusPayload": {
@@ -208,7 +210,9 @@
         "tool_name": {
           "enum": [
             "ticket.create",
-            "ticket.add_note"
+            "ticket.add_note",
+            "ticket.start_processing",
+            "ticket.resolve"
           ]
         },
         "business_object_type": {
@@ -242,6 +246,12 @@
             "ticket_version": {
               "type": "integer",
               "minimum": 1
+            },
+            "status": {
+              "enum": ["in_progress", "resolved"]
+            },
+            "assignee_user_id": {
+              "anyOf": [{"const": ""}, {"type": "string", "format": "uuid"}]
             },
             "note_id": {
               "type": "string",
@@ -330,8 +340,30 @@
   },
   "allOf": [
     {
-      "if": {"properties": {"type": {"const": "resource.revoked"}}},
-      "then": {"properties": {"payload": {"type": "object", "additionalProperties": false, "required": ["summary"], "properties": {"summary": {"type": "string", "maxLength": 500}}}}}
+      "if": {
+        "properties": {
+          "type": {
+            "const": "resource.revoked"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "summary"
+            ],
+            "properties": {
+              "summary": {
+                "type": "string",
+                "maxLength": 500
+              }
+            }
+          }
+        }
+      }
     },
     {
       "if": {

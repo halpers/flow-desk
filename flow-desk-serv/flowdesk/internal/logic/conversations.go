@@ -282,7 +282,7 @@ func SendMessage(ctx context.Context, s *svc.ServiceContext, req *types.SendMess
 		if _, err = appendEventTx(ctx, s, tx, run, uuid.NewSHA1(uuid.NameSpaceURL, []byte(run.Id+":queued")).String(), domain.EventRunQueued, payload, now, ""); err != nil {
 			return types.RunData{}, err
 		}
-		command := map[string]any{"dispatch_id": run.DispatchId, "run_id": run.Id, "lease_generation": run.LeaseGeneration, "command": "execute", "graph_version": "ticket-v1"}
+		command := map[string]any{"dispatch_id": run.DispatchId, "run_id": run.Id, "lease_generation": run.LeaseGeneration, "command": "execute", "graph_version": ticketGraphVersion}
 		if err = s.OutboxEventsModel.InsertTx(ctx, tx, &model.OutboxEvents{Id: uuid.NewString(), TenantId: actor.TenantId, AggregateId: run.Id, DispatchId: run.DispatchId, Topic: "run.execute", Payload: marshal(command), Status: "pending", AvailableAt: now}); err != nil {
 			return types.RunData{}, err
 		}

@@ -110,6 +110,8 @@ def test_mcp_protocol_discovery_validation_permissions_and_receipt_replay():
                 context["tools"].remove("order.lookup")
                 hidden = await client.call_tool("order.lookup", {"order_no": "FD0001"})
                 assert hidden.is_error and hidden.structured_content["code"] == "PERMISSION_DENIED"
+                context["tools"] = ["ticket.resolve"]
+                assert [tool.name for tool in (await client.list_tools()).tools] == [ACTION_NAME]
                 flags["revoked"] = True
                 revoked = await client.call_tool(ACTION_NAME, {"action_id": receipt["action_id"]})
                 assert revoked.is_error
@@ -120,7 +122,7 @@ def test_mcp_protocol_discovery_validation_permissions_and_receipt_replay():
 
 def test_mcp_stdio_subprocess_uses_trusted_run_and_no_model_credentials(monkeypatch):
     item = command()
-    _, _, flags, handler = fixture(item)
+    _, receipt, flags, handler = fixture(item)
     monkeypatch.setenv("MODEL_API_KEY", "secret-not-for-the-tool-process")
 
     class Handler(BaseHTTPRequestHandler):
@@ -152,6 +154,13 @@ def test_mcp_stdio_subprocess_uses_trusted_run_and_no_model_credentials(monkeypa
         assert "MODEL_API_KEY" not in tools.parameters.env
         assert "AGENT_DATABASE_URL" not in tools.parameters.env
         assert await tools.call("order.lookup", {"order_no": "FD0001"}) == {"tickets": []}
+        try:
+            await tools.call(ACTION_NAME, {"action_id": receipt["action_id"]})
+        except ToolError as exc:
+            assert exc.code == "APPROVAL_REQUIRED"
+        else:
+            raise AssertionError("Unapproved action did not return its exact business failure")
+        assert flags["effects"] == 0
         flags["revoked"] = True
         try:
             await tools.call("order.lookup", {"order_no": "FD0001"})

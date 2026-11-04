@@ -1,21 +1,176 @@
 {
- "$schema":"https://json-schema.org/draft/2020-12/schema",
- "$id":"https://flowdesk.local/contracts/tools/v1/actions.schema.json",
- "title":"Action proposal v1; trusted context is injected by Go",
- "oneOf":[
-  {"type":"object","additionalProperties":false,"required":["tool_name","arguments"],"properties":{
-   "tool_name":{"const":"ticket.create"},
-   "arguments":{"type":"object","additionalProperties":false,"required":["order_id","expected_version","title","description","category","priority"],"properties":{
-    "order_id":{"type":"string","format":"uuid"},"expected_version":{"type":"integer","minimum":1},
-    "title":{"type":"string","minLength":1,"maxLength":120},"description":{"type":"string","minLength":1,"maxLength":4000},
-    "category":{"enum":["after_sales","logistics","other"]},"priority":{"enum":["normal","urgent"]}
-   }}
-  }},
-  {"type":"object","additionalProperties":false,"required":["tool_name","arguments"],"properties":{
-   "tool_name":{"const":"ticket.add_note"},
-   "arguments":{"type":"object","additionalProperties":false,"required":["ticket_id","expected_version","content"],"properties":{
-    "ticket_id":{"type":"string","format":"uuid"},"expected_version":{"type":"integer","minimum":1},"content":{"type":"string","minLength":1,"maxLength":4000}
-   }}
-  }}
- ]
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://flowdesk.local/contracts/tools/v1/actions.schema.json",
+  "title": "Action proposal v1; trusted context is injected by Go",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tool_name",
+        "arguments"
+      ],
+      "properties": {
+        "tool_name": {
+          "const": "ticket.create"
+        },
+        "arguments": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "order_id",
+            "expected_version",
+            "title",
+            "description",
+            "category",
+            "priority"
+          ],
+          "properties": {
+            "order_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "expected_version": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "title": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120
+            },
+            "description": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4000
+            },
+            "category": {
+              "enum": [
+                "after_sales",
+                "logistics",
+                "other"
+              ]
+            },
+            "priority": {
+              "enum": [
+                "normal",
+                "urgent"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tool_name",
+        "arguments"
+      ],
+      "properties": {
+        "tool_name": {
+          "const": "ticket.add_note"
+        },
+        "arguments": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "ticket_id",
+            "expected_version",
+            "content"
+          ],
+          "properties": {
+            "ticket_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "expected_version": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "content": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4000
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tool_name",
+        "arguments"
+      ],
+      "properties": {
+        "tool_name": {
+          "const": "ticket.start_processing"
+        },
+        "arguments": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "ticket_id",
+            "expected_version",
+            "reason"
+          ],
+          "properties": {
+            "ticket_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "expected_version": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4000
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tool_name",
+        "arguments"
+      ],
+      "properties": {
+        "tool_name": {
+          "const": "ticket.resolve"
+        },
+        "arguments": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "ticket_id",
+            "expected_version",
+            "reason"
+          ],
+          "properties": {
+            "ticket_id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "expected_version": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4000
+            }
+          }
+        }
+      }
+    }
+  ]
 }

@@ -86,7 +86,11 @@ func resumeRunTx(ctx context.Context, s *svc.ServiceContext, tx sqlx.Session, ru
 	if _, err := appendEventTx(ctx, s, tx, run, uuid.NewSHA1(uuid.MustParse(run.DispatchId), []byte("queued")).String(), domain.EventRunQueued, map[string]any{"status": run.Status, "run_version": run.Version + 1}, time.Now().UTC(), ""); err != nil {
 		return err
 	}
-	command := map[string]any{"dispatch_id": run.DispatchId, "run_id": run.Id, "lease_generation": run.LeaseGeneration, "command": "resume", "graph_version": "ticket-v1"}
+	graphVersion, err := s.OutboxEventsModel.FindGraphVersionTx(ctx, tx, run.TenantId, run.Id)
+	if err != nil {
+		return err
+	}
+	command := map[string]any{"dispatch_id": run.DispatchId, "run_id": run.Id, "lease_generation": run.LeaseGeneration, "command": "resume", "graph_version": graphVersion}
 	return s.OutboxEventsModel.InsertTx(ctx, tx, &model.OutboxEvents{Id: uuid.NewString(), TenantId: run.TenantId, AggregateId: run.Id, DispatchId: run.DispatchId, Topic: "run.resume", Payload: marshal(command), Status: statePending, AvailableAt: time.Now().UTC()})
 }
 func invalidatePendingTx(ctx context.Context, s *svc.ServiceContext, tx sqlx.Session, run *model.Runs, status string) error {

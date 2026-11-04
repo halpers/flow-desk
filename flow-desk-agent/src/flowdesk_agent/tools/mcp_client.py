@@ -58,20 +58,26 @@ class MCPTools:
                     )
                     async with Client(stdio_client(parameters, errlog=errors)) as client:
                         definitions = (await client.list_tools()).tools
-                        if name not in {tool.name for tool in definitions}:
-                            raise ToolError("PERMISSION_DENIED")
-                        result = await client.call_tool(name, arguments)
-                        body = result.structured_content
-                        if not isinstance(body, dict):
-                            raise ToolError("MCP_INVALID_RESULT")
-                        if result.is_error:
-                            code = body.get("code")
-                            raise ToolError(code if isinstance(code, str) else "MCP_TOOL_FAILED")
-                        if "data" not in body:
-                            raise ToolError("MCP_INVALID_RESULT")
-                        return body["data"]
+                        result = (
+                            await client.call_tool(name, arguments)
+                            if name in {tool.name for tool in definitions}
+                            else None
+                        )
         except ToolError:
             raise
         except Exception:
             # An uncertain write is retried only through the exact same action_id.
             raise ToolError("MCP_RESULT_UNKNOWN") from None
+        # Raise business failures after SDK task groups exit. Raising inside their
+        # context can wrap ToolError in ExceptionGroup and erase a definite result.
+        if result is None:
+            raise ToolError("PERMISSION_DENIED")
+        body = result.structured_content
+        if not isinstance(body, dict):
+            raise ToolError("MCP_INVALID_RESULT")
+        if result.is_error:
+            code = body.get("code")
+            raise ToolError(code if isinstance(code, str) else "MCP_TOOL_FAILED")
+        if "data" not in body:
+            raise ToolError("MCP_INVALID_RESULT")
+        return body["data"]

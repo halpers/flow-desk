@@ -5,6 +5,25 @@ import type { Run } from "../../shared/events/watch";
 import { terminal } from "../../shared/events/watch";
 import { TicketDetail } from "./Tickets";
 
+const actionTitles: Record<string, string> = {
+  "ticket.create": "确认创建工单",
+  "ticket.add_note": "确认添加内部备注",
+  "ticket.start_processing": "确认接手处理工单",
+  "ticket.resolve": "确认办结工单",
+};
+const receiptLabels: Record<string, string> = {
+  "ticket.create": "工单已创建",
+  "ticket.add_note": "备注已保存",
+  "ticket.start_processing": "工单已接手处理",
+  "ticket.resolve": "工单已办结",
+};
+const statusLabels: Record<string, string> = {
+  open: "待处理",
+  in_progress: "处理中",
+  resolved: "已办结",
+  closed: "已关闭",
+};
+
 export function Receipt({ value }: { value: Record<string, unknown> }) {
   const result = value.result as Record<string, unknown> | undefined;
   const [open, setOpen] = useState(false);
@@ -12,7 +31,7 @@ export function Receipt({ value }: { value: Record<string, unknown> }) {
   return (
     <div className="receipt-card">
       <Tag color="green">
-        {value.tool_name === "ticket.create" ? "工单已创建" : "备注已保存"}
+        {receiptLabels[String(value.tool_name)] || "办理已完成"}
       </Tag>
       <Button type="link" onClick={() => setOpen(true)}>
         {String(result.ticket_no || "查看工单")}
@@ -102,12 +121,17 @@ export function RunControls({
       )}
       {run.status === "waiting_approval" && approval && (
         <section className="action-card" aria-label="待确认操作">
-          <h3>
-            {snapshot?.tool_name === "ticket.create"
-              ? "确认创建工单"
-              : "确认添加内部备注"}
-          </h3>
+          <h3>{actionTitles[String(snapshot?.tool_name)] || "确认操作"}</h3>
           <p>{String(snapshot?.order_no || snapshot?.ticket_no || "")}</p>
+          {typeof snapshot?.to_status === "string" && (
+            <p>
+              状态：
+              {statusLabels[String(snapshot.from_status)] ||
+                String(snapshot.from_status)}{" "}
+              → {statusLabels[snapshot.to_status] || snapshot.to_status}
+              ；办理人：{String(snapshot.actor_display_name)}
+            </p>
+          )}
           {fields &&
             Object.entries(fields)
               .filter(([key]) =>
@@ -117,6 +141,7 @@ export function RunControls({
                   "category",
                   "priority",
                   "content",
+                  "reason",
                 ].includes(key),
               )
               .map(([key, value]) => (
@@ -130,6 +155,10 @@ export function RunControls({
                           category: "分类",
                           priority: "优先级",
                           content: "备注内容",
+                          reason:
+                            snapshot?.tool_name === "ticket.resolve"
+                              ? "处理结论"
+                              : "处理原因",
                         } as Record<string, string>
                       )[key]
                     }

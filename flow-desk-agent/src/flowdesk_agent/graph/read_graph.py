@@ -7,11 +7,12 @@ from uuid import uuid5
 from langgraph.graph import END, START, StateGraph
 from langgraph.types import interrupt
 
-from flowdesk_agent.models import Answer, Plan
+from flowdesk_agent.models import Answer, Plan, ScenarioPlan
 from flowdesk_agent.runtime_gen import ToolName
 from flowdesk_agent.tools.go_client import GoTools, ToolError
 
 ORDER_PATTERN = re.compile(r"(?<![A-Za-z0-9])FD\d{12}(?![A-Za-z0-9])", re.IGNORECASE)
+TICKET_PATTERN = re.compile(r"(?<![A-Za-z0-9])T[0-9a-f]{32}(?![A-Za-z0-9])", re.IGNORECASE)
 
 
 class TaskState(TypedDict, total=False):
@@ -49,10 +50,15 @@ class FakeModel:
         )
 
     async def answer(self, state: TaskState) -> str | Answer:
-        plan = Plan.model_validate(state["plan"])
+        plan = ScenarioPlan.model_validate(state["plan"])
         if state.get("receipt"):
             receipt = state["receipt"]
-            label = "工单已创建" if receipt["tool_name"] == "ticket.create" else "备注已保存"
+            label = {
+                "ticket.create": "工单已创建",
+                "ticket.add_note": "备注已保存",
+                "ticket.start_processing": "工单已接手处理",
+                "ticket.resolve": "工单已办结",
+            }[receipt["tool_name"]]
             return Answer(
                 content=f"{label}，工单编号 {receipt['result']['ticket_no']}。",
                 evidence_ids=[item["id"] for item in state.get("evidence", [])],
@@ -108,12 +114,29 @@ class FakeModel:
         return result
 
 
+class ScenarioFakeModel(FakeModel):
+    async def plan(self, content: str) -> ScenarioPlan:
+        original = await super().plan(content)
+        action = original.requested_action
+        if "工单" in content:
+            if any(word in content for word in ("办结", "结单", "解决工单", "处理结论")):
+                action = "resolve"
+            elif any(word in content for word in ("接手", "开始处理", "受理", "催办")):
+                action = "start_processing"
+        return ScenarioPlan(
+            **(original.model_dump() | {"requested_action": action}),
+            ticket_category="logistics" if "物流" in content else "after_sales",
+        )
+
+
 def build_graph(tools: GoTools, checkpointer, model=None, retriever=None, recorder=None):
-    model = model or FakeModel()
+    version = tools.command.graph_version
+    plan_schema = ScenarioPlan if version == "ticket-v2" else Plan
+    model = model or (ScenarioFakeModel() if version == "ticket-v2" else FakeModel())
 
     async def route(state: TaskState):
         await tools.authorize()
-        plan = Plan.model_validate(await model.plan(state["content"]))
+        plan = plan_schema.model_validate(await model.plan(state["content"]))
         if plan.order_no and plan.order_no not in {
             match.upper() for match in ORDER_PATTERN.findall(state["content"])
         }:
@@ -122,7 +145,7 @@ def build_graph(tools: GoTools, checkpointer, model=None, retriever=None, record
         return {"plan": plan.model_dump()}
 
     async def read(state: TaskState):
-        plan = Plan.model_validate(state["plan"])
+        plan = plan_schema.model_validate(state["plan"])
         arguments = {"order_no": plan.order_no}
         order = await tools.call(ToolName.ORDER_LOOKUP, arguments)
         logistics = await tools.call(ToolName.LOGISTICS_TRACK, arguments)
@@ -139,7 +162,7 @@ def build_graph(tools: GoTools, checkpointer, model=None, retriever=None, record
 
     async def finalize(state: TaskState):
         context = await tools.authorize()
-        plan = Plan.model_validate(state["plan"])
+        plan = plan_schema.model_validate(state["plan"])
         output = (
             Answer(content="当前授权知识库中没有足够依据，请联系主管核实。", evidence_ids=[])
             if plan.knowledge_query and not state.get("evidence") and not state.get("receipt")
@@ -161,7 +184,12 @@ def build_graph(tools: GoTools, checkpointer, model=None, retriever=None, record
         content = answer.content
         if state.get("receipt"):
             receipt = state["receipt"]
-            label = "已创建工单" if receipt["tool_name"] == "ticket.create" else "已添加备注"
+            label = {
+                "ticket.create": "已创建工单",
+                "ticket.add_note": "已添加备注",
+                "ticket.start_processing": "已接手处理工单",
+                "ticket.resolve": "已办结工单",
+            }[receipt["tool_name"]]
             content = f"{label}：{receipt['result']['ticket_no']}。\n{content}"
         await tools.guard()
         await tools.callbacks.emit(
@@ -181,14 +209,14 @@ def build_graph(tools: GoTools, checkpointer, model=None, retriever=None, record
         return {"answer": content}
 
     async def retrieve(state: TaskState):
-        query = Plan.model_validate(state["plan"]).knowledge_query
+        query = plan_schema.model_validate(state["plan"]).knowledge_query
         return {"evidence": await retriever.search(query) if query and retriever else []}
 
     async def allocate_input(state: TaskState):
-        plan = Plan.model_validate(state["plan"])
+        plan = plan_schema.model_validate(state["plan"])
         question = "请提供以 FD 开头的完整订单号，例如 FD202611020002。"
         if plan.order_no:
-            question = "请选择要添加备注的工单，回复完整工单编号：" + "、".join(
+            question = "请选择要办理的工单，回复完整工单编号：" + "、".join(
                 item["ticket_no"] for item in state.get("tickets", [])
             )
         return {"input_id": str(uuid5(tools.command.dispatch_id, "input")), "question": question}
@@ -211,14 +239,21 @@ def build_graph(tools: GoTools, checkpointer, model=None, retriever=None, record
 
     def selected_ticket(state: TaskState):
         tickets = state.get("tickets", [])
+        if version == "ticket-v2" and TICKET_PATTERN.search(state["content"]):
+            selection = state["content"].rsplit("\n补充：", 1)[-1]
+            if not TICKET_PATTERN.search(selection):
+                selection = state["content"]
+            identifiers = {item.casefold() for item in TICKET_PATTERN.findall(selection)}
+            explicit = [item for item in tickets if item["ticket_no"].casefold() in identifiers]
+            return explicit[0] if len(explicit) == 1 and len(identifiers) == 1 else None
         explicit = [item for item in tickets if item["ticket_no"] in state["content"]]
         return explicit[0] if len(explicit) == 1 else tickets[0] if len(tickets) == 1 else None
 
     def next_after_retrieve(state: TaskState):
-        plan = Plan.model_validate(state["plan"])
+        plan = plan_schema.model_validate(state["plan"])
         if plan.requested_action == "query" or (plan.knowledge_query and not state.get("evidence")):
             return "finalize"
-        if plan.requested_action == "add_note":
+        if plan.requested_action in ("add_note", "start_processing", "resolve"):
             if not state.get("tickets"):
                 return "blocked"
             if selected_ticket(state) is None:
@@ -226,22 +261,37 @@ def build_graph(tools: GoTools, checkpointer, model=None, retriever=None, record
         return "action"
 
     async def blocked(state: TaskState):
-        return {"blocked": "该订单没有可访问的工单，尚未添加备注。请先创建工单。"}
+        return {
+            "blocked": "该订单没有可访问的工单，尚未办理。请先创建工单或联系管理员确认访问权限。"
+        }
 
     async def allocate_action(state: TaskState):
         return {"action_id": str(uuid5(tools.command.run_id, "action:v1"))}
 
     async def prepare_action(state: TaskState):
-        plan = Plan.model_validate(state["plan"])
+        plan = plan_schema.model_validate(state["plan"])
         if plan.requested_action == "create_ticket":
             tool = "ticket.create"
+            category = getattr(plan, "ticket_category", "after_sales")
+            label = {"logistics": "物流", "after_sales": "售后", "other": "服务"}[category]
             arguments = {
                 "order_id": state["order"]["id"],
                 "expected_version": state["order"]["version"],
-                "title": f"订单 {state['order']['order_no']} 售后跟进",
+                "title": f"订单 {state['order']['order_no']} {label}跟进",
                 "description": state["content"][:4000],
-                "category": "after_sales",
+                "category": category,
                 "priority": "normal",
+            }
+        elif plan.requested_action in ("start_processing", "resolve"):
+            tool = "ticket." + plan.requested_action
+            ticket = selected_ticket(state)
+            match = re.search(
+                r"(?:处理原因|处理结论|结论|原因)[：:]\s*(.+)", state["content"], re.S
+            )
+            arguments = {
+                "ticket_id": ticket["id"],
+                "expected_version": ticket["version"],
+                "reason": (match.group(1) if match else state["content"])[:4000],
             }
         else:
             tool = "ticket.add_note"

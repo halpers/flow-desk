@@ -19,6 +19,8 @@
 | [M6.1 语义 RAG](m6-semantic-rag.md) | embedding 预算、索引重建、重排、配置回退与实测 |
 | [M6.2 MCP](m6-mcp.md) | 官方 SDK、工具发现、stdio 生命周期、Go 授权与审批执行 |
 | [M6.3 部署与监控](m6-deployment-monitoring.md) | 固定镜像发布/回滚、TLS、OTel、指标、告警与本地验收 |
+| [M6.4 团队权限](m6-teams.md) | 团队成员、工单/知识范围、撤权、历史兼容与授权锁 |
+| [M6.5 业务场景](m6-business-scenarios.md) | 物流建单、接手、办结、图版本兼容与固定场景 |
 
 ## 阅读与修改顺序
 

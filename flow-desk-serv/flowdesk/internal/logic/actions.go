@@ -4,9 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"strings"
 	"time"
-	"unicode/utf8"
 
 	"flowdesk/db/model"
 	"flowdesk/internal/domain"
@@ -50,6 +48,9 @@ func actionPermission(tool string) string {
 	}
 	if tool == ticketNoteTool {
 		return "ticket:note"
+	}
+	if tool == ticketStartTool || tool == ticketResolveTool {
+		return "ticket:manage"
 	}
 	return "invalid"
 }
@@ -154,33 +155,23 @@ func PrepareAction(ctx context.Context, s *svc.ServiceContext, req *types.Prepar
 			resources["order"] = order.Version
 			display["order_no"] = order.OrderNo
 		} else {
-			var input types.AddNoteReq
-			if json.Unmarshal([]byte(arguments), &input) != nil {
-				return errArgument
-			}
-			// The public request locates this field in the HTTP path, not JSON.
-			input.TicketId, _ = req.Arguments["ticket_id"].(string)
-			if !validID(input.TicketId) || input.ExpectedVersion < 1 || strings.TrimSpace(input.Content) == "" || utf8.RuneCountInString(input.Content) > maxTicketText {
-				return errArgument
-			}
-			ticket, err := s.TicketsModel.FindOneForUpdateTx(ctx, tx, run.TenantId, input.TicketId)
+			ticket, err := prepareExistingTicketTx(ctx, s, tx, actor, req.ToolName, arguments)
 			if err != nil {
-				return err
-			}
-			if err = teamAccessTx(ctx, s, tx, actor, ticket.TeamId); err != nil {
 				return err
 			}
 			if err = rememberTicketTx(ctx, s, tx, run, ticket.Id); err != nil {
 				return err
 			}
-			if ticket.Version != input.ExpectedVersion {
-				return failure(409, "RESOURCE_CHANGED", "工单版本已变化")
-			}
-			if ticket.Status == stateClosed {
-				return failure(409, "TICKET_CLOSED", "已关闭工单不能添加备注")
-			}
 			resources["ticket"] = ticket.Version
 			display["ticket_no"] = ticket.TicketNo
+			if req.ToolName == ticketStartTool || req.ToolName == ticketResolveTool {
+				display["from_status"] = ticket.Status
+				display["to_status"] = stateInProgress
+				if req.ToolName == ticketResolveTool {
+					display["to_status"] = stateResolved
+				}
+				display["actor_display_name"] = actor.DisplayName
+			}
 		}
 		expires := time.Now().UTC().Add(waitLifetime).Truncate(time.Microsecond)
 		display["expires_at"] = expires.Format(time.RFC3339Nano)
@@ -321,6 +312,8 @@ func executeAction(ctx context.Context, s *svc.ServiceContext, req *types.Action
 				return err
 			}
 			ticket, err = createTicketTx(ctx, s, tx, actor, &input, action.Id)
+		} else if action.ToolName == ticketStartTool || action.ToolName == ticketResolveTool {
+			ticket, noteID, err = ticketWorkflowTx(ctx, s, tx, actor, action)
 		} else {
 			var input types.AddNoteReq
 			if err = json.Unmarshal([]byte(action.Arguments), &input); err != nil {
@@ -331,12 +324,16 @@ func executeAction(ctx context.Context, s *svc.ServiceContext, req *types.Action
 		}
 		if err != nil {
 			var business *BusinessError
-			if errors.As(err, &business) && (business.Code == "RESOURCE_CHANGED" || business.Code == "ORDER_CANCELLED" || business.Code == "TICKET_CLOSED" || business.Code == "RESOURCE_NOT_FOUND" || business.Code == "PERMISSION_DENIED") {
+			if errors.As(err, &business) && (business.Code == "RESOURCE_CHANGED" || business.Code == "ORDER_CANCELLED" || business.Code == "TICKET_CLOSED" || business.Code == "INVALID_TRANSITION" || business.Code == "TICKET_ASSIGNED" || business.Code == "RESOURCE_NOT_FOUND" || business.Code == "PERMISSION_DENIED") {
 				return invalidate(err)
 			}
 			return err
 		}
 		values := map[string]any{"ticket_id": ticket.Id, "ticket_no": ticket.TicketNo, "ticket_version": ticket.Version}
+		if action.ToolName == ticketStartTool || action.ToolName == ticketResolveTool {
+			values["status"] = ticket.Status
+			values["assignee_user_id"] = ticket.AssigneeUserId
+		}
 		if err = rememberTicketTx(ctx, s, tx, run, ticket.Id); err != nil {
 			return err
 		}

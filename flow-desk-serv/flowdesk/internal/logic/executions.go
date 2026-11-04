@@ -133,7 +133,7 @@ func RenewLease(ctx context.Context, s *svc.ServiceContext, req *types.LeaseReq)
 				tools = append(tools, ticketSearchTool)
 			}
 		}
-		for _, tool := range []string{"ticket.create", "ticket.add_note"} {
+		for _, tool := range []string{ticketCreateTool, ticketNoteTool, ticketStartTool, ticketResolveTool} {
 			if permitted(actor, actionPermission(tool)) {
 				tools = append(tools, tool)
 			}

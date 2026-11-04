@@ -12,7 +12,7 @@ class ExecutionCommand(BaseModel):
     run_id: UUID
     lease_generation: int = Field(ge=1)
     command: Literal["execute", "resume"]
-    graph_version: Literal["read-v1", "ticket-v1"]
+    graph_version: Literal["read-v1", "ticket-v1", "ticket-v2"]
 
 
 class CommandReceipt(BaseModel):
