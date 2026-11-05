@@ -90,24 +90,27 @@ def test_parser_deadline_kills_child_and_excludes_service_credentials(monkeypatc
 
 
 @pytest.mark.parametrize(
-    "filename,error_code,ocr_mode",
+    "filename,error_code,ocr_mode,pdf_layout",
     [
-        ("policy.pdf", "", "off"),
-        ("scan.pdf", "PDF_OCR_REQUIRED", "off"),
+        ("policy.pdf", "", "off", "plain"),
+        ("scan.pdf", "PDF_OCR_REQUIRED", "off", "plain"),
+        ("layout-columns.pdf", "", "off", "columns"),
+        ("layout-ambiguous.pdf", "PDF_LAYOUT_UNSUPPORTED", "off", "columns"),
         pytest.param(
             "ocr-policy.pdf",
             "",
             "auto",
+            "plain",
             marks=pytest.mark.skipif(
                 os.environ.get("FLOWDESK_NATIVE_OCR_TESTS") != "1",
                 reason="Pinned native OCR image",
             ),
         ),
-        ("scan.pdf", "PDF_OCR_PAGE_LIMIT", "force_limit"),
+        ("scan.pdf", "PDF_OCR_PAGE_LIMIT", "force_limit", "plain"),
     ],
 )
 def test_pdf_index_callback_crash_replays_manifest_or_durable_error(
-    monkeypatch, filename, error_code, ocr_mode
+    monkeypatch, filename, error_code, ocr_mode, pdf_layout
 ):
     async def scenario():
         async with isolated_pool() as pool:
@@ -124,6 +127,7 @@ def test_pdf_index_callback_crash_replays_manifest_or_durable_error(
             else:
                 ocr_selection = ocr_mode
             source = {
+                "pdf_layout": pdf_layout,
                 "ocr_mode": ocr_selection,
                 "source_format": "pdf",
                 "content": "",
@@ -160,7 +164,7 @@ def test_pdf_index_callback_crash_replays_manifest_or_durable_error(
                 fresh = await fresh_index.claim()
                 assert fresh["attempts"] == old["attempts"] + 1
 
-                async def no_reparse(raw):
+                async def no_reparse(*args, **kwargs):
                     raise AssertionError("persisted extraction/error must be reused")
 
                 monkeypatch.setattr("flowdesk_agent.retrieval.extract_pdf", no_reparse)
@@ -184,13 +188,16 @@ def test_pdf_index_callback_crash_replays_manifest_or_durable_error(
                     assert not rows and callbacks[1]["status"] == "failed"
                 else:
                     assert [row["page_number"] for row in rows] == (
-                        [1, 2] if filename == "ocr-policy.pdf" else [1, 2, 3]
+                        [1, 2]
+                        if filename in ("ocr-policy.pdf", "layout-columns.pdf")
+                        else [1, 2, 3]
                     )
                     assert callbacks[1]["page_texts"][1]["page_number"] == 2
                     if filename == "ocr-policy.pdf":
                         assert callbacks[1]["page_texts"][1]["extraction_method"] == "ocr"
                     retriever = Retriever(pool, None, profile="baseline")
-                    chosen = await retriever.rank("三十六个月", tenant, [version], mode="lexical")
+                    query = "四十八个月" if pdf_layout == "columns" else "三十六个月"
+                    chosen = await retriever.rank(query, tenant, [version], mode="lexical")
                     assert chosen[0]["page_number"] == 2
                     assert (
                         await retriever.rank("三十六个月", uuid4(), [version], mode="lexical") == []

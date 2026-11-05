@@ -50,6 +50,7 @@ type ActiveKnowledgeVersion struct {
 
 // Listing metadata must not load every original PDF into API memory.
 type DocumentVersionSummary struct {
+	PdfLayout     string `db:"pdf_layout"`
 	SourceStorage string `db:"source_storage"`
 	OcrMode       string `db:"ocr_mode"`
 	OcrPageCount  int64  `db:"ocr_page_count"`
@@ -67,6 +68,9 @@ type DocumentVersionSummary struct {
 }
 
 func (m *customDocumentVersionsModel) InsertTx(ctx context.Context, tx sqlx.Session, row *DocumentVersions) error {
+	if row.PdfLayout == "" {
+		row.PdfLayout = "plain"
+	}
 	if row.SourceStorage == "" {
 		row.SourceStorage = "postgres"
 	}
@@ -108,7 +112,7 @@ func (m *customDocumentVersionsModel) UpdateIndexResultTx(ctx context.Context, t
 func (m *customDocumentVersionsModel) ListByDocument(ctx context.Context, tenant, document string) ([]DocumentVersionSummary, error) {
 	rows := []DocumentVersionSummary{}
 	query := fmt.Sprintf(`select id,document_id,filename,content_hash,index_status,chunk_count,error_code,source_format,ocr_mode,
-    source_size,source_storage,
+    source_size,source_storage,pdf_layout,
     jsonb_array_length(page_texts) as page_count,
     (select count(*) from jsonb_array_elements(page_texts) p where p->>'text' ~ '[^[:space:]]') as text_page_count,
  (select count(*) from jsonb_array_elements(page_texts) p where p->>'extraction_method'='ocr') as ocr_page_count

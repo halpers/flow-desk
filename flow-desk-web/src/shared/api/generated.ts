@@ -1508,6 +1508,7 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
+                    confirm_layout?: boolean;
                     confirm_ocr?: boolean;
                     expected_version: number;
                     version_id: string;
@@ -1566,6 +1567,7 @@ export interface operations {
                                 ocr_mode: string;
                                 ocr_page_count: number;
                                 page_count: number;
+                                pdf_layout: string;
                                 source_format: string;
                                 source_size: number;
                                 source_storage: string;
@@ -1596,6 +1598,7 @@ export interface operations {
                     content_base64?: string;
                     filename: string;
                     ocr_mode?: string;
+                    pdf_layout?: string;
                 };
             };
         };
@@ -1618,6 +1621,7 @@ export interface operations {
                             ocr_mode: string;
                             ocr_page_count: number;
                             page_count: number;
+                            pdf_layout: string;
                             source_format: string;
                             source_size: number;
                             source_storage: string;
@@ -1661,6 +1665,7 @@ export interface operations {
                             ocr_mode: string;
                             ocr_page_count: number;
                             page_count: number;
+                            pdf_layout: string;
                             source_format: string;
                             source_size: number;
                             source_storage: string;
@@ -1738,6 +1743,7 @@ export interface operations {
                             ocr_mode: string;
                             ocr_page_count: number;
                             page_count: number;
+                            pdf_layout: string;
                             source_format: string;
                             source_size: number;
                             source_storage: string;
@@ -1971,6 +1977,7 @@ export interface operations {
                     content_base64?: string;
                     filename: string;
                     ocr_mode?: string;
+                    pdf_layout?: string;
                     title: string;
                 };
             };
@@ -1994,6 +2001,7 @@ export interface operations {
                             ocr_mode: string;
                             ocr_page_count: number;
                             page_count: number;
+                            pdf_layout: string;
                             source_format: string;
                             source_size: number;
                             source_storage: string;
@@ -3292,6 +3300,7 @@ export interface operations {
                             ocr_mode: string;
                             ocr_page_count: number;
                             page_count: number;
+                            pdf_layout: string;
                             source_format: string;
                             source_size: number;
                             source_storage: string;
@@ -3329,6 +3338,7 @@ export interface operations {
                             document_id: string;
                             knowledge_base_id: string;
                             ocr_mode: string;
+                            pdf_layout: string;
                             source_base64: string;
                             source_format: string;
                             tenant_id: string;

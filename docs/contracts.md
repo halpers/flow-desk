@@ -341,3 +341,7 @@ PDF 两个上传端点增加可选 ocr_mode，缺省 off，仅允许 off/auto/fo
 版本元数据增加 source_storage（postgres/s3），source_size 始终表示原文件字节数，归档不会改变版本/hash/index_status。GET `/api/v1/documents/:document_id/versions/:version_id/source` 只允许当前租户管理员，返回标准 envelope，data 包含 filename/content_hash/source_format/content_base64；不返回存储定位。响应 Cache-Control: no-store，PDF 最多 2 MiB，TXT/MD 沿用现有限额。浏览器按附件保存；内部索引 source 端点沿用 job 绑定并通过 Go 读取有界原字节，Python 不持有 S3 凭据。
 
 POST 同一前缀的 `/archive` 返回 202，`/restore-source` 返回 200；均要求 Idempotency-Key，body 为 `{}`，返回当前 VersionData。archive 仅 PDF、配置启用 S3，重复投递复用同代次任务；restore-source 校验完整对象并在事务内恢复数据库字节、递增 source_epoch。当前会话/角色、租户和文档绑定在外部读取前后及幂等重放时检查，成功操作有审计。SOURCE_ARCHIVE_DISABLED、SOURCE_CHANGED 为 409；SOURCE_UNAVAILABLE、SOURCE_INTEGRITY_FAILED 为 503，响应不含供应商异常或原始路径。具体恢复边界见[M7.4](m7-object-storage.md)。未新增 SSE 类型。
+
+## M7.5 PDF 阅读方式
+
+上传可选 pdf_layout（plain/columns/table，缺省 plain），版本元数据与内部 source 返回该不可变选择。非 plain 只接受 PDF 与 ocr_mode=off，不合法组合返回 INVALID_ARGUMENT（400）；新 parser 分别为 pypdf-6.21.4-columns-v1、pypdf-6.21.4-table-v1，回调必须与版本选择一致且无 OCR 来源。非 plain 激活必须有 confirm_layout=true，否则 PDF_LAYOUT_REVIEW_REQUIRED（409）；审核及激活同事务审计。PDF_LAYOUT_UNSUPPORTED 为已持久化索引失败码，禁止自动降级。旧 plain/OCR manifest 与物理页码引用保持兼容，默认上传保留历史幂等摘要形状。预览仍只返回分页文本，不返回结构化单元格；详见[M7.5](m7-pdf-layout.md)。

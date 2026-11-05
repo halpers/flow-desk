@@ -22,6 +22,7 @@ from flowdesk_agent.pdf_limits import (
     OCR_TIMEOUT_SECONDS,
     PARSE_TIMEOUT_SECONDS,
     PARSER_VERSION,
+    PDF_LAYOUTS,
 )
 
 PDF_ERRORS = frozenset(
@@ -36,6 +37,7 @@ PDF_ERRORS = frozenset(
         "PDF_OCR_EMPTY",
         "PDF_OCR_TIMEOUT",
         "PDF_OCR_PAGE_LIMIT",
+        "PDF_LAYOUT_UNSUPPORTED",
     }
 )
 
@@ -55,7 +57,9 @@ class PDFPage(BaseModel):
 
 class PDFManifest(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
-    parser_version: Literal[PARSER_VERSION, OCR_PARSER_VERSION]
+    parser_version: Literal[
+        PARSER_VERSION, OCR_PARSER_VERSION, "pypdf-6.21.4-columns-v1", "pypdf-6.21.4-table-v1"
+    ]
     pages: list[PDFPage] = Field(min_length=1, max_length=MAX_PDF_PAGES)
 
     @model_validator(mode="after")
@@ -114,8 +118,12 @@ def stop_worker(process):
         pass
 
 
-async def extract_pdf(raw: bytes, ocr_mode: str = "off") -> PDFManifest:
-    if ocr_mode not in OCR_MODES:
+async def extract_pdf(raw: bytes, ocr_mode: str = "off", pdf_layout: str = "plain") -> PDFManifest:
+    if (
+        ocr_mode not in OCR_MODES
+        or pdf_layout not in PDF_LAYOUTS
+        or (pdf_layout != "plain" and ocr_mode != "off")
+    ):
         raise PDFError("PDF_INVALID")
     if len(raw) > MAX_PDF_BYTES:
         raise PDFError("PDF_LIMIT_EXCEEDED")
@@ -124,14 +132,14 @@ async def extract_pdf(raw: bytes, ocr_mode: str = "off") -> PDFManifest:
     # psycopg uses a Selector loop on Windows, which has no asyncio subprocess transport.
     # Communicate in a thread; the child still has a hard timeout and is reaped on cancellation.
     with tempfile.TemporaryDirectory(prefix="flowdesk-pdf-") as directory:
-        return await extract_in_directory(raw, ocr_mode, directory)
+        return await extract_in_directory(raw, ocr_mode, directory, pdf_layout)
 
 
-async def extract_in_directory(raw, ocr_mode, directory):
+async def extract_in_directory(raw, ocr_mode, directory, pdf_layout="plain"):
     environment = worker_environment()
     environment["TMPDIR"] = directory
     process = subprocess.Popen(
-        [sys.executable, "-m", "flowdesk_agent.pdf_worker", ocr_mode],
+        [sys.executable, "-m", "flowdesk_agent.pdf_worker", ocr_mode, pdf_layout],
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.DEVNULL,

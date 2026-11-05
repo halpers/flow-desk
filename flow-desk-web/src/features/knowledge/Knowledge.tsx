@@ -31,6 +31,11 @@ const ocrOptions = [
   { value: "auto", label: "自动识别无文字页" },
   { value: "force", label: "整页扫描识别" },
 ];
+const layoutOptions = [
+  { value: "plain", label: "原始顺序" },
+  { value: "columns", label: "双栏先左后右" },
+  { value: "table", label: "表格行列对齐" },
+];
 const post = (body: unknown, key?: string, method = "POST"): RequestInit => ({
   method,
   headers: key ? { "Idempotency-Key": key } : {},
@@ -49,9 +54,12 @@ function DocumentVersions({
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [ocrMode, setOcrMode] = useState("off");
-  const [review, setReview] = useState<{ id: string; expected: number } | null>(
-    null,
-  );
+  const [pdfLayout, setPdfLayout] = useState("plain");
+  const [review, setReview] = useState<{
+    id: string;
+    expected: number;
+    kind: "ocr" | "layout";
+  } | null>(null);
   const [confirmed, setConfirmed] = useState(false);
   const [preview, setPreview] = useState<Models["VersionPagesData"] | null>(
     null,
@@ -143,6 +151,8 @@ function DocumentVersions({
               ` · OCR ${version.ocr_page_count} 页，激活前需核对`}
             {version.source_format === "pdf" &&
               ` · ${ocrOptions.find((option) => option.value === version.ocr_mode)?.label || "仅文本层"}`}
+            {version.source_format === "pdf" &&
+              ` · ${layoutOptions.find((option) => option.value === version.pdf_layout)?.label || "原始顺序"}`}
           </span>
           <Button
             size="small"
@@ -202,9 +212,16 @@ function DocumentVersions({
               document.active_version_id === version.id
             }
             onClick={() => {
-              if (version.ocr_page_count > 0) {
+              if (
+                version.ocr_page_count > 0 ||
+                (version.pdf_layout && version.pdf_layout !== "plain")
+              ) {
                 setConfirmed(false);
-                setReview({ id: version.id, expected: document.version });
+                setReview({
+                  id: version.id,
+                  expected: document.version,
+                  kind: version.ocr_page_count > 0 ? "ocr" : "layout",
+                });
                 return;
               }
               void change(`/documents/${document.id}/activate`, {
@@ -224,9 +241,20 @@ function DocumentVersions({
           aria-label={`${document.title} PDF 识别方式`}
           value={ocrMode}
           options={ocrOptions}
-          onChange={setOcrMode}
+          onChange={(value) => {
+            setOcrMode(value);
+            if (value !== "off") setPdfLayout("plain");
+          }}
           disabled={busy}
           style={{ width: 200 }}
+        />
+        <Select
+          aria-label={`${document.title} PDF 阅读方式`}
+          value={pdfLayout}
+          options={layoutOptions}
+          onChange={setPdfLayout}
+          disabled={busy || ocrMode !== "off"}
+          style={{ width: 180 }}
         />
         <label>
           上传新版本{" "}
@@ -242,7 +270,7 @@ function DocumentVersions({
               setBusy(true);
               setError("");
               try {
-                const body = await readKnowledgeFile(file, ocrMode);
+                const body = await readKnowledgeFile(file, ocrMode, pdfLayout);
                 const serialized = JSON.stringify(body);
                 if (uploadPayload.current !== serialized)
                   uploadKey.current = newId();
@@ -285,7 +313,7 @@ function DocumentVersions({
       >
         <p>
           请逐页核对提取文本，尤其是 OCR
-          页的数字、金额和条款。仅文本层模式不会识别图片。
+          页的数字、金额和条款，以及双栏顺序、表格行列。仅文本层模式不会识别图片。
         </p>
         {preview?.pages.map((item) => (
           <section key={item.page_number}>
@@ -297,14 +325,16 @@ function DocumentVersions({
                   ? "未识别到文字"
                   : "文本层"}
             </Tag>
-            <p className="citation-excerpt">
+            <p className="citation-excerpt pdf-preview">
               {item.text || "此页未提取到文字"}
             </p>
           </section>
         ))}
       </Modal>
       <Modal
-        title="核对 OCR 文本"
+        title={
+          review?.kind === "layout" ? "核对 PDF 阅读顺序" : "核对 OCR 文本"
+        }
         open={review !== null}
         confirmLoading={busy}
         okText="确认并激活"
@@ -320,20 +350,25 @@ function DocumentVersions({
             (await change(`/documents/${document.id}/activate`, {
               version_id: review.id,
               expected_version: review.expected,
-              confirm_ocr: true,
+              confirm_ocr: review.kind === "ocr",
+              confirm_layout: review.kind === "layout",
             }))
           )
             setReview(null);
         }}
       >
         <p>
-          OCR 可能误识别数字和条款。请先使用“预览提取文本”核对，再确认发布。
+          {review?.kind === "layout"
+            ? "请对照原文件检查双栏先后顺序及表格行列对应关系，再确认发布。复杂跨栏、合并单元格和扫描表格可能无法正确还原。"
+            : "OCR 可能误识别数字和条款。请先使用“预览提取文本”核对，再确认发布。"}
         </p>
         <Checkbox
           checked={confirmed}
           onChange={(event) => setConfirmed(event.target.checked)}
         >
-          我已核对 OCR 提取文本
+          {review?.kind === "layout"
+            ? "我已核对双栏顺序和表格行列"
+            : "我已核对 OCR 提取文本"}
         </Checkbox>
         {error && <Alert type="error" title={error} />}
       </Modal>
@@ -352,6 +387,7 @@ export function Knowledge({ user }: { user: User }) {
   const [roles, setRoles] = useState(allRoles);
   const [file, setFile] = useState<File | null>(null);
   const [ocrMode, setOcrMode] = useState("off");
+  const [pdfLayout, setPdfLayout] = useState("plain");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const key = useRef(newId());
@@ -505,6 +541,7 @@ export function Knowledge({ user }: { user: User }) {
               UTF-8 TXT / Markdown：256 KiB、20,000 字符。文本 PDF：2 MiB、50
               页、100,000 字符。中英文扫描件可选择 OCR，每次最多识别 10 页。
               自动模式仅识别无文字页；含页眉文字的扫描页请选择整页识别。识别后请核对再激活。
+              规则双栏或文字表格可在仅文本层模式下选择阅读方式，上传后请预览核对。
             </p>
             <Input
               aria-label="文档标题"
@@ -533,6 +570,18 @@ export function Knowledge({ user }: { user: User }) {
               style={{ width: 220, marginRight: 8 }}
               onChange={(value) => {
                 setOcrMode(value);
+                if (value !== "off") setPdfLayout("plain");
+                key.current = newId();
+              }}
+            />
+            <Select
+              aria-label="PDF 阅读方式"
+              value={pdfLayout}
+              options={layoutOptions}
+              disabled={busy || ocrMode !== "off"}
+              style={{ width: 180, marginRight: 8 }}
+              onChange={(value) => {
+                setPdfLayout(value);
                 key.current = newId();
               }}
             />
@@ -547,7 +596,7 @@ export function Knowledge({ user }: { user: User }) {
                     post(
                       {
                         title,
-                        ...(await readKnowledgeFile(file, ocrMode)),
+                        ...(await readKnowledgeFile(file, ocrMode, pdfLayout)),
                       },
                       key.current,
                     ),

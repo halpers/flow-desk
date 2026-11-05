@@ -9,6 +9,7 @@ type ActionReq struct {
 }
 
 type ActivateDocumentReq struct {
+	ConfirmLayout   bool   `json:"confirm_layout,optional"`
 	ConfirmOcr      bool   `json:"confirm_ocr,optional"`
 	DocumentId      string `path:"document_id"`
 	VersionId       string `json:"version_id"`
@@ -271,6 +272,7 @@ type IndexCompleteReq struct {
 }
 
 type IndexSourceData struct {
+	PdfLayout       string `json:"pdf_layout"`
 	OcrMode         string `json:"ocr_mode"`
 	SourceFormat    string `json:"source_format"`
 	SourceBase64    string `json:"source_base64"`
@@ -818,6 +820,7 @@ type ToolResult struct {
 }
 
 type UploadDocumentReq struct {
+	PdfLayout       string `json:"pdf_layout,optional"`
 	OcrMode         string `json:"ocr_mode,optional"`
 	KnowledgeBaseId string `path:"knowledge_base_id"`
 	Title           string `json:"title"`
@@ -828,6 +831,7 @@ type UploadDocumentReq struct {
 }
 
 type UploadVersionReq struct {
+	PdfLayout      string `json:"pdf_layout,optional"`
 	OcrMode        string `json:"ocr_mode,optional"`
 	DocumentId     string `path:"document_id"`
 	Filename       string `json:"filename"`
@@ -853,6 +857,7 @@ type UserResp struct {
 }
 
 type VersionData struct {
+	PdfLayout     string `json:"pdf_layout"`
 	SourceStorage string `json:"source_storage"`
 	OcrMode       string `json:"ocr_mode"`
 	OcrPageCount  int64  `json:"ocr_page_count"`

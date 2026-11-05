@@ -1,4 +1,8 @@
-export async function readKnowledgeFile(file: File, ocrMode = "off") {
+export async function readKnowledgeFile(
+  file: File,
+  ocrMode = "off",
+  pdfLayout = "plain",
+) {
   const pdf = file.name.toLowerCase().endsWith(".pdf");
   if (!pdf && !/\.(txt|md)$/i.test(file.name))
     throw new Error("请选择 PDF、TXT 或 Markdown 文件");
@@ -16,6 +20,7 @@ export async function readKnowledgeFile(file: File, ocrMode = "off") {
     filename: file.name,
     content_base64: btoa(binary),
     ocr_mode: ocrMode,
+    pdf_layout: pdfLayout,
   };
 }
 
@@ -30,5 +35,7 @@ export const indexErrors: Record<string, string> = {
   PDF_OCR_EMPTY: "OCR 未识别到文字，请上传清晰的印刷文档",
   PDF_OCR_TIMEOUT: "OCR 超时，请拆分文件后重试",
   PDF_OCR_PAGE_LIMIT: "一次最多识别 10 页，请拆分文件或使用自动模式",
+  PDF_LAYOUT_UNSUPPORTED:
+    "版面不适合所选阅读方式，请检查旋转、多栏或改用原始顺序上传新版本",
   INDEX_FAILED: "索引失败，请检查文件后上传新版本",
 };

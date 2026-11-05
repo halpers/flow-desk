@@ -20,12 +20,14 @@ const maxPDFPages = 50
 const maxPDFTextBytes = 512 * 1024
 const maxPDFTextCharacters = 100000
 const pdfParserVersion = "pypdf-6.21.4-text-v1"
+const columnsParserVersion = "pypdf-6.21.4-columns-v1"
+const tableParserVersion = "pypdf-6.21.4-table-v1"
 const ocrParserVersion = "pypdf-6.21.4-tesseract-5.5.0-ocr-v1"
 const maxOCRPages = 10
 
 type knowledgeFile struct {
-	format, content, ocrMode string
-	raw                      []byte
+	format, content, ocrMode, pdfLayout string
+	raw                                 []byte
 }
 
 func knowledgeUploadWithOCR(filename, content, encoded, mode string) (knowledgeFile, error) {
@@ -43,6 +45,21 @@ func knowledgeUploadWithOCR(filename, content, encoded, mode string) (knowledgeF
 	return file, nil
 }
 
+func knowledgeUploadWithLayout(filename, content, encoded, mode, layout string) (knowledgeFile, error) {
+	file, err := knowledgeUploadWithOCR(filename, content, encoded, mode)
+	if err != nil {
+		return file, err
+	}
+	if layout == "" {
+		layout = "plain"
+	}
+	if !slices.Contains([]string{"plain", "columns", "table"}, layout) || (layout != "plain" && (file.format != "pdf" || file.ocrMode != "off")) {
+		return knowledgeFile{}, errArgument
+	}
+	file.pdfLayout = layout
+	return file, nil
+}
+
 func ocrPageCount(pages []types.KnowledgePageText) int64 {
 	var count int64
 	for _, page := range pages {
@@ -54,6 +71,18 @@ func ocrPageCount(pages []types.KnowledgePageText) int64 {
 }
 
 func validPDFProvenance(row *model.DocumentVersions, req *types.IndexCompleteReq) bool {
+	if row.PdfLayout != "" && row.PdfLayout != "plain" {
+		expected := map[string]string{"columns": columnsParserVersion, "table": tableParserVersion}[row.PdfLayout]
+		if expected == "" || req.ParserVersion != expected || row.OcrMode != "off" {
+			return false
+		}
+		for _, page := range req.PageTexts {
+			if page.ExtractionMethod != "" {
+				return false
+			}
+		}
+		return true
+	}
 	if req.ParserVersion == pdfParserVersion {
 		if row.OcrMode == "force" {
 			return false
@@ -133,7 +162,7 @@ func applyIndexResult(row *model.DocumentVersions, req *types.IndexCompleteReq) 
 		return errArgument
 	}
 	if req.Status == "failed" {
-		allowed := []string{"PDF_INVALID", "PDF_ENCRYPTED", "PDF_OCR_REQUIRED", "PDF_LIMIT_EXCEEDED", "PDF_PARSE_TIMEOUT", "PDF_OCR_UNAVAILABLE", "PDF_OCR_FAILED", "PDF_OCR_EMPTY", "PDF_OCR_TIMEOUT", "PDF_OCR_PAGE_LIMIT", "INDEX_FAILED"}
+		allowed := []string{"PDF_INVALID", "PDF_ENCRYPTED", "PDF_OCR_REQUIRED", "PDF_LIMIT_EXCEEDED", "PDF_PARSE_TIMEOUT", "PDF_OCR_UNAVAILABLE", "PDF_OCR_FAILED", "PDF_OCR_EMPTY", "PDF_OCR_TIMEOUT", "PDF_OCR_PAGE_LIMIT", "PDF_LAYOUT_UNSUPPORTED", "INDEX_FAILED"}
 		if !slices.Contains(allowed, req.ErrorCode) || req.ChunkCount != 0 || len(req.PageTexts) != 0 || req.ParserVersion != "" {
 			return errArgument
 		}

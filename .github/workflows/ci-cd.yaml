@@ -128,6 +128,8 @@ jobs:
           docker compose --file docker-compose.yaml --file deploy/compose.storage.yaml config --quiet
           docker compose --file docker-compose.yaml --file deploy/compose.storage.yaml up --detach --wait --wait-timeout 180
           python scripts/check-source-storage.py --output work/source-storage-ci.json
+      - name: Check PDF layout comparison, reviewed activation and citations
+        run: python scripts/check-pdf-layout.py --require-s3 --output work/pdf-layout-ci.json
       - name: Validate local monitoring and TLS configuration
         run: |
           python scripts/configure-monitoring.py

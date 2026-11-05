@@ -126,7 +126,9 @@ class KnowledgeIndex:
                         }
                     )
                     if manifest
-                    else await extract_pdf(raw, source.get("ocr_mode", "off"))
+                    else await extract_pdf(
+                        raw, source.get("ocr_mode", "off"), source.get("pdf_layout", "plain")
+                    )
                 )
                 pages = [page.model_dump() for page in parsed.pages]
                 parser = parsed.parser_version

@@ -61,6 +61,7 @@ type (
 		SourceStoreId string    `db:"source_store_id"`
 		SourceKey     string    `db:"source_key"`
 		SourceEpoch   int64     `db:"source_epoch"`
+		PdfLayout     string    `db:"pdf_layout"`
 	}
 )
 
@@ -134,14 +135,14 @@ func (m *defaultDocumentVersionsModel) FindOneByTenantIdId(ctx context.Context, 
 }
 
 func (m *defaultDocumentVersionsModel) Insert(ctx context.Context, data *DocumentVersions) (sql.Result, error) {
-	query := fmt.Sprintf("insert into %s (%s) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)", m.table, documentVersionsRowsExpectAutoSet)
-	ret, err := m.conn.ExecCtx(ctx, query, data.Id, data.TenantId, data.DocumentId, data.JobId, data.Filename, data.Content, data.ContentHash, data.IndexStatus, data.ChunkCount, data.ErrorCode, data.SourceFormat, data.SourceBytes, data.PageTexts, data.ParserVersion, data.OcrMode, data.SourceStorage, data.SourceSize, data.SourceStoreId, data.SourceKey, data.SourceEpoch)
+	query := fmt.Sprintf("insert into %s (%s) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)", m.table, documentVersionsRowsExpectAutoSet)
+	ret, err := m.conn.ExecCtx(ctx, query, data.Id, data.TenantId, data.DocumentId, data.JobId, data.Filename, data.Content, data.ContentHash, data.IndexStatus, data.ChunkCount, data.ErrorCode, data.SourceFormat, data.SourceBytes, data.PageTexts, data.ParserVersion, data.OcrMode, data.SourceStorage, data.SourceSize, data.SourceStoreId, data.SourceKey, data.SourceEpoch, data.PdfLayout)
 	return ret, err
 }
 
 func (m *defaultDocumentVersionsModel) Update(ctx context.Context, newData *DocumentVersions) error {
 	query := fmt.Sprintf("update %s set %s where id = $1", m.table, documentVersionsRowsWithPlaceHolder)
-	_, err := m.conn.ExecCtx(ctx, query, newData.Id, newData.TenantId, newData.DocumentId, newData.JobId, newData.Filename, newData.Content, newData.ContentHash, newData.IndexStatus, newData.ChunkCount, newData.ErrorCode, newData.SourceFormat, newData.SourceBytes, newData.PageTexts, newData.ParserVersion, newData.OcrMode, newData.SourceStorage, newData.SourceSize, newData.SourceStoreId, newData.SourceKey, newData.SourceEpoch)
+	_, err := m.conn.ExecCtx(ctx, query, newData.Id, newData.TenantId, newData.DocumentId, newData.JobId, newData.Filename, newData.Content, newData.ContentHash, newData.IndexStatus, newData.ChunkCount, newData.ErrorCode, newData.SourceFormat, newData.SourceBytes, newData.PageTexts, newData.ParserVersion, newData.OcrMode, newData.SourceStorage, newData.SourceSize, newData.SourceStoreId, newData.SourceKey, newData.SourceEpoch, newData.PdfLayout)
 	return err
 }
 

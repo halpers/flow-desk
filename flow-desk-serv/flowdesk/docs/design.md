@@ -185,3 +185,6 @@ YAML 的环境插值需显式启用并验证 go-zero 配置加载选项；文档
 - 实施后运行 gofmt、go test、go vet；依赖数据库的套件显式启用并隔离，报告实际执行结果。
 
 代码实现与验收顺序遵循 [质量与交付计划](../../../docs/quality-and-roadmap.md)。
+## M7.5 PDF 阅读方式与审核
+
+Go 保存不可变 pdf_layout，验证文件/OCR 组合、上传幂等及索引 parser/来源绑定，不在业务服务中解析 PDF。只有当前租户管理员显式提交 confirm_layout 后才可激活非 plain 版本，knowledge.layout_review 与文档更新同事务。预览与物理页码证据、撤回、S3 归档沿用现有授权边界。迁移、回调和旧请求兼容见[M7.5](../../../docs/m7-pdf-layout.md)。

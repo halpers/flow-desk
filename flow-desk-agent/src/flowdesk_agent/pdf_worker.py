@@ -10,6 +10,7 @@ from pathlib import Path
 from flowdesk_agent.pdf_limits import (
     ADDRESS_SPACE_BYTES,
     CPU_SECONDS,
+    LAYOUT_PARSERS,
     MAX_OCR_PAGES,
     MAX_PDF_BYTES,
     MAX_PDF_PAGES,
@@ -21,12 +22,14 @@ from flowdesk_agent.pdf_limits import (
     OCR_MODES,
     OCR_PARSER_VERSION,
     PARSER_VERSION,
+    PDF_LAYOUTS,
 )
 
 
 def main():
-    mode = sys.argv[1] if len(sys.argv) == 2 else "off"
-    if mode not in OCR_MODES:
+    mode = sys.argv[1] if len(sys.argv) >= 2 else "off"
+    layout = sys.argv[2] if len(sys.argv) >= 3 else "plain"
+    if mode not in OCR_MODES or layout not in PDF_LAYOUTS or (layout != "plain" and mode != "off"):
         return fail("PDF_INVALID")
     if sys.platform == "linux":
         import resource
@@ -39,6 +42,8 @@ def main():
         resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
     logging.disable(logging.CRITICAL)
     from pypdf import PdfReader
+
+    from flowdesk_agent.pdf_layout import LayoutError, extract_layout
 
     raw = sys.stdin.buffer.read(MAX_PDF_BYTES + 1)
     if len(raw) > MAX_PDF_BYTES:
@@ -55,9 +60,17 @@ def main():
         characters = 0
         byte_count = 0
         for number, page in enumerate(reader.pages, 1):
-            text = unicodedata.normalize(
-                "NFC", "" if mode == "force" else (page.extract_text() or "")
-            )
+            try:
+                extracted = (
+                    ""
+                    if mode == "force"
+                    else (
+                        extract_layout(page, layout) if layout != "plain" else page.extract_text()
+                    )
+                )
+            except LayoutError as exc:
+                return fail(str(exc))
+            text = unicodedata.normalize("NFC", "" if mode == "force" else (extracted or ""))
             text = "".join(
                 char
                 for char in text
@@ -101,7 +114,9 @@ def main():
         sys.stdout.buffer.write(
             json.dumps(
                 {
-                    "parser_version": OCR_PARSER_VERSION if used_ocr else PARSER_VERSION,
+                    "parser_version": OCR_PARSER_VERSION
+                    if used_ocr
+                    else LAYOUT_PARSERS.get(layout, PARSER_VERSION),
                     "pages": pages,
                 },
                 ensure_ascii=False,

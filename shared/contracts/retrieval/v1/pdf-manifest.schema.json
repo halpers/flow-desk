@@ -49,7 +49,9 @@
     "parser_version": {
       "enum": [
         "pypdf-6.21.4-text-v1",
-        "pypdf-6.21.4-tesseract-5.5.0-ocr-v1"
+        "pypdf-6.21.4-tesseract-5.5.0-ocr-v1",
+        "pypdf-6.21.4-columns-v1",
+        "pypdf-6.21.4-table-v1"
       ],
       "title": "Parser Version",
       "type": "string"

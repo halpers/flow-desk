@@ -64,7 +64,7 @@ func versionData(row *model.DocumentVersions) types.VersionData {
 	if row.SourceFormat != "pdf" {
 		size = len(row.Content)
 	}
-	return types.VersionData{SourceStorage: row.SourceStorage, OcrMode: row.OcrMode, OcrPageCount: ocrPageCount(pages), SourceFormat: row.SourceFormat, SourceSize: int64(size), PageCount: int64(len(pages)), TextPageCount: textPages, Id: row.Id, DocumentId: row.DocumentId, Filename: row.Filename, ContentHash: row.ContentHash, IndexStatus: row.IndexStatus, ChunkCount: row.ChunkCount, ErrorCode: row.ErrorCode}
+	return types.VersionData{PdfLayout: row.PdfLayout, SourceStorage: row.SourceStorage, OcrMode: row.OcrMode, OcrPageCount: ocrPageCount(pages), SourceFormat: row.SourceFormat, SourceSize: int64(size), PageCount: int64(len(pages)), TextPageCount: textPages, Id: row.Id, DocumentId: row.DocumentId, Filename: row.Filename, ContentHash: row.ContentHash, IndexStatus: row.IndexStatus, ChunkCount: row.ChunkCount, ErrorCode: row.ErrorCode}
 }
 func evidenceData(row *model.RunEvidence) types.EvidenceData {
 	return types.EvidenceData{ExtractionMethod: row.ExtractionMethod, PageNumber: row.PageNumber, Id: row.Id, VersionId: row.VersionId, ChunkId: row.ChunkId, Title: row.Title, Excerpt: row.Excerpt}
@@ -199,7 +199,7 @@ func insertDocumentVersionTx(ctx context.Context, s *svc.ServiceContext, tx sqlx
 	if file.format == "pdf" {
 		hash = HashToken(string(file.raw))
 	}
-	row := &model.DocumentVersions{OcrMode: file.ocrMode, SourceFormat: file.format, SourceBytes: file.raw, PageTexts: "[]", Id: uuid.NewString(), TenantId: actor.TenantId, DocumentId: doc.Id, JobId: uuid.NewString(), Filename: filename, Content: file.content, ContentHash: hash, IndexStatus: "pending"}
+	row := &model.DocumentVersions{PdfLayout: file.pdfLayout, OcrMode: file.ocrMode, SourceFormat: file.format, SourceBytes: file.raw, PageTexts: "[]", Id: uuid.NewString(), TenantId: actor.TenantId, DocumentId: doc.Id, JobId: uuid.NewString(), Filename: filename, Content: file.content, ContentHash: hash, IndexStatus: "pending"}
 	if err := s.DocumentVersionsModel.InsertTx(ctx, tx, row); err != nil {
 		return types.VersionData{}, err
 	}
@@ -220,18 +220,27 @@ func UploadDocument(ctx context.Context, s *svc.ServiceContext, req *types.Uploa
 		return types.VersionData{}, err
 	}
 	req.Title = strings.TrimSpace(req.Title)
-	file, err := knowledgeUploadWithOCR(req.Filename, req.Content, req.ContentBase64, req.OcrMode)
+	file, err := knowledgeUploadWithLayout(req.Filename, req.Content, req.ContentBase64, req.OcrMode, req.PdfLayout)
 	if err != nil {
 		return types.VersionData{}, err
 	}
 	req.OcrMode = file.ocrMode
+	req.PdfLayout = file.pdfLayout
 	if file.format == "pdf" {
 		req.ContentBase64 = base64.StdEncoding.EncodeToString(file.raw)
 	}
 	if !validID(req.KnowledgeBaseId) || req.Title == "" || utf8.RuneCountInString(req.Title) > 120 {
 		return types.VersionData{}, errArgument
 	}
-	return idempotent(ctx, s, "document.upload", req.IdempotencyKey, req, 202, func(ctx context.Context, tx sqlx.Session) (types.VersionData, error) {
+	// Keep the historical fingerprint for default uploads; include explicit layout selections.
+	fingerprint := struct {
+		*types.UploadDocumentReq
+		PdfLayout string `json:"pdf_layout,omitempty"`
+	}{UploadDocumentReq: req}
+	if file.pdfLayout != "plain" {
+		fingerprint.PdfLayout = file.pdfLayout
+	}
+	return idempotent(ctx, s, "document.upload", req.IdempotencyKey, fingerprint, 202, func(ctx context.Context, tx sqlx.Session) (types.VersionData, error) {
 		if _, err := s.KnowledgeBasesModel.FindOneForUpdateTx(ctx, tx, actor.TenantId, req.KnowledgeBaseId); err != nil {
 			return types.VersionData{}, err
 		}
@@ -254,18 +263,26 @@ func UploadDocumentVersion(ctx context.Context, s *svc.ServiceContext, req *type
 	if err != nil {
 		return types.VersionData{}, err
 	}
-	file, err := knowledgeUploadWithOCR(req.Filename, req.Content, req.ContentBase64, req.OcrMode)
+	file, err := knowledgeUploadWithLayout(req.Filename, req.Content, req.ContentBase64, req.OcrMode, req.PdfLayout)
 	if err != nil {
 		return types.VersionData{}, err
 	}
 	req.OcrMode = file.ocrMode
+	req.PdfLayout = file.pdfLayout
 	if file.format == "pdf" {
 		req.ContentBase64 = base64.StdEncoding.EncodeToString(file.raw)
 	}
 	if !validID(req.DocumentId) {
 		return types.VersionData{}, errArgument
 	}
-	return idempotent(ctx, s, "document.version", req.IdempotencyKey, req, 202, func(ctx context.Context, tx sqlx.Session) (types.VersionData, error) {
+	fingerprint := struct {
+		*types.UploadVersionReq
+		PdfLayout string `json:"pdf_layout,omitempty"`
+	}{UploadVersionReq: req}
+	if file.pdfLayout != "plain" {
+		fingerprint.PdfLayout = file.pdfLayout
+	}
+	return idempotent(ctx, s, "document.version", req.IdempotencyKey, fingerprint, 202, func(ctx context.Context, tx sqlx.Session) (types.VersionData, error) {
 		doc, err := s.DocumentsModel.FindOneForUpdateTx(ctx, tx, actor.TenantId, req.DocumentId)
 		if err != nil {
 			return types.VersionData{}, err
@@ -292,11 +309,11 @@ func ListDocumentVersions(ctx context.Context, s *svc.ServiceContext, documentID
 	for _, row := range rows {
 		result.Items = append(result.Items, types.VersionData{Id: row.Id, DocumentId: row.DocumentId, Filename: row.Filename,
 			ContentHash: row.ContentHash, IndexStatus: row.IndexStatus, ChunkCount: row.ChunkCount, ErrorCode: row.ErrorCode,
-			SourceStorage: row.SourceStorage, OcrMode: row.OcrMode, OcrPageCount: row.OcrPageCount, SourceFormat: row.SourceFormat, SourceSize: row.SourceSize, PageCount: row.PageCount, TextPageCount: row.TextPageCount})
+			PdfLayout: row.PdfLayout, SourceStorage: row.SourceStorage, OcrMode: row.OcrMode, OcrPageCount: row.OcrPageCount, SourceFormat: row.SourceFormat, SourceSize: row.SourceSize, PageCount: row.PageCount, TextPageCount: row.TextPageCount})
 	}
 	return result, nil
 }
-func changeDocument(ctx context.Context, s *svc.ServiceContext, id, versionID string, expected int64, confirmOCR bool) (types.DocumentData, error) {
+func changeDocument(ctx context.Context, s *svc.ServiceContext, id, versionID string, expected int64, confirmOCR, confirmLayout bool) (types.DocumentData, error) {
 	var result types.DocumentData
 	actor, err := knowledgeAdmin(ctx)
 	if err != nil {
@@ -333,6 +350,14 @@ func changeDocument(ctx context.Context, s *svc.ServiceContext, id, versionID st
 					return err
 				}
 			}
+			if v.PdfLayout != "" && v.PdfLayout != "plain" {
+				if !confirmLayout {
+					return failure(409, "PDF_LAYOUT_REVIEW_REQUIRED", "请核对双栏顺序或表格行列后再确认激活")
+				}
+				if err = s.AuditEventsModel.InsertTx(ctx, tx, &model.AuditEvents{Id: orderedID(), TenantId: actor.TenantId, ActorUserId: actor.Id, Operation: "knowledge.layout_review", ObjectType: "document_version", ObjectId: v.Id, Source: "manual", Summary: "PDF reading order and row alignment reviewed before activation"}); err != nil {
+					return err
+				}
+			}
 			status = "active"
 		}
 		if err = s.DocumentsModel.UpdateActiveVersionTx(ctx, tx, actor.TenantId, id, expected, versionID, status); err != nil {
@@ -351,10 +376,10 @@ func ActivateDocument(ctx context.Context, s *svc.ServiceContext, req *types.Act
 	if !validID(req.VersionId) {
 		return types.DocumentData{}, errArgument
 	}
-	return changeDocument(ctx, s, req.DocumentId, req.VersionId, req.ExpectedVersion, req.ConfirmOcr)
+	return changeDocument(ctx, s, req.DocumentId, req.VersionId, req.ExpectedVersion, req.ConfirmOcr, req.ConfirmLayout)
 }
 func WithdrawDocument(ctx context.Context, s *svc.ServiceContext, req *types.WithdrawDocumentReq) (types.DocumentData, error) {
-	return changeDocument(ctx, s, req.DocumentId, "", req.ExpectedVersion, false)
+	return changeDocument(ctx, s, req.DocumentId, "", req.ExpectedVersion, false, false)
 }
 func GetIndexSource(ctx context.Context, s *svc.ServiceContext, req *types.IndexSourceReq) (types.IndexSourceData, error) {
 	var result types.IndexSourceData
@@ -376,7 +401,7 @@ func GetIndexSource(ctx context.Context, s *svc.ServiceContext, req *types.Index
 	if err != nil {
 		return result, err
 	}
-	return types.IndexSourceData{OcrMode: v.OcrMode, SourceFormat: v.SourceFormat, SourceBase64: base64.StdEncoding.EncodeToString(raw), TenantId: v.TenantId, KnowledgeBaseId: d.KnowledgeBaseId, DocumentId: d.Id, VersionId: v.Id, Content: v.Content, ContentHash: v.ContentHash}, nil
+	return types.IndexSourceData{PdfLayout: v.PdfLayout, OcrMode: v.OcrMode, SourceFormat: v.SourceFormat, SourceBase64: base64.StdEncoding.EncodeToString(raw), TenantId: v.TenantId, KnowledgeBaseId: d.KnowledgeBaseId, DocumentId: d.Id, VersionId: v.Id, Content: v.Content, ContentHash: v.ContentHash}, nil
 }
 func CompleteIndex(ctx context.Context, s *svc.ServiceContext, req *types.IndexCompleteReq) (types.VersionData, error) {
 	var result types.VersionData

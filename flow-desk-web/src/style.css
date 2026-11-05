@@ -365,12 +365,60 @@ textarea {
     font-size: 22px;
   }
 }
-.run-controls { display: grid; gap: 12px; margin-top: 16px; }
-.action-card { display: grid; gap: 12px; padding: 20px; border: 1px solid #d4e2dc; border-radius: 12px; background: #f8fbf9; margin-bottom: 16px; }
-.action-card h3, .action-card p { margin: 0; }
-.action-field { display: grid; gap: 4px; }
-.action-field span { white-space: pre-wrap; overflow-wrap: anywhere; }
-.receipt-card { padding: 12px; margin-top: 12px; border: 1px solid #b5d6c6; border-radius: 10px; background: #edf7f1; overflow-wrap: anywhere; }
-.receipt-card small, .ticket-row small { display: block; color: #687b74; }
-.ticket-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 16px 0; border-bottom: 1px solid #edf0ee; }
-.ticket-timeline { max-height: 280px; overflow: auto; margin-bottom: 16px; }
+.run-controls {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+.action-card {
+  display: grid;
+  gap: 12px;
+  padding: 20px;
+  border: 1px solid #d4e2dc;
+  border-radius: 12px;
+  background: #f8fbf9;
+  margin-bottom: 16px;
+}
+.action-card h3,
+.action-card p {
+  margin: 0;
+}
+.action-field {
+  display: grid;
+  gap: 4px;
+}
+.action-field span {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.receipt-card {
+  padding: 12px;
+  margin-top: 12px;
+  border: 1px solid #b5d6c6;
+  border-radius: 10px;
+  background: #edf7f1;
+  overflow-wrap: anywhere;
+}
+.receipt-card small,
+.ticket-row small {
+  display: block;
+  color: #687b74;
+}
+.ticket-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 0;
+  border-bottom: 1px solid #edf0ee;
+}
+.ticket-timeline {
+  max-height: 280px;
+  overflow: auto;
+  margin-bottom: 16px;
+}
+.pdf-preview {
+  font-family: "Noto Sans Mono CJK SC", "Microsoft YaHei Mono", monospace;
+  white-space: pre;
+  overflow-x: auto;
+}

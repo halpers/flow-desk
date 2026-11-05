@@ -236,3 +236,6 @@ Go 迁移 2026110406_knowledge_ocr.sql 为 document_versions 增加 ocr_mode（�
 迁移 2026110501_source_storage.sql 增加 source_storage/size/store_id/key/epoch；历史行按原字节填充 size，旧版 INSERT 的 size 由 BEFORE INSERT 触发器填充。约束确保 PDF 原字节为 1 字节至 2 MiB：postgres 时长度与 size 相同且定位为空；s3 时原字节为空且指纹/键非空。TXT/MD 仍保留原 content。Go 自有 outbox 增加 knowledge.archive，dispatch_id 由版本和 source_epoch 确定。
 
 上传事务同时保存原文件、索引任务及可选归档任务；网络操作在事务外进行。切换定位时先锁版本，再校验并锁 outbox 当前 attempt/有效 lease，CAS 更新同 epoch 的数据库行。恢复只在原对象长度/hash 正确且当前授权有效时写回字节、递增 epoch；旧归档 payload 自动失效。死信再投递保留递增 attempt_count，每 8 次失败进入死信，禁止重置隔离代次。归档和恢复不改内容 hash、提取 manifest、激活指针或引用。无自动对象删除/GC；Down 保留全部原文件定位和审计。
+## M7.5 不可变 PDF 阅读方式
+
+Go 迁移 `2026110502_pdf_layout.sql` 为 document_versions 增加 pdf_layout，默认 plain，数据库约束仅允许 plain/columns/table；非 plain 必须为 PDF 且 ocr_mode=off。选择通过上传幂等摘要和内部 source 传递，改变方式须另建版本；旧 INSERT 采用数据库默认值，现有 Go InsertTx 对空值归一化。原件 hash、存储定位和物理页号不变，首次索引冻结新 parser 与分页文本。Python 复用既有 manifest、错误及租约代次表，不直接访问 Go 表。激活事务记录 knowledge.layout_review，绑定当前管理员/租户/版本；回退保留模式及审计，不执行 Down。

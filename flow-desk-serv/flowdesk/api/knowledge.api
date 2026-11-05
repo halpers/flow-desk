@@ -42,6 +42,7 @@ type DocumentData {
     Status string `json:"status"`
 }
 type UploadDocumentReq {
+    PdfLayout string `json:"pdf_layout,optional"`
     OcrMode string `json:"ocr_mode,optional"`
     KnowledgeBaseId string `path:"knowledge_base_id"`
     Title string `json:"title"`
@@ -51,6 +52,7 @@ type UploadDocumentReq {
     IdempotencyKey string `header:"Idempotency-Key"`
 }
 type UploadVersionReq {
+    PdfLayout string `json:"pdf_layout,optional"`
     OcrMode string `json:"ocr_mode,optional"`
     DocumentId string `path:"document_id"`
     Filename string `json:"filename"`
@@ -62,6 +64,7 @@ type DocumentReq {
     DocumentId string `path:"document_id"`
 }
 type VersionData {
+    PdfLayout string `json:"pdf_layout"`
     SourceStorage string `json:"source_storage"`
     OcrMode string `json:"ocr_mode"`
     OcrPageCount int64 `json:"ocr_page_count"`
@@ -104,6 +107,7 @@ type VersionResp {
     Data VersionData `json:"data"`
 }
 type ActivateDocumentReq {
+    ConfirmLayout bool `json:"confirm_layout,optional"`
     ConfirmOcr bool `json:"confirm_ocr,optional"`
     DocumentId string `path:"document_id"`
     VersionId string `json:"version_id"`
@@ -118,6 +122,7 @@ type IndexSourceReq {
     JobId string `form:"job_id"`
 }
 type IndexSourceData {
+    PdfLayout string `json:"pdf_layout"`
     OcrMode string `json:"ocr_mode"`
     SourceFormat string `json:"source_format"`
     SourceBase64 string `json:"source_base64"`

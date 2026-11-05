@@ -2,6 +2,8 @@
 
 原文件默认使用 PostgreSQL；启用外部私有 S3 或本地 SeaweedFS 沙箱，以及备份/恢复/回退步骤，见[原文件存储手册](source-storage.md)。
 
+规则双栏与表格阅读方式的升级、人工核对及旧版本回退条件见[服务器手册第 15 节](server.md)，能力限制和固定样本证据见[M7.5](../docs/m7-pdf-layout.md)。
+
 运维上服务器请从 **[单机服务器部署手册（IP:端口）](server.md)** 开始：包含 Ubuntu 环境准备、随机凭据初始化、GHCR/阿里云镜像、HTTP/HTTPS IP 入口、健康/登录验收、监控、升级回滚、备份恢复与排障。域名为可选配置。服务器发布使用 `release.py --server`，HTTPS 再加 `--tls`。
 
 以下内容描述本地开发拓扑；服务器端口由 `compose.server.yaml` 或 `compose.server-tls.yaml` 覆盖。

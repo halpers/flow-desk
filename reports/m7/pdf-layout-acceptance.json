@@ -1,0 +1,31 @@
+{
+  "phase": "M7.5",
+  "profile": "mock",
+  "completed_at": "2026-11-05T03:09:42.453787+00:00",
+  "checks": [
+    "columns: fixed comparison, immutable replay, reviewed activation and withdrawal",
+    "table: fixed comparison, immutable replay, reviewed activation and withdrawal",
+    "ambiguous three-column and rotated documents fail durably without fallback",
+    "operator receives physical page-2 citation; withdrawal revokes it",
+    "both layout originals archive in S3 and download byte-for-byte"
+  ],
+  "fixed_comparison": [
+    {
+      "fixture": "layout-columns.pdf",
+      "sha256": "4f12e7db55b264f9fb29c2f08f256e65b358fbed32a1ba8cd3f2874aef60035a",
+      "pages": 2,
+      "plain_order_or_row_association": false,
+      "selected_order_or_row_association": true,
+      "non_whitespace_content_equal": true
+    },
+    {
+      "fixture": "layout-table.pdf",
+      "sha256": "032c19446548e2e32eebe1d77c905d4fd398a4202cd6ec4ad5530cc7beea97c9",
+      "pages": 1,
+      "plain_order_or_row_association": false,
+      "selected_order_or_row_association": true,
+      "non_whitespace_content_equal": true
+    }
+  ],
+  "limitations": "Two synthetic documents only; no general PDF accuracy or semantic table reconstruction claim."
+}

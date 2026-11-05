@@ -24,3 +24,5 @@ M7.2 增加 Go operations.api 的列表/追踪/重试，Python AgentTraceData �
 M6.5 对 v1 追加两个工具名、相应严格参数和可选回执结果字段，既有事件仍可验证。新增工具名要求 Go/Python/Web 一同升级，旧消费者可能拒绝新枚举；原图版本继续保留，恢复不改写旧动作。回退旧镜像前需停止接收新任务并妥善完成 ticket-v2 等待任务，不能把旧版本能启动视为新动作也可恢复。
 
 M7.3 扩展 PDFManifest 到文本/OCR 两个固定解析版本，增加可选逐页 extraction_method；旧文本页可省略。Go .api 增加可选 ocr_mode/confirm_ocr、版本统计和证据来源，随后统一生成。业务证据来源只由 Go 从已冻结页派生，不能由模型候选提供；没有新增 SSE 事件。
+
+M7.5 增加可选上传 pdf_layout/激活 confirm_layout、版本/内部 source 的阅读方式及两个固定 layout parser 枚举。PDFManifest 仍由 Pydantic 导出，旧文本/OCR 结果格式继续可读；旧消费者不识别新 parser，因此需要 api/agent/web 一同升级，回退须先处理非 plain 索引及活跃版本。兼容评估和操作见[版面说明](../../docs/m7-pdf-layout.md)及[服务器手册](../../deploy/server.md)，不把追加枚举当成双向兼容。
