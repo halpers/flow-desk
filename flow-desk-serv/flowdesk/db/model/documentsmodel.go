@@ -12,6 +12,7 @@ type (
 	// DocumentsModel is an interface to be customized, add more methods here,
 	// and implement the added methods in customDocumentsModel.
 	DocumentsModel interface {
+		FindOneForShareTx(context.Context, sqlx.Session, string, string) (*Documents, error)
 		documentsModel
 		withSession(session sqlx.Session) DocumentsModel
 		InsertTx(context.Context, sqlx.Session, *Documents) error
@@ -32,6 +33,12 @@ func NewDocumentsModel(conn sqlx.SqlConn) DocumentsModel {
 	return &customDocumentsModel{
 		defaultDocumentsModel: newDocumentsModel(conn),
 	}
+}
+
+func (m *customDocumentsModel) FindOneForShareTx(ctx context.Context, tx sqlx.Session, tenant, id string) (*Documents, error) {
+	var row Documents
+	err := tx.QueryRowCtx(ctx, &row, fmt.Sprintf("select %s from %s where tenant_id=$1 and id=$2 for share", documentsRows, m.table), tenant, id)
+	return &row, err
 }
 func (m *customDocumentsModel) InsertTx(ctx context.Context, tx sqlx.Session, row *Documents) error {
 	_, err := m.withSession(tx).Insert(ctx, row)

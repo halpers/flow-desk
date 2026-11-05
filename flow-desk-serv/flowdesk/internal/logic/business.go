@@ -48,7 +48,7 @@ func identityRequired(ctx context.Context) (*Identity, error) {
 	return current, nil
 }
 func permitted(user *model.Users, permission string) bool {
-	for _, item := range Permissions(user.Role) {
+	for _, item := range UserPermissions(user) {
 		if item == permission {
 			return true
 		}
@@ -120,7 +120,10 @@ func idempotentAuthorized[T any](ctx context.Context, s *svc.ServiceContext, ope
 			if err = json.Unmarshal([]byte(previous.ResponseBody), &result); err != nil {
 				return err
 			}
-			return validate(ctx, tx, &result)
+			if err = validate(ctx, tx, &result); err != nil {
+				return err
+			}
+			return validateCurrentIdentityTx(ctx, s, tx)
 		}
 		if !errors.Is(err, model.ErrNotFound) {
 			return err
@@ -130,6 +133,9 @@ func idempotentAuthorized[T any](ctx context.Context, s *svc.ServiceContext, ope
 			return err
 		}
 		if err = validate(ctx, tx, &result); err != nil {
+			return err
+		}
+		if err = validateCurrentIdentityTx(ctx, s, tx); err != nil {
 			return err
 		}
 		return s.ApiIdempotencyModel.InsertTx(ctx, tx, &model.ApiIdempotency{Id: uuid.NewString(), TenantId: actor.TenantId, ActorUserId: actor.Id, Operation: operation, KeyHash: keyHash, RequestHash: requestHash, ResponseStatus: int64(status), ResponseBody: marshal(result), ExpiresAt: time.Now().Add(idempotencyLifetime)})

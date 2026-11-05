@@ -13,6 +13,7 @@ type (
 	// SessionsModel is an interface to be customized, add more methods here,
 	// and implement the added methods in customSessionsModel.
 	SessionsModel interface {
+		FindOneByRefreshHashTx(context.Context, sqlx.Session, string) (*Sessions, error)
 		sessionsModel
 		withSession(session sqlx.Session) SessionsModel
 		LockFamilyByRefreshHashTx(context.Context, sqlx.Session, string) error
@@ -21,12 +22,28 @@ type (
 		UpdateRevokedTx(context.Context, sqlx.Session, string) error
 		UpdateRevokedFamilyTx(context.Context, sqlx.Session, string) error
 		ExistsLiveFamilyBySessionTx(context.Context, sqlx.Session, string, string, string) (bool, error)
+		UpdateRevokedUserTx(context.Context, sqlx.Session, string, string) error
+		ExistsLiveSessionTx(context.Context, sqlx.Session, string, string, string) (bool, error)
 	}
 
 	customSessionsModel struct {
 		*defaultSessionsModel
 	}
 )
+
+func (m *customSessionsModel) UpdateRevokedUserTx(ctx context.Context, tx sqlx.Session, tenant, user string) error {
+	_, err := tx.ExecCtx(ctx, fmt.Sprintf("update %s set revoked_at=coalesce(revoked_at,now()) where tenant_id=$1 and user_id=$2", m.table), tenant, user)
+	return err
+}
+
+func (m *customSessionsModel) FindOneByRefreshHashTx(ctx context.Context, tx sqlx.Session, hash string) (*Sessions, error) {
+	return m.withSession(tx).FindOneByRefreshHash(ctx, hash)
+}
+func (m *customSessionsModel) ExistsLiveSessionTx(ctx context.Context, tx sqlx.Session, tenant, user, session string) (bool, error) {
+	var active bool
+	err := tx.QueryRowCtx(ctx, &active, fmt.Sprintf("select exists(select 1 from %s where tenant_id=$1 and user_id=$2 and id=$3 and revoked_at is null and expires_at>now())", m.table), tenant, user, session)
+	return active, err
+}
 
 // NewSessionsModel returns a model for the database table.
 func NewSessionsModel(conn sqlx.SqlConn) SessionsModel {

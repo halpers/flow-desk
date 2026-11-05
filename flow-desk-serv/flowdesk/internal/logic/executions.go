@@ -49,6 +49,9 @@ func hasScope(claims *runCapability, scope string) bool {
 }
 
 func authorizeRunTx(ctx context.Context, s *svc.ServiceContext, tx sqlx.Session, run *model.Runs) error {
+	if err := s.TeamsModel.LockAuthorizationForShareTx(ctx, tx, run.TenantId); err != nil {
+		return err
+	}
 	actor, err := s.UsersModel.FindOneTx(ctx, tx, run.ActorUserId)
 	if err != nil {
 		return err

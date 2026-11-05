@@ -6,6 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Workspace } from "../features/workspace/Workspace";
 import { Knowledge } from "../features/knowledge/Knowledge";
 import { Teams } from "../features/teams/Teams";
+import { Accounts } from "../features/accounts/Accounts";
 
 export function App() {
   const cache = useQueryClient();
@@ -90,6 +91,7 @@ export function App() {
           <p className="subtitle">从问题到解决，让流程清晰可见。</p>
         </div>
         <Space>
+          <Accounts key={`accounts:${user.tenant_id}:${user.id}`} user={user} />
           <Teams key={`teams:${user.tenant_id}:${user.id}`} user={user} />
           <Knowledge key={`${user.tenant_id}:${user.id}`} user={user} />
           <Tag>{user.role}</Tag>

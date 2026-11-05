@@ -5,7 +5,9 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
+	"slices"
 	"time"
 
 	"flowdesk/db/model"
@@ -74,7 +76,17 @@ func Login(ctx context.Context, s *svc.ServiceContext, req *types.LoginReq) (*ty
 		return nil, "", err
 	}
 	session := &model.Sessions{Id: uuid.NewString(), TenantId: user.TenantId, UserId: user.Id, RefreshHash: HashToken(raw), FamilyId: uuid.NewString(), ExpiresAt: time.Now().Add(RefreshLifetime)}
-	if _, err = s.SessionsModel.Insert(ctx, session); err != nil {
+	err = s.Conn.TransactCtx(ctx, func(ctx context.Context, tx sqlx.Session) error {
+		if err := s.TeamsModel.LockAuthorizationForShareTx(ctx, tx, user.TenantId); err != nil {
+			return err
+		}
+		fresh, err := s.UsersModel.FindOneTx(ctx, tx, user.Id)
+		if err != nil || !fresh.Enabled || fresh.AuthVersion != user.AuthVersion || fresh.PasswordHash != user.PasswordHash {
+			return ErrUnauthorized
+		}
+		return s.SessionsModel.InsertTx(ctx, tx, session)
+	})
+	if err != nil {
 		return nil, "", err
 	}
 	return issue(ctx, s, user, session, raw)
@@ -89,6 +101,13 @@ func Refresh(ctx context.Context, s *svc.ServiceContext, raw string) (*types.Tok
 	var nextRaw string
 	denied := false
 	err := s.Conn.TransactCtx(ctx, func(ctx context.Context, tx sqlx.Session) error {
+		anchor, err := s.SessionsModel.FindOneByRefreshHashTx(ctx, tx, HashToken(raw))
+		if err != nil {
+			return ErrUnauthorized
+		}
+		if err = s.TeamsModel.LockAuthorizationForShareTx(ctx, tx, anchor.TenantId); err != nil {
+			return err
+		}
 		if err := s.SessionsModel.LockFamilyByRefreshHashTx(ctx, tx, HashToken(raw)); err != nil {
 			return err
 		}
@@ -128,6 +147,16 @@ func Refresh(ctx context.Context, s *svc.ServiceContext, raw string) (*types.Tok
 
 func Logout(ctx context.Context, s *svc.ServiceContext, raw string) error {
 	return s.Conn.TransactCtx(ctx, func(ctx context.Context, tx sqlx.Session) error {
+		anchor, err := s.SessionsModel.FindOneByRefreshHashTx(ctx, tx, HashToken(raw))
+		if errors.Is(err, model.ErrNotFound) {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		if err = s.TeamsModel.LockAuthorizationForShareTx(ctx, tx, anchor.TenantId); err != nil {
+			return err
+		}
 		if err := s.SessionsModel.LockFamilyByRefreshHashTx(ctx, tx, HashToken(raw)); err != nil {
 			return err
 		}
@@ -177,7 +206,20 @@ func Permissions(role string) []string {
 		permissions = append(permissions, "ticket:manage", "audit:read", "run:observe")
 	}
 	if role == "admin" {
-		permissions = append(permissions, "knowledge:manage", "team:manage")
+		permissions = append(permissions, "knowledge:manage", "team:manage", "account:manage", "role:manage")
 	}
 	return permissions
+}
+
+func UserPermissions(user *model.Users) []string {
+	result := Permissions(user.Role)
+	var extra []string
+	if json.Unmarshal([]byte(user.ExtraPermissions), &extra) == nil {
+		for _, permission := range extra {
+			if slices.Contains(extraRolePermissions, permission) && !slices.Contains(result, permission) {
+				result = append(result, permission)
+			}
+		}
+	}
+	return result
 }

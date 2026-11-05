@@ -72,3 +72,8 @@ pnpm.cmd --dir flow-desk-web test:e2e
 M7.1 的 PDF 解析器随 Agent 镜像安装，无需额外解析服务或 API key。管理员上传有文本层的 PDF 后先预览文本再激活；错误状态、文件限制和页码规则见 [PDF 说明](m7-knowledge-files.md)。默认 Web 及两种 TLS 代理的请求上限与 Go 均为 4 MiB；自建代理也需保持一致。
 
 本地 HTTP Cookie 为 HttpOnly、SameSite=Strict。生产接入 TLS 反向代理时设置 `COOKIE_SECURE=true`、调整可信 Origin 并使用非 dev 模式；非 dev 模式会拒绝关闭 Secure Cookie 的配置。新建本地配置默认 `MODEL_PROVIDER=mock`；真实模型需在 `.env` 设置 `MODEL_PROVIDER=openai-compatible`、`MODEL_BASE_URL`、`MODEL_NAME` 和 `MODEL_API_KEY`。
+## M7.6 管理验收
+
+管理员登录后打开“账号与角色”，可管理本租户账号和角色。账号/角色变更会撤销受影响账号的全部会话，旧任务凭证也失效；当前账号需由其他管理员维护。角色采用基础角色加增量权限，见[M7.6](m7-accounts.md)。
+
+仅在可丢弃 mock 环境运行 `python scripts/check-accounts.py --env-file /path/to/disposable/.env --output work/accounts-check.json`，检查创建重放、密码重置、角色变更、会话撤销、禁用和分页。Go 集成测试自动创建并删除独立数据库；Chrome 用例为 flow-desk-web/tests/e2e/accounts.spec.ts。不要在生产运行合成验收脚本。

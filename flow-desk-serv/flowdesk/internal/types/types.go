@@ -127,6 +127,20 @@ type CreateConversationReq struct {
 	IdempotencyKey string `header:"Idempotency-Key"`
 }
 
+type CreateManagedRoleReq struct {
+	Name           string   `json:"name"`
+	Permissions    []string `json:"permissions"`
+	IdempotencyKey string   `header:"Idempotency-Key"`
+}
+
+type CreateManagedUserReq struct {
+	Account        string   `json:"account"`
+	DisplayName    string   `json:"display_name"`
+	Password       string   `json:"password"`
+	RoleIds        []string `json:"role_ids"`
+	IdempotencyKey string   `header:"Idempotency-Key"`
+}
+
 type CreateTeamReq struct {
 	IdempotencyKey string `header:"Idempotency-Key"`
 	Name           string `json:"name"`
@@ -394,6 +408,66 @@ type LogisticsResp struct {
 	Data      LogisticsPage `json:"data"`
 }
 
+type ManagedRoleData struct {
+	Id          string   `json:"id"`
+	Name        string   `json:"name"`
+	BuiltinRole string   `json:"builtin_role"`
+	Permissions []string `json:"permissions"`
+	Enabled     bool     `json:"enabled"`
+	Revision    int64    `json:"revision"`
+}
+
+type ManagedRolePage struct {
+	Items            []ManagedRoleData `json:"items"`
+	ExtraPermissions []string          `json:"extra_permissions"`
+}
+
+type ManagedRoleResp struct {
+	Code      string          `json:"code"`
+	RequestId string          `json:"request_id"`
+	Data      ManagedRoleData `json:"data"`
+}
+
+type ManagedRolesResp struct {
+	Code      string          `json:"code"`
+	RequestId string          `json:"request_id"`
+	Data      ManagedRolePage `json:"data"`
+}
+
+type ManagedUserData struct {
+	Id          string   `json:"id"`
+	Account     string   `json:"account"`
+	DisplayName string   `json:"display_name"`
+	Role        string   `json:"role"`
+	Enabled     bool     `json:"enabled"`
+	Revision    int64    `json:"revision"`
+	RoleIds     []string `json:"role_ids"`
+	Permissions []string `json:"permissions"`
+}
+
+type ManagedUserPage struct {
+	Items      []ManagedUserData `json:"items"`
+	NextCursor string            `json:"next_cursor"`
+	HasMore    bool              `json:"has_more"`
+}
+
+type ManagedUserResp struct {
+	Code      string          `json:"code"`
+	RequestId string          `json:"request_id"`
+	Data      ManagedUserData `json:"data"`
+}
+
+type ManagedUsersReq struct {
+	Limit  int64  `form:"limit,optional"`
+	Cursor string `form:"cursor,optional"`
+}
+
+type ManagedUsersResp struct {
+	Code      string          `json:"code"`
+	RequestId string          `json:"request_id"`
+	Data      ManagedUserPage `json:"data"`
+}
+
 type MessageData struct {
 	Id             string                   `json:"id"`
 	RunId          string                   `json:"run_id"`
@@ -529,6 +603,13 @@ type ReceiptResp struct {
 	Code      string      `json:"code"`
 	RequestId string      `json:"request_id"`
 	Data      ReceiptData `json:"data"`
+}
+
+type ResetManagedPasswordReq struct {
+	UserId           string `path:"user_id"`
+	Password         string `json:"password"`
+	ExpectedRevision int64  `json:"expected_revision"`
+	IdempotencyKey   string `header:"Idempotency-Key"`
 }
 
 type RetryRunReq struct {
@@ -817,6 +898,24 @@ type ToolResult struct {
 	Order     OrderData       `json:"order,optional"`
 	Logistics []LogisticsData `json:"logistics,optional"`
 	Tickets   []TicketData    `json:"tickets,optional"`
+}
+
+type UpdateManagedRoleReq struct {
+	RoleId           string   `path:"role_id"`
+	Name             string   `json:"name"`
+	Permissions      []string `json:"permissions"`
+	Enabled          bool     `json:"enabled"`
+	ExpectedRevision int64    `json:"expected_revision"`
+	IdempotencyKey   string   `header:"Idempotency-Key"`
+}
+
+type UpdateManagedUserReq struct {
+	UserId           string   `path:"user_id"`
+	DisplayName      string   `json:"display_name"`
+	Enabled          bool     `json:"enabled"`
+	RoleIds          []string `json:"role_ids"`
+	ExpectedRevision int64    `json:"expected_revision"`
+	IdempotencyKey   string   `header:"Idempotency-Key"`
 }
 
 type UploadDocumentReq struct {

@@ -100,6 +100,6 @@ func meHandler(s *svc.ServiceContext) http.HandlerFunc {
 			return
 		}
 		u := current.User
-		httpx.OkJsonCtx(r.Context(), w, types.UserResp{Code: "OK", RequestId: w.Header().Get("X-Request-ID"), Data: types.UserData{Id: u.Id, TenantId: u.TenantId, Account: u.Account, DisplayName: u.DisplayName, Role: u.Role, Permissions: logic.Permissions(u.Role)}})
+		httpx.OkJsonCtx(r.Context(), w, types.UserResp{Code: "OK", RequestId: w.Header().Get("X-Request-ID"), Data: types.UserData{Id: u.Id, TenantId: u.TenantId, Account: u.Account, DisplayName: u.DisplayName, Role: u.Role, Permissions: logic.UserPermissions(u)}})
 	}
 }

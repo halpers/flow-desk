@@ -247,13 +247,14 @@ func TestTeamTenantBoundaryAndReceiptRevocation(t *testing.T) {
 	foreign.Id = uuid.NewString()
 	foreign.Account = "foreign.operator"
 	foreign.TenantId = tenant
+	foreign.Role = "admin"
 	if _, err := s.UsersModel.Insert(context.Background(), &foreign); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := UpdateTeamMembership(admin, s, &types.TeamMembershipReq{TeamId: team.Id, UserId: foreign.Id, Member: true, ExpectedRevision: team.Revision, IdempotencyKey: uuid.NewString()}); err != errMissing {
 		t.Fatal("foreign member", err)
 	}
-	foreignAdmin := WithIdentity(context.Background(), &Identity{User: &model.Users{Id: foreign.Id, TenantId: tenant, Role: "admin", Enabled: true}})
+	foreignAdmin, _, _ := managedLogin(t, s, foreign.Account, "integration-password")
 	foreignTeam := newTeam(t, s, foreignAdmin)
 	run, old, approval := preparedTicket(t, s, ctx)
 	waitApproval(t, s, ctx, run, old, approval)

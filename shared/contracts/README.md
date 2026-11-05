@@ -26,3 +26,4 @@ M6.5 对 v1 追加两个工具名、相应严格参数和可选回执结果字�
 M7.3 扩展 PDFManifest 到文本/OCR 两个固定解析版本，增加可选逐页 extraction_method；旧文本页可省略。Go .api 增加可选 ocr_mode/confirm_ocr、版本统计和证据来源，随后统一生成。业务证据来源只由 Go 从已冻结页派生，不能由模型候选提供；没有新增 SSE 事件。
 
 M7.5 增加可选上传 pdf_layout/激活 confirm_layout、版本/内部 source 的阅读方式及两个固定 layout parser 枚举。PDFManifest 仍由 Pydantic 导出，旧文本/OCR 结果格式继续可读；旧消费者不识别新 parser，因此需要 api/agent/web 一同升级，回退须先处理非 plain 索引及活跃版本。兼容评估和操作见[版面说明](../../docs/m7-pdf-layout.md)及[服务器手册](../../deploy/server.md)，不把追加枚举当成双向兼容。
+M7.6 管理接口的源为 Go api/accounts.api，账号/角色响应及前端类型由统一导出流程生成；没有新增 SSE 或 Agent HTTP 字段。权限目录由服务端返回，基础角色仍用于团队/知识 ACL 投影；见[账号管理契约](../../docs/m7-accounts.md)。

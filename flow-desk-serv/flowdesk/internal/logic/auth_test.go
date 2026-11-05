@@ -21,7 +21,7 @@ import (
 )
 
 // Each integration test owns a disposable database, including its migration ledger.
-func testService(t *testing.T) *svc.ServiceContext {
+func testService(t *testing.T, beforeAccountMigration ...func(*sql.DB)) *svc.ServiceContext {
 	t.Helper()
 	raw := os.Getenv("TEST_DATABASE_URL")
 	if raw == "" {
@@ -54,6 +54,12 @@ func testService(t *testing.T) *svc.ServiceContext {
 	}
 	if err = goose.SetDialect("postgres"); err != nil {
 		t.Fatal(err)
+	}
+	if len(beforeAccountMigration) > 0 {
+		if err = goose.UpTo(database, filepath.Join("..", "..", "db", "migrations"), 2026110502); err != nil {
+			t.Fatal(err)
+		}
+		beforeAccountMigration[0](database)
 	}
 	if err = goose.Up(database, filepath.Join("..", "..", "db", "migrations")); err != nil {
 		t.Fatal(err)

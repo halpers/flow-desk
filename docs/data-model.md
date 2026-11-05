@@ -239,3 +239,8 @@ Go 迁移 2026110406_knowledge_ocr.sql 为 document_versions 增加 ocr_mode（�
 ## M7.5 不可变 PDF 阅读方式
 
 Go 迁移 `2026110502_pdf_layout.sql` 为 document_versions 增加 pdf_layout，默认 plain，数据库约束仅允许 plain/columns/table；非 plain 必须为 PDF 且 ocr_mode=off。选择通过上传幂等摘要和内部 source 传递，改变方式须另建版本；旧 INSERT 采用数据库默认值，现有 Go InsertTx 对空值归一化。原件 hash、存储定位和物理页号不变，首次索引冻结新 parser 与分页文本。Python 复用既有 manifest、错误及租约代次表，不直接访问 Go 表。激活事务记录 knowledge.layout_review，绑定当前管理员/租户/版本；回退保留模式及审计，不执行 Down。
+## M7.6 账号与角色投影
+
+迁移 2026110503_accounts_roles.sql 新增 roles/user_roles，使用租户复合外键、角色名大小写不敏感唯一索引和内置角色部分唯一索引。用户新增 revision/auth_version/extra_permissions；users.role 保留有效基础角色投影，extra_permissions 为启用自定义角色的权限并集。旧账号回填关联，新租户及新账号 INSERT 由触发器初始化基础角色。
+
+管理写在租户授权排他锁下更新用户/绑定/投影，递增版本并撤销全部 sessions，同时记录审计和幂等结果。角色修改会逐个刷新关联用户；保护最后一个启用的基础 admin，并拒绝自身账号/关联角色修改。密码只有 bcrypt hash，幂等摘要采用服务端 HMAC。Down 保留身份历史；禁止手工写投影绕过 API。并发顺序和范围见[账号设计](m7-accounts.md)。

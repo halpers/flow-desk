@@ -41,7 +41,7 @@ func readOriginal(ctx context.Context, s *svc.ServiceContext, row *model.Documen
 	}
 	return raw, nil
 }
-func sourceAdminVersionTx(ctx context.Context, s *svc.ServiceContext, tx sqlx.Session, document, version string) (*model.DocumentVersions, error) {
+func sourceAdminDocumentTx(ctx context.Context, s *svc.ServiceContext, tx sqlx.Session, document string) (*model.Documents, error) {
 	actor, err := operationsViewerTx(ctx, s, tx)
 	if err != nil {
 		return nil, err
@@ -49,7 +49,21 @@ func sourceAdminVersionTx(ctx context.Context, s *svc.ServiceContext, tx sqlx.Se
 	if !permitted(actor, "knowledge:manage") {
 		return nil, errForbidden
 	}
-	row, err := s.DocumentVersionsModel.FindOneForShareTx(ctx, tx, actor.TenantId, version)
+	doc, err := s.DocumentsModel.FindOneForShareTx(ctx, tx, actor.TenantId, document)
+	if err != nil {
+		return nil, err
+	}
+	if err = knowledgeManagementBaseTx(ctx, s, tx, actor, doc.KnowledgeBaseId); err != nil {
+		return nil, err
+	}
+	return doc, nil
+}
+func sourceAdminVersionTx(ctx context.Context, s *svc.ServiceContext, tx sqlx.Session, document, version string) (*model.DocumentVersions, error) {
+	doc, err := sourceAdminDocumentTx(ctx, s, tx, document)
+	if err != nil {
+		return nil, err
+	}
+	row, err := s.DocumentVersionsModel.FindOneForShareTx(ctx, tx, doc.TenantId, version)
 	if err != nil {
 		return nil, err
 	}
@@ -195,6 +209,10 @@ func RestoreOriginalSource(ctx context.Context, s *svc.ServiceContext, req *type
 		return types.VersionData{}, err
 	}
 	return idempotentAuthorized(ctx, s, "knowledge.source_restore", req.IdempotencyKey, req, 200, func(ctx context.Context, tx sqlx.Session) (types.VersionData, error) {
+		// Lock the document before its version, without upgrading a shared version lock.
+		if _, err := sourceAdminDocumentTx(ctx, s, tx, req.DocumentId); err != nil {
+			return types.VersionData{}, err
+		}
 		current, err := s.DocumentVersionsModel.FindOneByJobIdForUpdateTx(ctx, tx, row.JobId)
 		if err != nil {
 			return types.VersionData{}, err

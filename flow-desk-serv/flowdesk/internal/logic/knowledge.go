@@ -75,6 +75,36 @@ func readableBase(row *model.KnowledgeBases, role string) bool {
 	return slices.Contains(roles, role)
 }
 
+// Resource locks precede the tenant authorization lock. Custom managers retain
+// the same base-role ACL and team boundary as other readers.
+func knowledgeManagementBaseTx(ctx context.Context, s *svc.ServiceContext, tx sqlx.Session, actor *model.Users, id string) error {
+	base, err := s.KnowledgeBasesModel.FindOneForShareTx(ctx, tx, actor.TenantId, id)
+	if err != nil {
+		return err
+	}
+	if err = teamAccessTx(ctx, s, tx, actor, base.TeamId); err != nil {
+		return err
+	}
+	fresh, err := operationsViewerTx(ctx, s, tx)
+	if err != nil {
+		return err
+	}
+	if fresh.AuthVersion != actor.AuthVersion {
+		return ErrUnauthorized
+	}
+	if !permitted(fresh, "knowledge:manage") {
+		return errForbidden
+	}
+	if !readableBase(base, fresh.Role) {
+		return errMissing
+	}
+	return nil
+}
+func managedVersionAccessTx(ctx context.Context, s *svc.ServiceContext, tx sqlx.Session, result *types.VersionData) error {
+	_, err := sourceAdminVersionTx(ctx, s, tx, result.DocumentId, result.Id)
+	return err
+}
+
 func ListKnowledgeBases(ctx context.Context, s *svc.ServiceContext) (types.KnowledgeBasePage, error) {
 	result := types.KnowledgeBasePage{Items: []types.KnowledgeBaseData{}}
 	current, err := identityRequired(ctx)
@@ -103,10 +133,10 @@ func CreateKnowledgeBase(ctx context.Context, s *svc.ServiceContext, req *types.
 		return types.KnowledgeBaseData{}, err
 	}
 	req.Name = strings.TrimSpace(req.Name)
-	if len(req.Name) == 0 || utf8.RuneCountInString(req.Name) > 120 || !validRoles(req.ReadRoles) {
+	if len(req.Name) == 0 || utf8.RuneCountInString(req.Name) > 120 || !validRoles(req.ReadRoles) || !slices.Contains(req.ReadRoles, actor.Role) {
 		return types.KnowledgeBaseData{}, errArgument
 	}
-	return idempotent(ctx, s, "knowledge.create", req.IdempotencyKey, req, 201, func(ctx context.Context, tx sqlx.Session) (types.KnowledgeBaseData, error) {
+	return idempotentAuthorized(ctx, s, "knowledge.create", req.IdempotencyKey, req, 201, func(ctx context.Context, tx sqlx.Session) (types.KnowledgeBaseData, error) {
 		if err := s.KnowledgeBasesModel.LockTenantQuotaTx(ctx, tx, actor.TenantId); err != nil {
 			return types.KnowledgeBaseData{}, err
 		}
@@ -122,6 +152,8 @@ func CreateKnowledgeBase(ctx context.Context, s *svc.ServiceContext, req *types.
 			return types.KnowledgeBaseData{}, err
 		}
 		return baseData(row), nil
+	}, func(ctx context.Context, tx sqlx.Session, result *types.KnowledgeBaseData) error {
+		return knowledgeManagementBaseTx(ctx, s, tx, actor, result.Id)
 	})
 }
 func UpdateKnowledgeAcl(ctx context.Context, s *svc.ServiceContext, req *types.KnowledgeAclReq) (types.KnowledgeBaseData, error) {
@@ -141,13 +173,16 @@ func UpdateKnowledgeAcl(ctx context.Context, s *svc.ServiceContext, req *types.K
 		if row.AclRevision != req.ExpectedRevision {
 			return failure(409, "VERSION_CONFLICT", "知识库权限版本已变化")
 		}
+		if err = knowledgeManagementBaseTx(ctx, s, tx, actor, row.Id); err != nil {
+			return err
+		}
 		if err = s.KnowledgeBasesModel.UpdateAclTx(ctx, tx, actor.TenantId, row.Id, req.ExpectedRevision, marshal(req.ReadRoles)); err != nil {
 			return err
 		}
 		row.ReadRoles = marshal(req.ReadRoles)
 		row.AclRevision++
 		result = baseData(row)
-		return nil
+		return validateCurrentIdentityTx(ctx, s, tx)
 	})
 	return result, err
 }
@@ -240,8 +275,11 @@ func UploadDocument(ctx context.Context, s *svc.ServiceContext, req *types.Uploa
 	if file.pdfLayout != "plain" {
 		fingerprint.PdfLayout = file.pdfLayout
 	}
-	return idempotent(ctx, s, "document.upload", req.IdempotencyKey, fingerprint, 202, func(ctx context.Context, tx sqlx.Session) (types.VersionData, error) {
+	return idempotentAuthorized(ctx, s, "document.upload", req.IdempotencyKey, fingerprint, 202, func(ctx context.Context, tx sqlx.Session) (types.VersionData, error) {
 		if _, err := s.KnowledgeBasesModel.FindOneForUpdateTx(ctx, tx, actor.TenantId, req.KnowledgeBaseId); err != nil {
+			return types.VersionData{}, err
+		}
+		if err := knowledgeManagementBaseTx(ctx, s, tx, actor, req.KnowledgeBaseId); err != nil {
 			return types.VersionData{}, err
 		}
 		count, err := s.DocumentsModel.CountByBaseTx(ctx, tx, actor.TenantId, req.KnowledgeBaseId)
@@ -256,6 +294,8 @@ func UploadDocument(ctx context.Context, s *svc.ServiceContext, req *types.Uploa
 			return types.VersionData{}, err
 		}
 		return insertDocumentVersionTx(ctx, s, tx, actor, doc, req.Filename, file)
+	}, func(ctx context.Context, tx sqlx.Session, result *types.VersionData) error {
+		return managedVersionAccessTx(ctx, s, tx, result)
 	})
 }
 func UploadDocumentVersion(ctx context.Context, s *svc.ServiceContext, req *types.UploadVersionReq) (types.VersionData, error) {
@@ -282,12 +322,17 @@ func UploadDocumentVersion(ctx context.Context, s *svc.ServiceContext, req *type
 	if file.pdfLayout != "plain" {
 		fingerprint.PdfLayout = file.pdfLayout
 	}
-	return idempotent(ctx, s, "document.version", req.IdempotencyKey, fingerprint, 202, func(ctx context.Context, tx sqlx.Session) (types.VersionData, error) {
+	return idempotentAuthorized(ctx, s, "document.version", req.IdempotencyKey, fingerprint, 202, func(ctx context.Context, tx sqlx.Session) (types.VersionData, error) {
 		doc, err := s.DocumentsModel.FindOneForUpdateTx(ctx, tx, actor.TenantId, req.DocumentId)
 		if err != nil {
 			return types.VersionData{}, err
 		}
+		if err = knowledgeManagementBaseTx(ctx, s, tx, actor, doc.KnowledgeBaseId); err != nil {
+			return types.VersionData{}, err
+		}
 		return insertDocumentVersionTx(ctx, s, tx, actor, doc, req.Filename, file)
+	}, func(ctx context.Context, tx sqlx.Session, result *types.VersionData) error {
+		return managedVersionAccessTx(ctx, s, tx, result)
 	})
 }
 func ListDocumentVersions(ctx context.Context, s *svc.ServiceContext, documentID string) (types.VersionPage, error) {
@@ -299,19 +344,26 @@ func ListDocumentVersions(ctx context.Context, s *svc.ServiceContext, documentID
 	if !validID(documentID) {
 		return result, errArgument
 	}
-	if _, err = s.DocumentsModel.FindOneByTenantIdId(ctx, actor.TenantId, documentID); err != nil {
-		return result, err
-	}
-	rows, err := s.DocumentVersionsModel.ListByDocument(ctx, actor.TenantId, documentID)
-	if err != nil {
-		return result, err
-	}
-	for _, row := range rows {
-		result.Items = append(result.Items, types.VersionData{Id: row.Id, DocumentId: row.DocumentId, Filename: row.Filename,
-			ContentHash: row.ContentHash, IndexStatus: row.IndexStatus, ChunkCount: row.ChunkCount, ErrorCode: row.ErrorCode,
-			PdfLayout: row.PdfLayout, SourceStorage: row.SourceStorage, OcrMode: row.OcrMode, OcrPageCount: row.OcrPageCount, SourceFormat: row.SourceFormat, SourceSize: row.SourceSize, PageCount: row.PageCount, TextPageCount: row.TextPageCount})
-	}
-	return result, nil
+	err = s.Conn.TransactCtx(ctx, func(ctx context.Context, tx sqlx.Session) error {
+		doc, err := s.DocumentsModel.FindOneForShareTx(ctx, tx, actor.TenantId, documentID)
+		if err != nil {
+			return err
+		}
+		if err = knowledgeManagementBaseTx(ctx, s, tx, actor, doc.KnowledgeBaseId); err != nil {
+			return err
+		}
+		rows, err := s.DocumentVersionsModel.ListByDocumentTx(ctx, tx, actor.TenantId, documentID)
+		if err != nil {
+			return err
+		}
+		for _, row := range rows {
+			result.Items = append(result.Items, types.VersionData{Id: row.Id, DocumentId: row.DocumentId, Filename: row.Filename,
+				ContentHash: row.ContentHash, IndexStatus: row.IndexStatus, ChunkCount: row.ChunkCount, ErrorCode: row.ErrorCode,
+				PdfLayout: row.PdfLayout, SourceStorage: row.SourceStorage, OcrMode: row.OcrMode, OcrPageCount: row.OcrPageCount, SourceFormat: row.SourceFormat, SourceSize: row.SourceSize, PageCount: row.PageCount, TextPageCount: row.TextPageCount})
+		}
+		return nil
+	})
+	return result, err
 }
 func changeDocument(ctx context.Context, s *svc.ServiceContext, id, versionID string, expected int64, confirmOCR, confirmLayout bool) (types.DocumentData, error) {
 	var result types.DocumentData
@@ -325,6 +377,9 @@ func changeDocument(ctx context.Context, s *svc.ServiceContext, id, versionID st
 	err = s.Conn.TransactCtx(ctx, func(ctx context.Context, tx sqlx.Session) error {
 		doc, err := s.DocumentsModel.FindOneForUpdateTx(ctx, tx, actor.TenantId, id)
 		if err != nil {
+			return err
+		}
+		if err = knowledgeManagementBaseTx(ctx, s, tx, actor, doc.KnowledgeBaseId); err != nil {
 			return err
 		}
 		if doc.Version != expected {
@@ -368,7 +423,7 @@ func changeDocument(ctx context.Context, s *svc.ServiceContext, id, versionID st
 		doc.ActiveVersionId.Valid = versionID != ""
 		doc.Status = status
 		result = documentData(doc)
-		return nil
+		return validateCurrentIdentityTx(ctx, s, tx)
 	})
 	return result, err
 }

@@ -39,14 +39,17 @@ type (
 	}
 
 	Users struct {
-		Id           string    `db:"id"`
-		TenantId     string    `db:"tenant_id"`
-		Account      string    `db:"account"`
-		PasswordHash string    `db:"password_hash"`
-		DisplayName  string    `db:"display_name"`
-		Role         string    `db:"role"`
-		Enabled      bool      `db:"enabled"`
-		CreatedAt    time.Time `db:"created_at"`
+		Id               string    `db:"id"`
+		TenantId         string    `db:"tenant_id"`
+		Account          string    `db:"account"`
+		PasswordHash     string    `db:"password_hash"`
+		DisplayName      string    `db:"display_name"`
+		Role             string    `db:"role"`
+		Enabled          bool      `db:"enabled"`
+		CreatedAt        time.Time `db:"created_at"`
+		Revision         int64     `db:"revision"`
+		AuthVersion      int64     `db:"auth_version"`
+		ExtraPermissions string    `db:"extra_permissions"`
 	}
 )
 
@@ -106,14 +109,14 @@ func (m *defaultUsersModel) FindOneByTenantIdId(ctx context.Context, tenantId st
 }
 
 func (m *defaultUsersModel) Insert(ctx context.Context, data *Users) (sql.Result, error) {
-	query := fmt.Sprintf("insert into %s (%s) values ($1, $2, $3, $4, $5, $6, $7)", m.table, usersRowsExpectAutoSet)
-	ret, err := m.conn.ExecCtx(ctx, query, data.Id, data.TenantId, data.Account, data.PasswordHash, data.DisplayName, data.Role, data.Enabled)
+	query := fmt.Sprintf("insert into %s (%s) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)", m.table, usersRowsExpectAutoSet)
+	ret, err := m.conn.ExecCtx(ctx, query, data.Id, data.TenantId, data.Account, data.PasswordHash, data.DisplayName, data.Role, data.Enabled, data.Revision, data.AuthVersion, data.ExtraPermissions)
 	return ret, err
 }
 
 func (m *defaultUsersModel) Update(ctx context.Context, newData *Users) error {
 	query := fmt.Sprintf("update %s set %s where id = $1", m.table, usersRowsWithPlaceHolder)
-	_, err := m.conn.ExecCtx(ctx, query, newData.Id, newData.TenantId, newData.Account, newData.PasswordHash, newData.DisplayName, newData.Role, newData.Enabled)
+	_, err := m.conn.ExecCtx(ctx, query, newData.Id, newData.TenantId, newData.Account, newData.PasswordHash, newData.DisplayName, newData.Role, newData.Enabled, newData.Revision, newData.AuthVersion, newData.ExtraPermissions)
 	return err
 }
 

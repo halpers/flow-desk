@@ -114,6 +114,8 @@ jobs:
           docker compose ps --all
       - name: Check HTTP authentication through Web proxy
         run: python scripts/smoke.py
+      - name: Check account roles, password recovery and session revocation
+        run: python scripts/check-accounts.py --output work/accounts-ci.json
       - name: Check fixed business scenarios through public API
         run: python scripts/check-business-scenarios.py --output work/business-scenarios-ci.json
       - name: Check scoped run traces and safe retry through public API

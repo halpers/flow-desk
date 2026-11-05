@@ -14,6 +14,57 @@ import (
 
 func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.SessionAuth},
+			[]rest.Route{
+				{
+					// Tenant roles and permission catalog | permission=account:manage or role:manage | auth=required
+					Method:  http.MethodGet,
+					Path:    "/admin/roles",
+					Handler: ListManagedRolesHandler(serverCtx),
+				},
+				{
+					// Create additive role | permission=role:manage | auth=required
+					Method:  http.MethodPost,
+					Path:    "/admin/roles",
+					Handler: CreateManagedRoleHandler(serverCtx),
+				},
+				{
+					// Update additive role | permission=role:manage | auth=required
+					Method:  http.MethodPut,
+					Path:    "/admin/roles/:role_id",
+					Handler: UpdateManagedRoleHandler(serverCtx),
+				},
+				{
+					// Tenant account directory | permission=account:manage | auth=required
+					Method:  http.MethodGet,
+					Path:    "/admin/users",
+					Handler: ListManagedUsersHandler(serverCtx),
+				},
+				{
+					// Create tenant account | permission=account:manage | auth=required
+					Method:  http.MethodPost,
+					Path:    "/admin/users",
+					Handler: CreateManagedUserHandler(serverCtx),
+				},
+				{
+					// Update account and roles | permission=account:manage | auth=required
+					Method:  http.MethodPut,
+					Path:    "/admin/users/:user_id",
+					Handler: UpdateManagedUserHandler(serverCtx),
+				},
+				{
+					// Reset account password | permission=account:manage | auth=required
+					Method:  http.MethodPost,
+					Path:    "/admin/users/:user_id/reset-password",
+					Handler: ResetManagedPasswordHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithPrefix("/api/v1"),
+	)
+
+	server.AddRoutes(
 		[]rest.Route{
 			{
 				// Liveness | permission=- | auth=public

@@ -1,0 +1,11 @@
+{
+  "phase": "M7.6",
+  "profile": "mock",
+  "completed_at": "2026-11-05T04:21:22.249466+00:00",
+  "checks": [
+    "create replay, changed-password conflict and immutable builtin roles",
+    "reset revokes access and refresh; reset replay preserves fresh login",
+    "role update refreshes union and sessions; disable and optimistic versions enforced",
+    "bounded distinct pages and operator directory denial"
+  ]
+}

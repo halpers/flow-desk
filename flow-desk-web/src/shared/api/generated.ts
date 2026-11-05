@@ -1,5 +1,92 @@
 /** Generated from Go .api via OpenAPI. DO NOT EDIT. */
 export interface paths {
+    "/api/v1/admin/roles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Tenant roles and permission catalog | permission=account:manage or role:manage | auth=required */
+        get: operations["listManagedRoles"];
+        put?: never;
+        /** Create additive role | permission=role:manage | auth=required */
+        post: operations["createManagedRole"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/roles/{role_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Update additive role | permission=role:manage | auth=required */
+        put: operations["updateManagedRole"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Tenant account directory | permission=account:manage | auth=required */
+        get: operations["listManagedUsers"];
+        put?: never;
+        /** Create tenant account | permission=account:manage | auth=required */
+        post: operations["createManagedUser"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/users/{user_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Update account and roles | permission=account:manage | auth=required */
+        put: operations["updateManagedUser"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/users/{user_id}/reset-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reset account password | permission=account:manage | auth=required */
+        post: operations["resetManagedPassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/approvals/{approval_id}/decision": {
         parameters: {
             query?: never;
@@ -971,6 +1058,291 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    listManagedRoles: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            extra_permissions: string[];
+                            items: {
+                                builtin_role: string;
+                                enabled: boolean;
+                                id: string;
+                                name: string;
+                                permissions: string[];
+                                revision: number;
+                            }[];
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    createManagedRole: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    name: string;
+                    permissions: string[];
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            builtin_role: string;
+                            enabled: boolean;
+                            id: string;
+                            name: string;
+                            permissions: string[];
+                            revision: number;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    updateManagedRole: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                role_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    enabled: boolean;
+                    expected_revision: number;
+                    name: string;
+                    permissions: string[];
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            builtin_role: string;
+                            enabled: boolean;
+                            id: string;
+                            name: string;
+                            permissions: string[];
+                            revision: number;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    listManagedUsers: {
+        parameters: {
+            query?: {
+                limit?: number;
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            has_more: boolean;
+                            items: {
+                                account: string;
+                                display_name: string;
+                                enabled: boolean;
+                                id: string;
+                                permissions: string[];
+                                revision: number;
+                                role: string;
+                                role_ids: string[];
+                            }[];
+                            next_cursor: string;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    createManagedUser: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    account: string;
+                    display_name: string;
+                    password: string;
+                    role_ids: string[];
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            account: string;
+                            display_name: string;
+                            enabled: boolean;
+                            id: string;
+                            permissions: string[];
+                            revision: number;
+                            role: string;
+                            role_ids: string[];
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    updateManagedUser: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    display_name: string;
+                    enabled: boolean;
+                    expected_revision: number;
+                    role_ids: string[];
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            account: string;
+                            display_name: string;
+                            enabled: boolean;
+                            id: string;
+                            permissions: string[];
+                            revision: number;
+                            role: string;
+                            role_ids: string[];
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    resetManagedPassword: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    expected_revision: number;
+                    password: string;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            account: string;
+                            display_name: string;
+                            enabled: boolean;
+                            id: string;
+                            permissions: string[];
+                            revision: number;
+                            role: string;
+                            role_ids: string[];
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
     decideApproval: {
         parameters: {
             query?: never;

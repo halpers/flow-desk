@@ -379,7 +379,7 @@ function DocumentVersions({
 export function Knowledge({ user }: { user: User }) {
   const cache = useQueryClient();
   const scope = ["knowledge", user.tenant_id, user.id];
-  const admin = user.role === "admin";
+  const admin = user.permissions.includes("knowledge:manage");
   const [open, setOpen] = useState(false);
   const [baseId, setBaseId] = useState("");
   const [name, setName] = useState("");

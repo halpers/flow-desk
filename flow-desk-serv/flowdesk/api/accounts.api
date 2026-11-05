@@ -1,0 +1,97 @@
+syntax = "v1"
+
+type ManagedUserData {
+ Id string `json:"id"`
+ Account string `json:"account"`
+ DisplayName string `json:"display_name"`
+ Role string `json:"role"`
+ Enabled bool `json:"enabled"`
+ Revision int64 `json:"revision"`
+ RoleIds []string `json:"role_ids"`
+ Permissions []string `json:"permissions"`
+}
+type ManagedUserPage { Items []ManagedUserData `json:"items"`
+ NextCursor string `json:"next_cursor"`
+ HasMore bool `json:"has_more"` }
+type ManagedUserResp { Code string `json:"code"`
+ RequestId string `json:"request_id"`
+ Data ManagedUserData `json:"data"` }
+type ManagedUsersResp { Code string `json:"code"`
+ RequestId string `json:"request_id"`
+ Data ManagedUserPage `json:"data"` }
+type ManagedUsersReq { Limit int64 `form:"limit,optional"`
+ Cursor string `form:"cursor,optional"` }
+type CreateManagedUserReq {
+ Account string `json:"account"`
+ DisplayName string `json:"display_name"`
+ Password string `json:"password"`
+ RoleIds []string `json:"role_ids"`
+ IdempotencyKey string `header:"Idempotency-Key"`
+}
+type UpdateManagedUserReq {
+ UserId string `path:"user_id"`
+ DisplayName string `json:"display_name"`
+ Enabled bool `json:"enabled"`
+ RoleIds []string `json:"role_ids"`
+ ExpectedRevision int64 `json:"expected_revision"`
+ IdempotencyKey string `header:"Idempotency-Key"`
+}
+type ResetManagedPasswordReq {
+ UserId string `path:"user_id"`
+ Password string `json:"password"`
+ ExpectedRevision int64 `json:"expected_revision"`
+ IdempotencyKey string `header:"Idempotency-Key"`
+}
+type ManagedRoleData {
+ Id string `json:"id"`
+ Name string `json:"name"`
+ BuiltinRole string `json:"builtin_role"`
+ Permissions []string `json:"permissions"`
+ Enabled bool `json:"enabled"`
+ Revision int64 `json:"revision"`
+}
+type ManagedRolePage { Items []ManagedRoleData `json:"items"`
+ ExtraPermissions []string `json:"extra_permissions"` }
+type ManagedRolesResp { Code string `json:"code"`
+ RequestId string `json:"request_id"`
+ Data ManagedRolePage `json:"data"` }
+type ManagedRoleResp { Code string `json:"code"`
+ RequestId string `json:"request_id"`
+ Data ManagedRoleData `json:"data"` }
+type CreateManagedRoleReq {
+ Name string `json:"name"`
+ Permissions []string `json:"permissions"`
+ IdempotencyKey string `header:"Idempotency-Key"`
+}
+type UpdateManagedRoleReq {
+ RoleId string `path:"role_id"`
+ Name string `json:"name"`
+ Permissions []string `json:"permissions"`
+ Enabled bool `json:"enabled"`
+ ExpectedRevision int64 `json:"expected_revision"`
+ IdempotencyKey string `header:"Idempotency-Key"`
+}
+@server(prefix: /api/v1 middleware: SessionAuth)
+service flowdesk-api {
+ @doc "Tenant account directory | permission=account:manage | auth=required"
+ @handler ListManagedUsers
+ get /admin/users (ManagedUsersReq) returns (ManagedUsersResp)
+ @doc "Create tenant account | permission=account:manage | auth=required"
+ @handler CreateManagedUser
+ post /admin/users (CreateManagedUserReq) returns (ManagedUserResp)
+ @doc "Update account and roles | permission=account:manage | auth=required"
+ @handler UpdateManagedUser
+ put /admin/users/:user_id (UpdateManagedUserReq) returns (ManagedUserResp)
+ @doc "Reset account password | permission=account:manage | auth=required"
+ @handler ResetManagedPassword
+ post /admin/users/:user_id/reset-password (ResetManagedPasswordReq) returns (ManagedUserResp)
+ @doc "Tenant roles and permission catalog | permission=account:manage or role:manage | auth=required"
+ @handler ListManagedRoles
+ get /admin/roles returns (ManagedRolesResp)
+ @doc "Create additive role | permission=role:manage | auth=required"
+ @handler CreateManagedRole
+ post /admin/roles (CreateManagedRoleReq) returns (ManagedRoleResp)
+ @doc "Update additive role | permission=role:manage | auth=required"
+ @handler UpdateManagedRole
+ put /admin/roles/:role_id (UpdateManagedRoleReq) returns (ManagedRoleResp)
+}

@@ -19,6 +19,7 @@ type (
 		InsertTx(context.Context, sqlx.Session, *DocumentVersions) error
 		CountByDocumentTx(context.Context, sqlx.Session, string, string) (int64, error)
 		ListByDocument(context.Context, string, string) ([]DocumentVersionSummary, error)
+		ListByDocumentTx(context.Context, sqlx.Session, string, string) ([]DocumentVersionSummary, error)
 		FindOneForShareTx(context.Context, sqlx.Session, string, string) (*DocumentVersions, error)
 		FindOneByJobIdForUpdateTx(context.Context, sqlx.Session, string) (*DocumentVersions, error)
 		UpdateIndexResultTx(context.Context, sqlx.Session, *DocumentVersions) error
@@ -119,6 +120,9 @@ func (m *customDocumentVersionsModel) ListByDocument(ctx context.Context, tenant
     from %s where tenant_id=$1 and document_id=$2 order by created_at,id limit 101`, m.table)
 	err := m.conn.QueryRowsCtx(ctx, &rows, query, tenant, document)
 	return rows, err
+}
+func (m *customDocumentVersionsModel) ListByDocumentTx(ctx context.Context, tx sqlx.Session, tenant, document string) ([]DocumentVersionSummary, error) {
+	return m.withSession(tx).ListByDocument(ctx, tenant, document)
 }
 
 func (m *customDocumentVersionsModel) UpdateArchivedSourceTx(ctx context.Context, tx sqlx.Session, row *DocumentVersions, store, key string) error {

@@ -221,14 +221,10 @@ func excerptOnPage(version model.ActiveKnowledgeVersion, candidate types.Evidenc
 
 func PreviewVersionPages(ctx context.Context, s *svc.ServiceContext, req *types.VersionPagesReq) (types.VersionPagesData, error) {
 	result := types.VersionPagesData{Pages: []types.KnowledgePageText{}}
-	actor, err := knowledgeAdmin(ctx)
-	if err != nil {
-		return result, err
-	}
 	if !validID(req.DocumentId) || !validID(req.VersionId) {
 		return result, errArgument
 	}
-	row, err := s.DocumentVersionsModel.FindOneByTenantIdId(ctx, actor.TenantId, req.VersionId)
+	row, err := sourceAdminVersion(ctx, s, req.DocumentId, req.VersionId)
 	if err != nil {
 		return result, err
 	}

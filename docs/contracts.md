@@ -345,3 +345,6 @@ POST 同一前缀的 `/archive` 返回 202，`/restore-source` 返回 200；均�
 ## M7.5 PDF 阅读方式
 
 上传可选 pdf_layout（plain/columns/table，缺省 plain），版本元数据与内部 source 返回该不可变选择。非 plain 只接受 PDF 与 ocr_mode=off，不合法组合返回 INVALID_ARGUMENT（400）；新 parser 分别为 pypdf-6.21.4-columns-v1、pypdf-6.21.4-table-v1，回调必须与版本选择一致且无 OCR 来源。非 plain 激活必须有 confirm_layout=true，否则 PDF_LAYOUT_REVIEW_REQUIRED（409）；审核及激活同事务审计。PDF_LAYOUT_UNSUPPORTED 为已持久化索引失败码，禁止自动降级。旧 plain/OCR manifest 与物理页码引用保持兼容，默认上传保留历史幂等摘要形状。预览仍只返回分页文本，不返回结构化单元格；详见[M7.5](m7-pdf-layout.md)。
+## M7.6 账号与角色管理
+
+机器源为 api/accounts.api。/admin/users 支持有界游标列表与创建；PUT /admin/users/:user_id 同时更新名称/启停/多角色，POST 其 reset-password 子路由重置密码；写需 Idempotency-Key，更新需 expected_revision。/admin/roles 返回内置/自定义角色和增量权限目录，POST 创建自定义角色，PUT /admin/roles/:role_id 修改/禁用自定义角色。内置角色只读，自定义权限从目录取并集，账号至少一个内置基础角色。管理读取与重放复核当前授权；版本冲突 409、内置/自身保护及最后管理员保护 409、重复账号名 409，不暴露另一租户的账号信息。账号响应不含凭据，密码 12–72 UTF-8 字节且至少一个字母和数字；HTTP 登录仍兼容历史密码。详见[设计](m7-accounts.md)。

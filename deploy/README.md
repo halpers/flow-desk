@@ -60,3 +60,4 @@ live 表示事件循环/服务进程存活；ready 表示数据库、迁移和�
 默认使用完整 Compose：`scripts/start.ps1` 构建并等待服务健康；`scripts/compose.ps1` 优先调用 Windows Docker，无该命令时转发到 WSL Docker。Go 与前端也可在宿主机开发，端口配置见运行说明。Go 生成脚本需要 psql/goose/goctl，可由项目专用开发容器提供。
 
 PowerShell 包装脚本原样转发 Compose 参数；示例统一使用完整参数 `--detach`。
+账号交接、初始化密码重置、启停和角色升级/回退见[服务器手册 §16](server.md#16-账号与角色管理升级及交接)。本阶段无新增配置；角色调整通过 Go 管理 API 同事务撤销会话，禁止直接改数据库权限投影。
