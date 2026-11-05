@@ -123,6 +123,8 @@ jobs:
           python scripts/check-retention.py --env-file work/retention-ci.env --output work/retention-ci.json
       - name: Check configurable retention policy and stale preview fencing
         run: python scripts/check-retention-policy.py --env-file work/retention-ci.env --output work/retention-policy-ci.json
+      - name: Check complete version history and metadata archive recovery
+        run: python scripts/check-history-archive.py --env-file work/retention-ci.env --output work/history-archive-ci.json
       - name: Check fixed business scenarios through public API
         run: python scripts/check-business-scenarios.py --output work/business-scenarios-ci.json
       - name: Check scoped run traces and safe retry through public API

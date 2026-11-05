@@ -276,6 +276,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/documents/{document_id}/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** ListVersionHistory | permission=knowledge:manage | auth=required */
+        get: operations["listVersionHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/documents/{document_id}/retention": {
         parameters: {
             query?: never;
@@ -356,6 +373,23 @@ export interface paths {
         put?: never;
         /** CleanupArchiveCopy | permission=knowledge:manage | auth=required */
         post: operations["cleanupArchiveCopy"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/documents/{document_id}/versions/{version_id}/archive-metadata": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** ArchiveVersionMetadata | permission=knowledge:manage | auth=required */
+        post: operations["archiveVersionMetadata"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1995,6 +2029,58 @@ export interface operations {
             };
         };
     };
+    listVersionHistory: {
+        parameters: {
+            query?: {
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            document_version: number;
+                            has_more: boolean;
+                            items: {
+                                archive_block_reason: string;
+                                archived_at: string;
+                                can_archive: boolean;
+                                chunk_count: number;
+                                cleanup_state: string;
+                                content_hash: string;
+                                created_at: string;
+                                document_id: string;
+                                error_code: string;
+                                filename: string;
+                                id: string;
+                                index_status: string;
+                                metadata_archived: boolean;
+                                ocr_mode: string;
+                                parser_version: string;
+                                pdf_layout: string;
+                                source_format: string;
+                                source_size: number;
+                            }[];
+                            next_cursor: string;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
     getRetentionPlan: {
         parameters: {
             query?: never;
@@ -2252,6 +2338,45 @@ export interface operations {
                             source_epoch: number;
                             source_size: number;
                             status: string;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    archiveVersionMetadata: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                document_id: string;
+                version_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    confirm: boolean;
+                    expected_document_version: number;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            archived_at: string;
+                            document_id: string;
+                            version_id: string;
                         };
                         request_id?: string;
                     };

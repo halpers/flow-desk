@@ -97,6 +97,14 @@ type ArchiveCopyResp struct {
 	Data      ArchiveCopyItem `json:"data"`
 }
 
+type ArchiveMetadataReq struct {
+	DocumentId              string `path:"document_id"`
+	VersionId               string `path:"version_id"`
+	ExpectedDocumentVersion int64  `json:"expected_document_version"`
+	Confirm                 bool   `json:"confirm"`
+	IdempotencyKey          string `header:"Idempotency-Key"`
+}
+
 type ArchiveSourceReq struct {
 	DocumentId     string `path:"document_id"`
 	VersionId      string `path:"version_id"`
@@ -543,6 +551,18 @@ type MessagesResp struct {
 	Code      string      `json:"code"`
 	RequestId string      `json:"request_id"`
 	Data      MessagePage `json:"data"`
+}
+
+type MetadataArchiveData struct {
+	VersionId  string `json:"version_id"`
+	DocumentId string `json:"document_id"`
+	ArchivedAt string `json:"archived_at"`
+}
+
+type MetadataArchiveResp struct {
+	Code      string              `json:"code"`
+	RequestId string              `json:"request_id"`
+	Data      MetadataArchiveData `json:"data"`
 }
 
 type ModelObservation struct {
@@ -1064,6 +1084,46 @@ type VersionData struct {
 	IndexStatus   string `json:"index_status"`
 	ChunkCount    int64  `json:"chunk_count"`
 	ErrorCode     string `json:"error_code"`
+}
+
+type VersionHistoryItem struct {
+	Id                 string `json:"id"`
+	DocumentId         string `json:"document_id"`
+	Filename           string `json:"filename"`
+	CreatedAt          string `json:"created_at"`
+	CleanupState       string `json:"cleanup_state"`
+	ContentHash        string `json:"content_hash"`
+	IndexStatus        string `json:"index_status"`
+	ChunkCount         int64  `json:"chunk_count"`
+	ErrorCode          string `json:"error_code"`
+	ParserVersion      string `json:"parser_version"`
+	OcrMode            string `json:"ocr_mode"`
+	PdfLayout          string `json:"pdf_layout"`
+	SourceFormat       string `json:"source_format"`
+	SourceSize         int64  `json:"source_size"`
+	MetadataArchived   bool   `json:"metadata_archived"`
+	ArchivedAt         string `json:"archived_at"`
+	CanArchive         bool   `json:"can_archive"`
+	ArchiveBlockReason string `json:"archive_block_reason"`
+}
+
+type VersionHistoryPage struct {
+	DocumentVersion int64                `json:"document_version"`
+	Items           []VersionHistoryItem `json:"items"`
+	HasMore         bool                 `json:"has_more"`
+	NextCursor      string               `json:"next_cursor"`
+}
+
+type VersionHistoryReq struct {
+	DocumentId string `path:"document_id"`
+	Cursor     string `form:"cursor,optional"`
+	Limit      int64  `form:"limit,optional"`
+}
+
+type VersionHistoryResp struct {
+	Code      string             `json:"code"`
+	RequestId string             `json:"request_id"`
+	Data      VersionHistoryPage `json:"data"`
 }
 
 type VersionPage struct {

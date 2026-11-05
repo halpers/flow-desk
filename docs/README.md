@@ -44,3 +44,4 @@
 - Go 基线：Go 1.27.1、goctl 1.10.2、go-zero 1.10.3；Python 3.12、Node 22/24。各服务依赖已由 go.sum、requirements.lock、pnpm-lock.yaml 固定。
 - 各阶段的实际证据见实施记录；完整目标设计不等于当前已实现范围。
 - [M7.6 账号与角色管理](m7-accounts.md)：账号启停/改密、多角色增量权限、会话撤销和管理员交接。
+- [M7.10 完整历史与元数据归档](m7-history-archive.md)：完整版本分页、已清理版本详情归档与身份隔离。

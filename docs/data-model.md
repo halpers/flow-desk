@@ -1,5 +1,9 @@
 # 数据模型与一致性设计
 
+M7.10 迁移 `2026110507_metadata_archive.sql` 增加 Go 自有 version_metadata_archives（版本/租户/文档身份、文件名、parser、错误码、片段数、OCR/版面、归档人/时间），并在 document_versions 增加 metadata_archived。归档表复合外键指向原版本及当前租户用户；归档事务先锁文档、ACL/团队、版本，再复核资格、插入详情、精简热行和记录审计/幂等回执。热行约束要求归档后为 purged，且文件名/parser/错误码为空、片段数归零、OCR/版面为默认值；原租户/文档/版本/job/hash/创建时间、source 元数据及清理状态不变。
+
+热查询用 NOT metadata_archived 过滤及部分索引；完整历史由原版本按 created_at/id 定位，并在同一 Go 授权事务内左联归档详情。归档时间与原创建时间独立，翻页顺序不因归档改变。回执、引用、审计、Python 墓碑和 source_objects 不迁移或删除；身份锚点和历史表仍会增长，此功能不等于数据库压缩或完整生命周期数据擦除。归档表须纳入同一数据库备份，禁止 Down 删除后再回退旧应用。
+
 M6.5 的 `2026110403_business_scenarios.sql` 只扩展 actions 的工具 CHECK，不新增跨服务表。接手在一个事务内更新负责人、状态及 version；办结同事务写入带 source_action_id 的处理结论、状态、事件、审计及唯一回执。恢复图版本读取 Go 首次执行 outbox，Python 继续拥有检查点；不可变历史保留，迁移 Down 不删除已经产生的新动作。
 
 M6.4 新增 `teams`、`team_members`、`run_ticket_resources`，在 `tickets` 和 `knowledge_bases` 增加可空的 `team_id`。成员与资源采用 `(tenant_id,id)` 复合外键；成员变更更新团队 revision，资源范围变更更新工单 version 或知识库 acl_revision。历史回填与授权锁语义见[团队设计](m6-teams.md)。固定角色仍存于 users.role，自定义多角色尚未实现。

@@ -118,6 +118,59 @@ type DocumentResp {
 type VersionPage {
     Items []VersionData `json:"items"`
 }
+type VersionHistoryReq {
+    DocumentId string `path:"document_id"`
+    Cursor string `form:"cursor,optional"`
+    Limit int64 `form:"limit,optional"`
+}
+type VersionHistoryItem {
+    Id string `json:"id"`
+    DocumentId string `json:"document_id"`
+    Filename string `json:"filename"`
+    CreatedAt string `json:"created_at"`
+    CleanupState string `json:"cleanup_state"`
+    ContentHash string `json:"content_hash"`
+    IndexStatus string `json:"index_status"`
+    ChunkCount int64 `json:"chunk_count"`
+    ErrorCode string `json:"error_code"`
+    ParserVersion string `json:"parser_version"`
+    OcrMode string `json:"ocr_mode"`
+    PdfLayout string `json:"pdf_layout"`
+    SourceFormat string `json:"source_format"`
+    SourceSize int64 `json:"source_size"`
+    MetadataArchived bool `json:"metadata_archived"`
+    ArchivedAt string `json:"archived_at"`
+    CanArchive bool `json:"can_archive"`
+    ArchiveBlockReason string `json:"archive_block_reason"`
+}
+type VersionHistoryPage {
+    DocumentVersion int64 `json:"document_version"`
+    Items []VersionHistoryItem `json:"items"`
+    HasMore bool `json:"has_more"`
+    NextCursor string `json:"next_cursor"`
+}
+type VersionHistoryResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data VersionHistoryPage `json:"data"`
+}
+type ArchiveMetadataReq {
+    DocumentId string `path:"document_id"`
+    VersionId string `path:"version_id"`
+    ExpectedDocumentVersion int64 `json:"expected_document_version"`
+    Confirm bool `json:"confirm"`
+    IdempotencyKey string `header:"Idempotency-Key"`
+}
+type MetadataArchiveData {
+    VersionId string `json:"version_id"`
+    DocumentId string `json:"document_id"`
+    ArchivedAt string `json:"archived_at"`
+}
+type MetadataArchiveResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data MetadataArchiveData `json:"data"`
+}
 type VersionsResp {
     Code string `json:"code"`
     RequestId string `json:"request_id"`
@@ -326,6 +379,12 @@ type ArchiveCopyResp {
 
 @server(prefix: /api/v1 middleware: SessionAuth)
 service flowdesk-api {
+    @doc "ListVersionHistory | permission=knowledge:manage | auth=required"
+    @handler ListVersionHistory
+    get /documents/:document_id/history (VersionHistoryReq) returns (VersionHistoryResp)
+    @doc "ArchiveVersionMetadata | permission=knowledge:manage | auth=required"
+    @handler ArchiveVersionMetadata
+    post /documents/:document_id/versions/:version_id/archive-metadata (ArchiveMetadataReq) returns (MetadataArchiveResp)
     @doc "GetRetentionPolicy | permission=knowledge:manage | auth=required"
     @handler GetRetentionPolicy
     get /knowledge-bases/:knowledge_base_id/retention-policy (KnowledgeBaseReq) returns (RetentionPolicyResp)

@@ -1,5 +1,7 @@
 # Go 业务服务详细设计
 
+M7.10 增加授权完整版本历史与 purged 详情归档；API 源为 api/knowledge.api，模型层分别持有 document_versions 查询/CAS 和 version_metadata_archives 写入/读取。业务层按文档→权限范围→版本顺序锁定，归档详情、热行精简、审计和幂等结果使用同一非空事务。完整历史以租户/文档/创建时间/版本 ID 定位，每页最多读取 51 条判断 has_more，不加载原文或存储定位。具体边界与回退见[跨服务设计](../../../docs/m7-history-archive.md)。
+
 M7.4 的原文件适配器位于 internal/client/sources.go，归档/下载/恢复用例由 internal/logic/knowledgesources.go 编排。Go 是唯一存储凭据持有者，Python 和浏览器通过已有/新增授权 API 读取。数据库字节与 S3 定位的切换、代次和外部事务边界见[跨服务数据模型](../../../docs/data-model.md)及[M7.4](../../../docs/m7-object-storage.md)。
 
 框架：go-zero；模块根：`flow-desk-serv/flowdesk/`。Go 默认脚手架已生成，本文业务模块、接口和数据库部分属于待实现规格。

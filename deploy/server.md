@@ -419,3 +419,25 @@ SELECT status,count(*) FROM business.outbox_events
 ```
 
 custom_policy_count 必须为 0，第二条不应有结果，且需满足第 17/18 节及其他功能的回退条件。保留策略列、修订及审计，不执行 Down；仍依赖自定义规则时保留新版。恢复清理前内容仍要求完整一致数据库及对象备份，单独恢复策略不能找回原文。独立 mock 验收及协议见[保留策略说明](../docs/m7-retention-policy.md)；禁止在生产运行调整版本日期的合成脚本。
+
+## 20. 完整版本历史与元数据归档
+
+M7.10 无新增服务、环境变量或端口，IP:port 与域名入口操作一致。先按第 10 节做一致数据库备份，再发布同一 SHA 的配套镜像；migrate 增量执行 `2026110507_metadata_archive.sql`。升级仅创建字段、归档表及索引，不自动归档已有记录。大规模历史表创建索引可能持锁，安排维护窗口，先在恢复副本测量迁移时间再升级。
+
+1. 以有 knowledge:manage 且能管理目标库的账号登录，“知识库”→目标文档→“完整版本历史”。确认文件名、版本 ID、原创建时间、清理/归档状态正常；“下一页/上一页”逐页查看，刷新历史回到第一页查看新上传版本。
+2. 只有“内容已清理”且显示“可归档版本详情”的版本可归档。激活、引用、未完成知识任务和原文件归档历史仍受保护；不要为获得候选修改数据库日期、状态或保护信息。
+3. 点击“归档版本详情”，核对范围与备份并勾选确认。成功后日常版本列表不再显示该版本，但“完整版本历史”保留原文件名、片段数、parser/OCR/版面等详情和归档时间。操作不恢复原文，也不减少 S3 对象数。
+4. 响应丢失时在原确认框重试，使用原请求键。VERSION_CONFLICT 或 METADATA_ARCHIVE_PROTECTED 时关闭确认框、刷新并重新核对；权限/团队/会话已撤销时重新授权或登录，不通过改库绕过检查。成功归档仅记录一次 knowledge.metadata_archive 审计。
+
+运维 owner 在维护窗口可用以下只读查询核对归档与热记录一致性。missing_archive_count 应为 0；异常时保留备份并排查，禁止直接补写或删除身份行。
+
+```sql
+SELECT count(*) AS archived_version_count FROM business.document_versions WHERE metadata_archived;
+SELECT count(*) AS missing_archive_count FROM business.document_versions v
+ LEFT JOIN business.version_metadata_archives a ON a.tenant_id=v.tenant_id AND a.id=v.id
+ WHERE v.metadata_archived AND a.id IS NULL;
+```
+
+归档表与原版本、审计、幂等回执须包含在同一数据库备份中。原版本行、job/hash 和 Python 墓碑必须保留，不能按“已归档”手工删除。此功能把终态详情移出热行，身份锚点和归档表仍会增长；不保证 PostgreSQL 文件缩小，不清除数据库/WAL/对象备份，也不处理 source_objects、消息或 checkpoint 的历史保留。
+
+回退前在维护窗口停止归档新请求并等待在途事务结束，查询 archived_version_count。为 0 时可在满足第 17–19 节约束后切换旧镜像，保留新表和列，不执行 Down。已有归档时，旧版不能正确展示精简后的热行，需使用支持归档读取的版本或从升级前一致备份整体恢复；不要将旧版 API 与新版 Web 混用，也不要只恢复归档表。独立 mock 验收脚本只用于临时环境，不能在服务器运行；详见[历史归档说明](../docs/m7-history-archive.md)。

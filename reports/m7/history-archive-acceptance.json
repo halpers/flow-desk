@@ -1,0 +1,23 @@
+{
+  "stage": "M7.10",
+  "environment": "disposable local mock",
+  "created_at": "2026-11-05T08:41:42.072396+00:00",
+  "checks": [
+    {
+      "name": "retained protection and real durable cleanup before archive",
+      "passed": true
+    },
+    {
+      "name": "atomic metadata archive, immutable replay, preserved history and fences",
+      "passed": true
+    },
+    {
+      "name": "111 history rows, equal timestamp tie-breaker and bounded cursor requests",
+      "passed": true
+    },
+    {
+      "name": "ordinary account cannot read history or replay metadata archive",
+      "passed": true
+    }
+  ]
+}

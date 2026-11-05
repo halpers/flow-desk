@@ -2,6 +2,7 @@ package model
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 	"time"
@@ -13,6 +14,9 @@ type (
 	// DocumentVersionsModel is an interface to be customized, add more methods here,
 	// and implement the added methods in customDocumentVersionsModel.
 	DocumentVersionsModel interface {
+		ListHistoryTx(context.Context, sqlx.Session, string, string, time.Time, string, int64) ([]VersionHistoryRow, error)
+		FindHistoryVersionTx(context.Context, sqlx.Session, string, string, string) (*VersionHistoryRow, error)
+		UpdateMetadataArchivedTx(context.Context, sqlx.Session, string, string) error
 		FindOneForUpdateTx(context.Context, sqlx.Session, string, string) (*DocumentVersions, error)
 		ListRetentionTx(context.Context, sqlx.Session, string, string) ([]RetentionVersion, error)
 		UpdateCleanupStateTx(context.Context, sqlx.Session, string, string, string, string) error
@@ -125,7 +129,7 @@ func (m *customDocumentVersionsModel) ListByDocument(ctx context.Context, tenant
     jsonb_array_length(page_texts) as page_count,
     (select count(*) from jsonb_array_elements(page_texts) p where p->>'text' ~ '[^[:space:]]') as text_page_count,
  (select count(*) from jsonb_array_elements(page_texts) p where p->>'extraction_method'='ocr') as ocr_page_count
-    from %s where tenant_id=$1 and document_id=$2 order by (cleanup_state='purged'),created_at desc,id desc limit 101`, m.table)
+    from %s where tenant_id=$1 and document_id=$2 and not metadata_archived order by (cleanup_state='purged'),created_at desc,id desc limit 101`, m.table)
 	err := m.conn.QueryRowsCtx(ctx, &rows, query, tenant, document)
 	return rows, err
 }
@@ -194,7 +198,7 @@ func (m *customDocumentVersionsModel) ListRetentionTx(ctx context.Context, tx sq
   and o.topic='knowledge.archive' and o.payload->>'version_id'=v.id::text)) as has_archive,
  (v.index_status='pending' or exists(select 1 from business.outbox_events o where o.tenant_id=v.tenant_id
   and o.topic='knowledge.index' and o.payload->>'version_id'=v.id::text and o.status<>'delivered')) as busy
- from %s v where v.tenant_id=$1 and v.document_id=$2
+ from %s v where v.tenant_id=$1 and v.document_id=$2 and not v.metadata_archived
  order by (v.cleanup_state='purged'),v.created_at desc,v.id desc limit 101`, m.table, m.table)
 	err := tx.QueryRowsCtx(ctx, &rows, query, tenant, document)
 	return rows, err
@@ -205,4 +209,60 @@ func (m *customDocumentVersionsModel) UpdateCleanupStateTx(ctx context.Context, 
  source_bytes=case when $4='purged' then ''::bytea else source_bytes end,
  page_texts=case when $4='purged' then '[]'::jsonb else page_texts end
  where tenant_id=$1 and id=$2 and cleanup_state=$3 and source_storage='postgres'`, m.table), tenant, id, before, after))
+}
+
+// VersionHistoryRow never loads source bytes, document text or object storage locators.
+type VersionHistoryRow struct {
+	Id                 string       `db:"id"`
+	DocumentId         string       `db:"document_id"`
+	Filename           string       `db:"filename"`
+	CreatedAt          time.Time    `db:"created_at"`
+	CleanupState       string       `db:"cleanup_state"`
+	ContentHash        string       `db:"content_hash"`
+	IndexStatus        string       `db:"index_status"`
+	ChunkCount         int64        `db:"chunk_count"`
+	ErrorCode          string       `db:"error_code"`
+	ParserVersion      string       `db:"parser_version"`
+	OcrMode            string       `db:"ocr_mode"`
+	PdfLayout          string       `db:"pdf_layout"`
+	SourceFormat       string       `db:"source_format"`
+	SourceSize         int64        `db:"source_size"`
+	MetadataArchived   bool         `db:"metadata_archived"`
+	ArchivedAt         sql.NullTime `db:"archived_at"`
+	ArchiveBlockReason string       `db:"archive_block_reason"`
+}
+
+func (m *customDocumentVersionsModel) historyQuery() string {
+	return fmt.Sprintf(`select v.id,v.document_id,coalesce(a.filename,v.filename) as filename,v.created_at,
+ v.cleanup_state,v.content_hash,v.index_status,coalesce(a.chunk_count,v.chunk_count) as chunk_count,
+ coalesce(a.error_code,v.error_code) as error_code,coalesce(a.parser_version,v.parser_version) as parser_version,
+ coalesce(a.ocr_mode,v.ocr_mode) as ocr_mode,coalesce(a.pdf_layout,v.pdf_layout) as pdf_layout,
+ v.source_format,v.source_size,v.metadata_archived,a.created_at as archived_at,
+ case when v.metadata_archived then 'already_archived'
+ when v.cleanup_state<>'purged' then 'content_not_purged'
+ when d.active_version_id=v.id then 'active'
+ when exists(select 1 from business.run_evidence e where e.tenant_id=v.tenant_id and e.version_id=v.id) then 'referenced'
+ when v.source_storage<>'postgres' or v.source_epoch>0 or exists(select 1 from business.source_objects so
+  where so.tenant_id=v.tenant_id and so.version_id=v.id) or exists(select 1 from business.outbox_events o
+  where o.tenant_id=v.tenant_id and o.topic='knowledge.archive' and o.payload->>'version_id'=v.id::text) then 'archive_history'
+ when v.index_status='pending' or exists(select 1 from business.outbox_events o where o.tenant_id=v.tenant_id
+  and o.payload->>'version_id'=v.id::text and o.topic in ('knowledge.index','knowledge.cleanup') and o.status<>'delivered') then 'knowledge_busy'
+ else '' end as archive_block_reason
+ from %s v join business.documents d on d.tenant_id=v.tenant_id and d.id=v.document_id
+ left join business.version_metadata_archives a on a.tenant_id=v.tenant_id and a.id=v.id
+ where v.tenant_id=$1 and v.document_id=$2`, m.table)
+}
+func (m *customDocumentVersionsModel) ListHistoryTx(ctx context.Context, tx sqlx.Session, tenant, document string, before time.Time, beforeID string, limit int64) ([]VersionHistoryRow, error) {
+	rows := []VersionHistoryRow{}
+	err := tx.QueryRowsCtx(ctx, &rows, m.historyQuery()+` and (v.created_at,v.id)<($3,$4::uuid) order by v.created_at desc,v.id desc limit $5`, tenant, document, before, beforeID, limit)
+	return rows, err
+}
+func (m *customDocumentVersionsModel) FindHistoryVersionTx(ctx context.Context, tx sqlx.Session, tenant, document, id string) (*VersionHistoryRow, error) {
+	var row VersionHistoryRow
+	err := tx.QueryRowCtx(ctx, &row, m.historyQuery()+` and v.id=$3`, tenant, document, id)
+	return &row, err
+}
+func (m *customDocumentVersionsModel) UpdateMetadataArchivedTx(ctx context.Context, tx sqlx.Session, tenant, id string) error {
+	return requireOne(tx.ExecCtx(ctx, fmt.Sprintf(`update %s set metadata_archived=true,filename='',parser_version='',error_code='',chunk_count=0,ocr_mode='off',pdf_layout='plain'
+ where tenant_id=$1 and id=$2 and cleanup_state='purged' and not metadata_archived`, m.table), tenant, id))
 }

@@ -20,6 +20,7 @@ import { TeamScope } from "../teams/Teams";
 import { indexErrors, readKnowledgeFile } from "./files";
 import { ArchiveCopies } from "./ArchiveCopies";
 import { RetentionPolicy } from "./RetentionPolicy";
+import { VersionHistory } from "./VersionHistory";
 
 type Document = Models["DocumentPage"]["items"][number];
 const roleOptions = [
@@ -148,6 +149,14 @@ function DocumentVersions({
               : "草稿"}
         </Tag>
         <small>修订 {document.version}</small>
+        <VersionHistory
+          documentId={document.id}
+          scope={scope}
+          onArchived={async () => {
+            await refresh();
+            await versions.refetch();
+          }}
+        />
         <Button
           size="small"
           disabled={busy}

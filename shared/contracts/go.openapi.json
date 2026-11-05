@@ -2146,6 +2146,160 @@
         }
       }
     },
+    "/api/v1/documents/{document_id}/history": {
+      "get": {
+        "summary": "ListVersionHistory | permission=knowledge:manage | auth=required",
+        "operationId": "listVersionHistory",
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "allowEmptyValue": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "allowEmptyValue": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "document_version",
+                        "items",
+                        "has_more",
+                        "next_cursor"
+                      ],
+                      "properties": {
+                        "document_version": {
+                          "type": "integer"
+                        },
+                        "has_more": {
+                          "type": "boolean"
+                        },
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "id",
+                              "document_id",
+                              "filename",
+                              "created_at",
+                              "cleanup_state",
+                              "content_hash",
+                              "index_status",
+                              "chunk_count",
+                              "error_code",
+                              "parser_version",
+                              "ocr_mode",
+                              "pdf_layout",
+                              "source_format",
+                              "source_size",
+                              "metadata_archived",
+                              "archived_at",
+                              "can_archive",
+                              "archive_block_reason"
+                            ],
+                            "properties": {
+                              "archive_block_reason": {
+                                "type": "string"
+                              },
+                              "archived_at": {
+                                "type": "string"
+                              },
+                              "can_archive": {
+                                "type": "boolean"
+                              },
+                              "chunk_count": {
+                                "type": "integer"
+                              },
+                              "cleanup_state": {
+                                "type": "string"
+                              },
+                              "content_hash": {
+                                "type": "string"
+                              },
+                              "created_at": {
+                                "type": "string"
+                              },
+                              "document_id": {
+                                "type": "string"
+                              },
+                              "error_code": {
+                                "type": "string"
+                              },
+                              "filename": {
+                                "type": "string"
+                              },
+                              "id": {
+                                "type": "string"
+                              },
+                              "index_status": {
+                                "type": "string"
+                              },
+                              "metadata_archived": {
+                                "type": "boolean"
+                              },
+                              "ocr_mode": {
+                                "type": "string"
+                              },
+                              "parser_version": {
+                                "type": "string"
+                              },
+                              "pdf_layout": {
+                                "type": "string"
+                              },
+                              "source_format": {
+                                "type": "string"
+                              },
+                              "source_size": {
+                                "type": "integer"
+                              }
+                            }
+                          }
+                        },
+                        "next_cursor": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "request_id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/documents/{document_id}/retention": {
       "get": {
         "summary": "GetRetentionPlan | permission=knowledge:manage | auth=required",
@@ -2834,6 +2988,98 @@
                           "type": "integer"
                         },
                         "status": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "request_id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/documents/{document_id}/versions/{version_id}/archive-metadata": {
+      "post": {
+        "summary": "ArchiveVersionMetadata | permission=knowledge:manage | auth=required",
+        "operationId": "archiveVersionMetadata",
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "version_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "expected_document_version",
+                  "confirm"
+                ],
+                "properties": {
+                  "confirm": {
+                    "type": "boolean"
+                  },
+                  "expected_document_version": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "version_id",
+                        "document_id",
+                        "archived_at"
+                      ],
+                      "properties": {
+                        "archived_at": {
+                          "type": "string"
+                        },
+                        "document_id": {
+                          "type": "string"
+                        },
+                        "version_id": {
                           "type": "string"
                         }
                       }

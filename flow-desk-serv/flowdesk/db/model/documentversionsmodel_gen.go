@@ -40,29 +40,30 @@ type (
 	}
 
 	DocumentVersions struct {
-		Id            string    `db:"id"`
-		TenantId      string    `db:"tenant_id"`
-		DocumentId    string    `db:"document_id"`
-		JobId         string    `db:"job_id"`
-		Filename      string    `db:"filename"`
-		Content       string    `db:"content"`
-		ContentHash   string    `db:"content_hash"`
-		IndexStatus   string    `db:"index_status"`
-		ChunkCount    int64     `db:"chunk_count"`
-		ErrorCode     string    `db:"error_code"`
-		CreatedAt     time.Time `db:"created_at"`
-		SourceFormat  string    `db:"source_format"`
-		SourceBytes   []byte    `db:"source_bytes"`
-		PageTexts     string    `db:"page_texts"`
-		ParserVersion string    `db:"parser_version"`
-		OcrMode       string    `db:"ocr_mode"`
-		SourceStorage string    `db:"source_storage"`
-		SourceSize    int64     `db:"source_size"`
-		SourceStoreId string    `db:"source_store_id"`
-		SourceKey     string    `db:"source_key"`
-		SourceEpoch   int64     `db:"source_epoch"`
-		PdfLayout     string    `db:"pdf_layout"`
-		CleanupState  string    `db:"cleanup_state"`
+		Id               string    `db:"id"`
+		TenantId         string    `db:"tenant_id"`
+		DocumentId       string    `db:"document_id"`
+		JobId            string    `db:"job_id"`
+		Filename         string    `db:"filename"`
+		Content          string    `db:"content"`
+		ContentHash      string    `db:"content_hash"`
+		IndexStatus      string    `db:"index_status"`
+		ChunkCount       int64     `db:"chunk_count"`
+		ErrorCode        string    `db:"error_code"`
+		CreatedAt        time.Time `db:"created_at"`
+		SourceFormat     string    `db:"source_format"`
+		SourceBytes      []byte    `db:"source_bytes"`
+		PageTexts        string    `db:"page_texts"`
+		ParserVersion    string    `db:"parser_version"`
+		OcrMode          string    `db:"ocr_mode"`
+		SourceStorage    string    `db:"source_storage"`
+		SourceSize       int64     `db:"source_size"`
+		SourceStoreId    string    `db:"source_store_id"`
+		SourceKey        string    `db:"source_key"`
+		SourceEpoch      int64     `db:"source_epoch"`
+		PdfLayout        string    `db:"pdf_layout"`
+		CleanupState     string    `db:"cleanup_state"`
+		MetadataArchived bool      `db:"metadata_archived"`
 	}
 )
 
@@ -136,14 +137,14 @@ func (m *defaultDocumentVersionsModel) FindOneByTenantIdId(ctx context.Context, 
 }
 
 func (m *defaultDocumentVersionsModel) Insert(ctx context.Context, data *DocumentVersions) (sql.Result, error) {
-	query := fmt.Sprintf("insert into %s (%s) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)", m.table, documentVersionsRowsExpectAutoSet)
-	ret, err := m.conn.ExecCtx(ctx, query, data.Id, data.TenantId, data.DocumentId, data.JobId, data.Filename, data.Content, data.ContentHash, data.IndexStatus, data.ChunkCount, data.ErrorCode, data.SourceFormat, data.SourceBytes, data.PageTexts, data.ParserVersion, data.OcrMode, data.SourceStorage, data.SourceSize, data.SourceStoreId, data.SourceKey, data.SourceEpoch, data.PdfLayout, data.CleanupState)
+	query := fmt.Sprintf("insert into %s (%s) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)", m.table, documentVersionsRowsExpectAutoSet)
+	ret, err := m.conn.ExecCtx(ctx, query, data.Id, data.TenantId, data.DocumentId, data.JobId, data.Filename, data.Content, data.ContentHash, data.IndexStatus, data.ChunkCount, data.ErrorCode, data.SourceFormat, data.SourceBytes, data.PageTexts, data.ParserVersion, data.OcrMode, data.SourceStorage, data.SourceSize, data.SourceStoreId, data.SourceKey, data.SourceEpoch, data.PdfLayout, data.CleanupState, data.MetadataArchived)
 	return ret, err
 }
 
 func (m *defaultDocumentVersionsModel) Update(ctx context.Context, newData *DocumentVersions) error {
 	query := fmt.Sprintf("update %s set %s where id = $1", m.table, documentVersionsRowsWithPlaceHolder)
-	_, err := m.conn.ExecCtx(ctx, query, newData.Id, newData.TenantId, newData.DocumentId, newData.JobId, newData.Filename, newData.Content, newData.ContentHash, newData.IndexStatus, newData.ChunkCount, newData.ErrorCode, newData.SourceFormat, newData.SourceBytes, newData.PageTexts, newData.ParserVersion, newData.OcrMode, newData.SourceStorage, newData.SourceSize, newData.SourceStoreId, newData.SourceKey, newData.SourceEpoch, newData.PdfLayout, newData.CleanupState)
+	_, err := m.conn.ExecCtx(ctx, query, newData.Id, newData.TenantId, newData.DocumentId, newData.JobId, newData.Filename, newData.Content, newData.ContentHash, newData.IndexStatus, newData.ChunkCount, newData.ErrorCode, newData.SourceFormat, newData.SourceBytes, newData.PageTexts, newData.ParserVersion, newData.OcrMode, newData.SourceStorage, newData.SourceSize, newData.SourceStoreId, newData.SourceKey, newData.SourceEpoch, newData.PdfLayout, newData.CleanupState, newData.MetadataArchived)
 	return err
 }
 
