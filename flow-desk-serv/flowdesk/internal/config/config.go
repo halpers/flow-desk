@@ -16,6 +16,7 @@ type Config struct {
 	FileStoreProvider         string `json:",optional"`
 	FileStoreCleanupEnabled   bool   `json:",optional"`
 	FileStoreInventoryEnabled bool   `json:",optional"`
+	FileStoreAdoptionEnabled  bool   `json:",optional"`
 	FileStoreEndpoint         string `json:",optional"`
 	FileStoreRegion           string `json:",optional"`
 	FileStoreBucket           string `json:",optional"`

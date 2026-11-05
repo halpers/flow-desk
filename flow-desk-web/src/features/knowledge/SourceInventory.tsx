@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Alert, Button, Drawer, Empty, Space, Tag } from "antd";
 import { api } from "../../shared/api/client";
 import type { Models } from "../../shared/api/models";
+import { AdoptSource } from "./AdoptSource";
 
 const results: Record<string, string> = {
   unregistered: "未登记，待人工核对",
@@ -133,6 +134,15 @@ export function SourceInventory({
                       : "非标准对象"}
                 </p>
                 {item.registered_id && <p>登记编号：{item.registered_id}</p>}
+                {!item.registered_id && (
+                  <AdoptSource
+                    documentId={documentId}
+                    versionId={versionId}
+                    sourceEpoch={inventory.data.source_epoch}
+                    item={item}
+                    scope={scope}
+                  />
+                )}
               </section>
             ))}
             {!inventory.data.items.length && (

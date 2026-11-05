@@ -1,5 +1,7 @@
 # Go 业务服务详细设计
 
+M7.12 sourceadoption 用例复用现有登记模型和幂等事务。巡检为当前有资格的标准旧副本签发与分页游标不同作用域的 AES-GCM 选择凭证。首次幂等事务可直接返回已提交回执；新请求复核后以内部准备信号回滚，退出所有数据库锁再读取 S3；最终幂等事务重新复核并提交登记/审计/回执。事务内无外部 I/O，成功重放不再读 S3，仍校验当前知识库权限与登记身份。新登记要求 FILE_STORE_ADOPTION_ENABLED 和 FILE_STORE_INVENTORY_ENABLED，独立于清理；详情见[人工登记](../../../docs/m7-source-adoption.md)。
+
 M7.11 新增可选 SourceInventory 适配器与 sourceinventory 用例。S3 ListObjectsV2 固定可信版本前缀，单次 limit+1、最多 51 对象及 256KiB 响应，继承 5 秒超时、不跟随重定向、不重试；严格检查范围、编码、顺序、重复及元数据。游标 AES-GCM 加密认证并绑定作用域，源代次改变失效。source_objects 模型仅查询当前页登记；逻辑在 I/O 后事务复核权限与原件，审计成功才返回。无对象写入、自动认领或修复；配置、协议边界见[巡检设计](../../../docs/m7-source-inventory.md)。
 
 M7.10 增加授权完整版本历史与 purged 详情归档；API 源为 api/knowledge.api，模型层分别持有 document_versions 查询/CAS 和 version_metadata_archives 写入/读取。业务层按文档→权限范围→版本顺序锁定，归档详情、热行精简、审计和幂等结果使用同一非空事务。完整历史以租户/文档/创建时间/版本 ID 定位，每页最多读取 51 条判断 has_more，不加载原文或存储定位。具体边界与回退见[跨服务设计](../../../docs/m7-history-archive.md)。

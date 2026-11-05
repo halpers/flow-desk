@@ -365,6 +365,9 @@ type SourceInventoryReq {
     Limit int64 `form:"limit,optional"`
 }
 type SourceInventoryItem {
+    AdoptionEligible bool `json:"adoption_eligible"`
+    AdoptionReason string `json:"adoption_reason"`
+    AdoptionToken string `json:"adoption_token"`
     ObjectRef string `json:"object_ref"`
     RegisteredId string `json:"registered_id"`
     RegisteredStatus string `json:"registered_status"`
@@ -375,6 +378,7 @@ type SourceInventoryItem {
     Reconciliation string `json:"reconciliation"`
 }
 type SourceInventoryPage {
+    AdoptionEnabled bool `json:"adoption_enabled"`
     VersionId string `json:"version_id"`
     SourceSize int64 `json:"source_size"`
     SourceEpoch int64 `json:"source_epoch"`
@@ -388,6 +392,28 @@ type SourceInventoryResp {
     Code string `json:"code"`
     RequestId string `json:"request_id"`
     Data SourceInventoryPage `json:"data"`
+}
+
+type SourceAdoptionReq {
+    DocumentId string `path:"document_id"`
+    VersionId string `path:"version_id"`
+    ObjectRef string `json:"object_ref"`
+    AdoptionToken string `json:"adoption_token"`
+    ExpectedSourceEpoch int64 `json:"expected_source_epoch"`
+    Confirm bool `json:"confirm"`
+    IdempotencyKey string `header:"Idempotency-Key"`
+}
+type SourceAdoptionData {
+    ObjectId string `json:"object_id"`
+    ObjectRef string `json:"object_ref"`
+    VersionId string `json:"version_id"`
+    SourceEpoch int64 `json:"source_epoch"`
+    VerifiedAt string `json:"verified_at"`
+}
+type SourceAdoptionResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data SourceAdoptionData `json:"data"`
 }
 type ArchiveCopiesResp {
     Code string `json:"code"`
@@ -413,6 +439,9 @@ service flowdesk-api {
     @doc "GetSourceInventory | permission=knowledge:manage | auth=required"
     @handler GetSourceInventory
     get /documents/:document_id/versions/:version_id/source-inventory (SourceInventoryReq) returns (SourceInventoryResp)
+    @doc "AdoptSourceObject | permission=knowledge:manage | auth=required"
+    @handler AdoptSourceObject
+    post /documents/:document_id/versions/:version_id/source-adoptions (SourceAdoptionReq) returns (SourceAdoptionResp)
     @doc "ListVersionHistory | permission=knowledge:manage | auth=required"
     @handler ListVersionHistory
     get /documents/:document_id/history (VersionHistoryReq) returns (VersionHistoryResp)

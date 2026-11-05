@@ -1,0 +1,19 @@
+{
+  "stage": "M7.12",
+  "environment": "disposable local mock with S3",
+  "created_at": "2026-11-05T09:57:52.636463+00:00",
+  "checks": [
+    {
+      "name": "restored verified database original and explicit scoped selection required; ordinary operator and invalid confirmation rejected",
+      "passed": true
+    },
+    {
+      "name": "real S3 bytes verified and registered once; same-key immutable receipt; source and listed object metadata unchanged",
+      "passed": true
+    },
+    {
+      "name": "adopted copy enters existing confirmed cleanup; retirement and replay preserve one adoption audit and original bytes",
+      "passed": true
+    }
+  ]
+}

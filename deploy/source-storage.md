@@ -118,3 +118,17 @@ mkdir -p work
 install -m 600 .env work/source-inventory.env
 python scripts/check-source-inventory.py --env-file work/source-inventory.env --output work/source-inventory.json
 ```
+
+## 未登记旧副本的人工登记
+
+M7.12 的 `FILE_STORE_ADOPTION_ENABLED=false` 与巡检/清理独立。已有巡检 ListBucket 及原件 GetObject 权限足够，不额外增加写对象或删除权限。先在独立测试桶验证完整流程，再显式开启；服务器操作、资格保护、失败重试和回退见[服务器手册 §22](server.md#22-未登记副本人工核验与登记)。数据库原件必须先恢复并核对，标准旧副本须匹配大小/hash 后才登记，不自动批量修复。
+
+以下仅在独立 mock 栈执行。验收会对新合成版本移除初始登记，随后恢复、核验登记并执行一次已有清理流程；不能在业务库或生产桶运行：
+
+```bash
+python scripts/configure-source-storage.py --enable-inventory --enable-adoption --enable-cleanup
+docker compose --file docker-compose.yaml --file deploy/compose.storage.yaml up --detach --wait --wait-timeout 180
+mkdir -p work
+install -m 600 .env work/source-adoption.env
+python scripts/check-source-adoption.py --env-file work/source-adoption.env --output work/source-adoption.json
+```

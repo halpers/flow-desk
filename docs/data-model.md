@@ -1,5 +1,7 @@
 # 数据模型与一致性设计
 
+M7.12 无新迁移。手工登记复用 Go 自有 source_objects 与 api_idempotency/audit_events：按文档→ACL/团队→版本→对象登记锁序复核资格，原子插入旧副本登记、knowledge.source_adopt 审计和回执。读取 S3 前退出首个检查事务，完成有界大小/SHA256 核验后新事务重查，不保留跨请求锁或私有正文。副本 ID 沿用版本 namespace + 存储指纹/key 的确定性 UUID，唯一约束和当前版本锁防止重复效果；副本使用旧代次，数据库原件代次/内容/定位不变。回执在对象后来 retired 后仍保留，不能通过删除登记或回执撤销认领，见[登记设计](m7-source-adoption.md)。
+
 M7.11 不增加表或迁移。Go 在当前授权事务内按 tenant_id/version_id/store_id 和本页键集合查询 source_objects，将外部列表元数据与登记记录对账；成功页面写入 knowledge.source_inventory 审计，仅保存对象版本、数量和未登记计数。外部请求不持数据库锁，结束后重新锁定版本及权限范围并复核 source_epoch/当前定位。未登记对象不自动补写账本，失败或撤权结果不发布，不修改原件、清理状态或 Python 索引。详见[巡检设计](m7-source-inventory.md)。
 
 M7.10 迁移 `2026110507_metadata_archive.sql` 增加 Go 自有 version_metadata_archives（版本/租户/文档身份、文件名、parser、错误码、片段数、OCR/版面、归档人/时间），并在 document_versions 增加 metadata_archived。归档表复合外键指向原版本及当前租户用户；归档事务先锁文档、ACL/团队、版本，再复核资格、插入详情、精简热行和记录审计/幂等回执。热行约束要求归档后为 purged，且文件名/parser/错误码为空、片段数归零、OCR/版面为默认值；原租户/文档/版本/job/hash/创建时间、source 元数据及清理状态不变。

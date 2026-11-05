@@ -3500,6 +3500,111 @@
         }
       }
     },
+    "/api/v1/documents/{document_id}/versions/{version_id}/source-adoptions": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "AdoptSourceObject | permission=knowledge:manage | auth=required",
+        "operationId": "adoptSourceObject",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "document_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "version_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "Idempotency-Key",
+            "in": "header"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": [
+                "object_ref",
+                "adoption_token",
+                "expected_source_epoch",
+                "confirm"
+              ],
+              "properties": {
+                "adoption_token": {
+                  "type": "string"
+                },
+                "confirm": {
+                  "type": "boolean"
+                },
+                "expected_source_epoch": {
+                  "type": "integer"
+                },
+                "object_ref": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "object_id",
+                    "object_ref",
+                    "version_id",
+                    "source_epoch",
+                    "verified_at"
+                  ],
+                  "properties": {
+                    "object_id": {
+                      "type": "string"
+                    },
+                    "object_ref": {
+                      "type": "string"
+                    },
+                    "source_epoch": {
+                      "type": "integer"
+                    },
+                    "verified_at": {
+                      "type": "string"
+                    },
+                    "version_id": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/documents/{document_id}/versions/{version_id}/source-inventory": {
       "get": {
         "produces": [
@@ -3548,6 +3653,7 @@
                 "data": {
                   "type": "object",
                   "required": [
+                    "adoption_enabled",
                     "version_id",
                     "source_size",
                     "source_epoch",
@@ -3558,6 +3664,9 @@
                     "next_cursor"
                   ],
                   "properties": {
+                    "adoption_enabled": {
+                      "type": "boolean"
+                    },
                     "content_verified": {
                       "type": "boolean"
                     },
@@ -3569,6 +3678,9 @@
                       "items": {
                         "type": "object",
                         "required": [
+                          "adoption_eligible",
+                          "adoption_reason",
+                          "adoption_token",
                           "object_ref",
                           "registered_id",
                           "registered_status",
@@ -3579,6 +3691,15 @@
                           "reconciliation"
                         ],
                         "properties": {
+                          "adoption_eligible": {
+                            "type": "boolean"
+                          },
+                          "adoption_reason": {
+                            "type": "string"
+                          },
+                          "adoption_token": {
+                            "type": "string"
+                          },
                           "key_kind": {
                             "type": "string"
                           },

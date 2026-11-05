@@ -824,7 +824,34 @@ type SendMessageReq struct {
 	Attachments     []string `json:"attachments,optional"`
 }
 
+type SourceAdoptionData struct {
+	ObjectId    string `json:"object_id"`
+	ObjectRef   string `json:"object_ref"`
+	VersionId   string `json:"version_id"`
+	SourceEpoch int64  `json:"source_epoch"`
+	VerifiedAt  string `json:"verified_at"`
+}
+
+type SourceAdoptionReq struct {
+	DocumentId          string `path:"document_id"`
+	VersionId           string `path:"version_id"`
+	ObjectRef           string `json:"object_ref"`
+	AdoptionToken       string `json:"adoption_token"`
+	ExpectedSourceEpoch int64  `json:"expected_source_epoch"`
+	Confirm             bool   `json:"confirm"`
+	IdempotencyKey      string `header:"Idempotency-Key"`
+}
+
+type SourceAdoptionResp struct {
+	Code      string             `json:"code"`
+	RequestId string             `json:"request_id"`
+	Data      SourceAdoptionData `json:"data"`
+}
+
 type SourceInventoryItem struct {
+	AdoptionEligible bool   `json:"adoption_eligible"`
+	AdoptionReason   string `json:"adoption_reason"`
+	AdoptionToken    string `json:"adoption_token"`
 	ObjectRef        string `json:"object_ref"`
 	RegisteredId     string `json:"registered_id"`
 	RegisteredStatus string `json:"registered_status"`
@@ -836,6 +863,7 @@ type SourceInventoryItem struct {
 }
 
 type SourceInventoryPage struct {
+	AdoptionEnabled bool                  `json:"adoption_enabled"`
 	VersionId       string                `json:"version_id"`
 	SourceSize      int64                 `json:"source_size"`
 	SourceEpoch     int64                 `json:"source_epoch"`

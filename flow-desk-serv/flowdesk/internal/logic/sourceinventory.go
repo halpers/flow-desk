@@ -191,8 +191,18 @@ func GetSourceInventory(ctx context.Context, s *svc.ServiceContext, req *types.S
 			byKey[registered[i].ObjectKey] = &registered[i]
 		}
 		unknown := 0
+		result.AdoptionEnabled = s.Config.FileStoreAdoptionEnabled
+		originalVerified := validDatabaseOriginal(current)
 		for _, object := range observed.Items {
 			item := inventoryItem(current, store, object, byKey[object.Key])
+			item.AdoptionReason = sourceAdoptionReason(current, item, result.AdoptionEnabled, originalVerified)
+			item.AdoptionEligible = item.AdoptionReason == ""
+			if item.AdoptionEligible {
+				item.AdoptionToken, err = sealInventoryCursor(s.Config.JwtSecret, sourceAdoptionScope(ctx, current, store), inventoryPosition{After: object.Key, Epoch: current.SourceEpoch, Expires: time.Now().Add(sourceInventoryCursorLifetime).Unix()})
+				if err != nil {
+					return err
+				}
+			}
 			result.Items = append(result.Items, item)
 			if item.RegisteredId == "" {
 				unknown++
