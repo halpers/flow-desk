@@ -300,7 +300,7 @@ docker compose exec -T postgres pg_restore --list < "$FLOWDESK_BACKUP/flowdesk.d
 sha256sum "$FLOWDESK_BACKUP/flowdesk.dump" > "$FLOWDESK_BACKUP/SHA256SUMS"
 ```
 
-`pg_dump` 包含 business/agent/knowledge 和检查点，使用同一数据库快照；它不包含集群角色、环境密钥、证书、镜像或发布记录。应另外加密备份 `.env`、`runtime/releases/`、服务器证书及角色恢复方案，保留匹配的源码 SHA/镜像 digest，将备份复制到独立受控存储并配置保留周期。备份中含业务和认证数据，权限与密钥同级管理。若另有外部原文件存储，也要纳入一致性备份；当前 Compose 没有独立原文件挂载卷。
+`pg_dump` 包含 business/agent/knowledge 和检查点，使用同一数据库快照；它不包含集群角色、环境密钥、证书、镜像或发布记录。应另外加密备份 `.env`、`runtime/releases/`、服务器证书及角色恢复方案，保留匹配的源码 SHA/镜像 digest，将备份复制到独立受控存储并配置保留周期。备份中含业务和认证数据，权限与密钥同级管理。启用 M7.4 S3 后，数据库备份不含已归档 PDF；必须同时备份对象及其存储配置，具体见[原文件存储手册](source-storage.md)。默认 PostgreSQL 模式仍包含全部原文件。
 
 恢复演练必须进入全新数据库，原数据库保持不变。以下在同一个 PostgreSQL 实例使用已有角色/扩展安装；先设置上一步的实际备份目录：
 

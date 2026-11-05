@@ -1,0 +1,11 @@
+{
+  "phase": "M7.4",
+  "model": "mock",
+  "storage": "SeaweedFS 4.52",
+  "passed": 3,
+  "checks": [
+    "archived file fails explicitly during objectstore outage",
+    "new upload keeps original downloadable in PostgreSQL during outage",
+    "same persistent object after restart and automatic archive/index recovery"
+  ]
+}

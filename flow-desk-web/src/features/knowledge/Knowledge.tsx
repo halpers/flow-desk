@@ -67,6 +67,30 @@ function DocumentVersions({
   });
   const uploadKey = useRef(newId());
   const uploadPayload = useRef("");
+  const download = async (versionId: string) => {
+    setBusy(true);
+    setError("");
+    try {
+      const source = await api<Models["OriginalSourceData"]>(
+        `/documents/${document.id}/versions/${versionId}/source`,
+      );
+      const bytes = Uint8Array.from(atob(source.content_base64), (value) =>
+        value.charCodeAt(0),
+      );
+      const url = URL.createObjectURL(
+        new Blob([bytes], { type: "application/octet-stream" }),
+      );
+      const anchor = window.document.createElement("a");
+      anchor.href = url;
+      anchor.download = source.filename;
+      anchor.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (reason) {
+      setError((reason as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
   const change = async (path: string, body: unknown) => {
     setBusy(true);
     setError("");
@@ -94,6 +118,13 @@ function DocumentVersions({
               : "草稿"}
         </Tag>
         <small>修订 {document.version}</small>
+        <Button
+          size="small"
+          disabled={busy}
+          onClick={() => void versions.refetch()}
+        >
+          刷新版本
+        </Button>
       </Space>
       {versions.isError && <Alert type="error" title="版本加载失败" />}
       {versions.data?.items.map((version) => (
@@ -113,6 +144,36 @@ function DocumentVersions({
             {version.source_format === "pdf" &&
               ` · ${ocrOptions.find((option) => option.value === version.ocr_mode)?.label || "仅文本层"}`}
           </span>
+          <Button
+            size="small"
+            disabled={busy}
+            onClick={() => void download(version.id)}
+          >
+            下载原文件
+          </Button>
+          {version.source_format === "pdf" && (
+            <Button
+              size="small"
+              disabled={busy}
+              onClick={async () => {
+                setBusy(true);
+                setError("");
+                try {
+                  await api(
+                    `/documents/${document.id}/versions/${version.id}/${version.source_storage === "s3" ? "restore-source" : "archive"}`,
+                    post({}, newId()),
+                  );
+                  await versions.refetch();
+                } catch (reason) {
+                  setError((reason as Error).message);
+                } finally {
+                  setBusy(false);
+                }
+              }}
+            >
+              {version.source_storage === "s3" ? "恢复至数据库" : "归档原文件"}
+            </Button>
+          )}
           {version.source_format === "pdf" &&
             version.index_status === "ready" && (
               <Button

@@ -207,6 +207,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/documents/{document_id}/versions/{version_id}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** RequestSourceArchive | permission=knowledge:manage | auth=required */
+        post: operations["requestSourceArchive"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/documents/{document_id}/versions/{version_id}/pages": {
         parameters: {
             query?: never;
@@ -216,6 +233,40 @@ export interface paths {
         };
         /** PreviewVersionPages | permission=knowledge:manage | auth=required */
         get: operations["previewVersionPages"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/documents/{document_id}/versions/{version_id}/restore-source": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** RestoreOriginalSource | permission=knowledge:manage | auth=required */
+        post: operations["restoreOriginalSource"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/documents/{document_id}/versions/{version_id}/source": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** DownloadOriginalSource | permission=knowledge:manage | auth=required */
+        get: operations["downloadOriginalSource"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1517,6 +1568,7 @@ export interface operations {
                                 page_count: number;
                                 source_format: string;
                                 source_size: number;
+                                source_storage: string;
                                 text_page_count: number;
                             }[];
                         };
@@ -1568,6 +1620,50 @@ export interface operations {
                             page_count: number;
                             source_format: string;
                             source_size: number;
+                            source_storage: string;
+                            text_page_count: number;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    requestSourceArchive: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                document_id: string;
+                version_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            chunk_count: number;
+                            content_hash: string;
+                            document_id: string;
+                            error_code: string;
+                            filename: string;
+                            id: string;
+                            index_status: string;
+                            ocr_mode: string;
+                            ocr_page_count: number;
+                            page_count: number;
+                            source_format: string;
+                            source_size: number;
+                            source_storage: string;
                             text_page_count: number;
                         };
                         request_id?: string;
@@ -1603,6 +1699,80 @@ export interface operations {
                             }[];
                             parser_version: string;
                             version_id: string;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    restoreOriginalSource: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                document_id: string;
+                version_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            chunk_count: number;
+                            content_hash: string;
+                            document_id: string;
+                            error_code: string;
+                            filename: string;
+                            id: string;
+                            index_status: string;
+                            ocr_mode: string;
+                            ocr_page_count: number;
+                            page_count: number;
+                            source_format: string;
+                            source_size: number;
+                            source_storage: string;
+                            text_page_count: number;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    downloadOriginalSource: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document_id: string;
+                version_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            content_base64: string;
+                            content_hash: string;
+                            filename: string;
+                            source_format: string;
                         };
                         request_id?: string;
                     };
@@ -1826,6 +1996,7 @@ export interface operations {
                             page_count: number;
                             source_format: string;
                             source_size: number;
+                            source_storage: string;
                             text_page_count: number;
                         };
                         request_id?: string;
@@ -3123,6 +3294,7 @@ export interface operations {
                             page_count: number;
                             source_format: string;
                             source_size: number;
+                            source_storage: string;
                             text_page_count: number;
                         };
                         request_id?: string;

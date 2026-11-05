@@ -90,6 +90,13 @@ services:
     environment:
       DATABASE_URL: postgres://fd_business:${BUSINESS_PASSWORD}@postgres:5432/flowdesk?sslmode=disable&search_path=business
       JWT_SECRET: ${JWT_SECRET:?run bootstrap-local}
+      FILE_STORE_PROVIDER: ${FILE_STORE_PROVIDER:-postgres}
+      FILE_STORE_ENDPOINT: ${FILE_STORE_ENDPOINT:-}
+      FILE_STORE_REGION: ${FILE_STORE_REGION:-us-east-1}
+      FILE_STORE_BUCKET: ${FILE_STORE_BUCKET:-}
+      FILE_STORE_ACCESS_KEY: ${FILE_STORE_ACCESS_KEY:-}
+      FILE_STORE_SECRET_KEY: ${FILE_STORE_SECRET_KEY:-}
+      FILE_STORE_ALLOW_HTTP: "${FILE_STORE_ALLOW_HTTP:-false}"
       COOKIE_SECURE: "${COOKIE_SECURE:-false}"
       APP_MODE: ${APP_MODE:-dev}
       OTEL_COLLECTOR_ENDPOINT: ${OTEL_COLLECTOR_ENDPOINT:-}

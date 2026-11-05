@@ -1,5 +1,7 @@
 # Go 业务服务详细设计
 
+M7.4 的原文件适配器位于 internal/client/sources.go，归档/下载/恢复用例由 internal/logic/knowledgesources.go 编排。Go 是唯一存储凭据持有者，Python 和浏览器通过已有/新增授权 API 读取。数据库字节与 S3 定位的切换、代次和外部事务边界见[跨服务数据模型](../../../docs/data-model.md)及[M7.4](../../../docs/m7-object-storage.md)。
+
 框架：go-zero；模块根：`flow-desk-serv/flowdesk/`。Go 默认脚手架已生成，本文业务模块、接口和数据库部分属于待实现规格。
 
 ## 0. 已生成工程与初始化方式

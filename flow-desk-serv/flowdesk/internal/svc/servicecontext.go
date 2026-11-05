@@ -18,6 +18,7 @@ const loginRequestsPerSecond = 2
 const loginBurst = 10
 
 type ServiceContext struct {
+	SourceStore             client.SourceStore
 	TeamsModel              model.TeamsModel
 	TeamMembersModel        model.TeamMembersModel
 	RunTicketResourcesModel model.RunTicketResourcesModel
@@ -57,7 +58,19 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	// SQL parameters include credential hashes; never log expanded statements.
 	sqlx.DisableLog()
 	conn := sqlx.NewSqlConn("postgres", c.DatabaseUrl)
+	var sourceStore client.SourceStore
+	if c.FileStoreProvider == "s3" || c.FileStoreEndpoint != "" {
+		var err error
+		sourceStore, err = client.NewS3SourceStore(client.S3SourceConfig{Endpoint: c.FileStoreEndpoint, Region: c.FileStoreRegion, Bucket: c.FileStoreBucket, AccessKey: c.FileStoreAccessKey, SecretKey: c.FileStoreSecretKey, AllowHTTP: c.FileStoreAllowHTTP})
+		if err != nil {
+			panic("invalid file store configuration")
+		}
+	}
+	if c.FileStoreProvider != "" && c.FileStoreProvider != "postgres" && c.FileStoreProvider != "s3" {
+		panic("invalid file store provider")
+	}
 	return &ServiceContext{
+		SourceStore:             sourceStore,
 		TeamsModel:              model.NewTeamsModel(conn),
 		TeamMembersModel:        model.NewTeamMembersModel(conn),
 		RunTicketResourcesModel: model.NewRunTicketResourcesModel(conn),

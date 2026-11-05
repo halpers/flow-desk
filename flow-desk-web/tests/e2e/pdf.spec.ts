@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import path from "node:path";
+import fs from "node:fs/promises";
 
 test("PDF text preview, physical page citations, rejection and withdrawal", async ({
   page,
@@ -39,6 +40,13 @@ test("PDF text preview, physical page citations, rejection and withdrawal", asyn
     timeout: 30000,
   });
   await expect(document).toContainText("3 页（3 页有文字）");
+  const downloadEvent = page.waitForEvent("download");
+  await document.getByRole("button", { name: "下载原文件" }).click();
+  const download = await downloadEvent;
+  expect(download.suggestedFilename()).toBe("policy.pdf");
+  expect(await fs.readFile((await download.path())!)).toEqual(
+    await fs.readFile(path.join(fixtures, "policy.pdf")),
+  );
   await document.getByRole("button", { name: "预览提取文本" }).click();
   const preview = page.getByRole("dialog", { name: "PDF 提取文本" });
   await expect(preview).toContainText("第 2 页");

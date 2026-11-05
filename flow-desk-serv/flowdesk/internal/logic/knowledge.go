@@ -60,11 +60,11 @@ func versionData(row *model.DocumentVersions) types.VersionData {
 			textPages++
 		}
 	}
-	size := len(row.SourceBytes)
+	size := int(row.SourceSize)
 	if row.SourceFormat != "pdf" {
 		size = len(row.Content)
 	}
-	return types.VersionData{OcrMode: row.OcrMode, OcrPageCount: ocrPageCount(pages), SourceFormat: row.SourceFormat, SourceSize: int64(size), PageCount: int64(len(pages)), TextPageCount: textPages, Id: row.Id, DocumentId: row.DocumentId, Filename: row.Filename, ContentHash: row.ContentHash, IndexStatus: row.IndexStatus, ChunkCount: row.ChunkCount, ErrorCode: row.ErrorCode}
+	return types.VersionData{SourceStorage: row.SourceStorage, OcrMode: row.OcrMode, OcrPageCount: ocrPageCount(pages), SourceFormat: row.SourceFormat, SourceSize: int64(size), PageCount: int64(len(pages)), TextPageCount: textPages, Id: row.Id, DocumentId: row.DocumentId, Filename: row.Filename, ContentHash: row.ContentHash, IndexStatus: row.IndexStatus, ChunkCount: row.ChunkCount, ErrorCode: row.ErrorCode}
 }
 func evidenceData(row *model.RunEvidence) types.EvidenceData {
 	return types.EvidenceData{ExtractionMethod: row.ExtractionMethod, PageNumber: row.PageNumber, Id: row.Id, VersionId: row.VersionId, ChunkId: row.ChunkId, Title: row.Title, Excerpt: row.Excerpt}
@@ -207,6 +207,11 @@ func insertDocumentVersionTx(ctx context.Context, s *svc.ServiceContext, tx sqlx
 	if err := s.OutboxEventsModel.InsertTx(ctx, tx, &model.OutboxEvents{Id: uuid.NewString(), TenantId: actor.TenantId, AggregateId: doc.Id, DispatchId: row.JobId, Topic: "knowledge.index", Payload: payload, Status: "pending"}); err != nil {
 		return types.VersionData{}, err
 	}
+	if file.format == "pdf" && s.Config.FileStoreProvider == "s3" {
+		if err := enqueueSourceArchiveTx(ctx, s, tx, row); err != nil {
+			return types.VersionData{}, err
+		}
+	}
 	return versionData(row), nil
 }
 func UploadDocument(ctx context.Context, s *svc.ServiceContext, req *types.UploadDocumentReq) (types.VersionData, error) {
@@ -287,7 +292,7 @@ func ListDocumentVersions(ctx context.Context, s *svc.ServiceContext, documentID
 	for _, row := range rows {
 		result.Items = append(result.Items, types.VersionData{Id: row.Id, DocumentId: row.DocumentId, Filename: row.Filename,
 			ContentHash: row.ContentHash, IndexStatus: row.IndexStatus, ChunkCount: row.ChunkCount, ErrorCode: row.ErrorCode,
-			OcrMode: row.OcrMode, OcrPageCount: row.OcrPageCount, SourceFormat: row.SourceFormat, SourceSize: row.SourceSize, PageCount: row.PageCount, TextPageCount: row.TextPageCount})
+			SourceStorage: row.SourceStorage, OcrMode: row.OcrMode, OcrPageCount: row.OcrPageCount, SourceFormat: row.SourceFormat, SourceSize: row.SourceSize, PageCount: row.PageCount, TextPageCount: row.TextPageCount})
 	}
 	return result, nil
 }
@@ -367,7 +372,11 @@ func GetIndexSource(ctx context.Context, s *svc.ServiceContext, req *types.Index
 	if err != nil {
 		return result, err
 	}
-	return types.IndexSourceData{OcrMode: v.OcrMode, SourceFormat: v.SourceFormat, SourceBase64: base64.StdEncoding.EncodeToString(v.SourceBytes), TenantId: v.TenantId, KnowledgeBaseId: d.KnowledgeBaseId, DocumentId: d.Id, VersionId: v.Id, Content: v.Content, ContentHash: v.ContentHash}, nil
+	raw, err := readOriginal(ctx, s, v)
+	if err != nil {
+		return result, err
+	}
+	return types.IndexSourceData{OcrMode: v.OcrMode, SourceFormat: v.SourceFormat, SourceBase64: base64.StdEncoding.EncodeToString(raw), TenantId: v.TenantId, KnowledgeBaseId: d.KnowledgeBaseId, DocumentId: d.Id, VersionId: v.Id, Content: v.Content, ContentHash: v.ContentHash}, nil
 }
 func CompleteIndex(ctx context.Context, s *svc.ServiceContext, req *types.IndexCompleteReq) (types.VersionData, error) {
 	var result types.VersionData

@@ -68,6 +68,12 @@ type ApprovalsResp struct {
 	Data      ApprovalPage `json:"data"`
 }
 
+type ArchiveSourceReq struct {
+	DocumentId     string `path:"document_id"`
+	VersionId      string `path:"version_id"`
+	IdempotencyKey string `header:"Idempotency-Key"`
+}
+
 type CancelRunReq struct {
 	RunId           string `path:"run_id"`
 	IdempotencyKey  string `header:"Idempotency-Key"`
@@ -474,6 +480,19 @@ type OrdersResp struct {
 	Data      OrderPage `json:"data"`
 }
 
+type OriginalSourceData struct {
+	Filename      string `json:"filename"`
+	ContentHash   string `json:"content_hash"`
+	ContentBase64 string `json:"content_base64"`
+	SourceFormat  string `json:"source_format"`
+}
+
+type OriginalSourceResp struct {
+	Code      string             `json:"code"`
+	RequestId string             `json:"request_id"`
+	Data      OriginalSourceData `json:"data"`
+}
+
 type PageReq struct {
 	Cursor string `form:"cursor,optional"`
 	Limit  int64  `form:"limit,default=20,range=[1:100]"`
@@ -834,6 +853,7 @@ type UserResp struct {
 }
 
 type VersionData struct {
+	SourceStorage string `json:"source_storage"`
 	OcrMode       string `json:"ocr_mode"`
 	OcrPageCount  int64  `json:"ocr_page_count"`
 	SourceFormat  string `json:"source_format"`

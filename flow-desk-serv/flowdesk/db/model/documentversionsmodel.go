@@ -12,6 +12,8 @@ type (
 	// DocumentVersionsModel is an interface to be customized, add more methods here,
 	// and implement the added methods in customDocumentVersionsModel.
 	DocumentVersionsModel interface {
+		UpdateArchivedSourceTx(context.Context, sqlx.Session, *DocumentVersions, string, string) error
+		UpdateRestoredSourceTx(context.Context, sqlx.Session, *DocumentVersions, []byte) error
 		documentVersionsModel
 		withSession(session sqlx.Session) DocumentVersionsModel
 		InsertTx(context.Context, sqlx.Session, *DocumentVersions) error
@@ -48,6 +50,7 @@ type ActiveKnowledgeVersion struct {
 
 // Listing metadata must not load every original PDF into API memory.
 type DocumentVersionSummary struct {
+	SourceStorage string `db:"source_storage"`
 	OcrMode       string `db:"ocr_mode"`
 	OcrPageCount  int64  `db:"ocr_page_count"`
 	Id            string `db:"id"`
@@ -64,6 +67,16 @@ type DocumentVersionSummary struct {
 }
 
 func (m *customDocumentVersionsModel) InsertTx(ctx context.Context, tx sqlx.Session, row *DocumentVersions) error {
+	if row.SourceStorage == "" {
+		row.SourceStorage = "postgres"
+	}
+	if row.SourceSize == 0 {
+		if row.SourceFormat == "pdf" {
+			row.SourceSize = int64(len(row.SourceBytes))
+		} else {
+			row.SourceSize = int64(len(row.Content))
+		}
+	}
 	if row.OcrMode == "" {
 		row.OcrMode = "off"
 	}
@@ -95,13 +108,20 @@ func (m *customDocumentVersionsModel) UpdateIndexResultTx(ctx context.Context, t
 func (m *customDocumentVersionsModel) ListByDocument(ctx context.Context, tenant, document string) ([]DocumentVersionSummary, error) {
 	rows := []DocumentVersionSummary{}
 	query := fmt.Sprintf(`select id,document_id,filename,content_hash,index_status,chunk_count,error_code,source_format,ocr_mode,
-    case when source_format='pdf' then octet_length(source_bytes) else octet_length(content) end as source_size,
+    source_size,source_storage,
     jsonb_array_length(page_texts) as page_count,
     (select count(*) from jsonb_array_elements(page_texts) p where p->>'text' ~ '[^[:space:]]') as text_page_count,
  (select count(*) from jsonb_array_elements(page_texts) p where p->>'extraction_method'='ocr') as ocr_page_count
     from %s where tenant_id=$1 and document_id=$2 order by created_at,id limit 101`, m.table)
 	err := m.conn.QueryRowsCtx(ctx, &rows, query, tenant, document)
 	return rows, err
+}
+
+func (m *customDocumentVersionsModel) UpdateArchivedSourceTx(ctx context.Context, tx sqlx.Session, row *DocumentVersions, store, key string) error {
+	return requireOne(tx.ExecCtx(ctx, fmt.Sprintf("update %s set source_storage='s3',source_store_id=$4,source_key=$5,source_bytes=''::bytea where tenant_id=$1 and id=$2 and source_epoch=$3 and source_storage='postgres'", m.table), row.TenantId, row.Id, row.SourceEpoch, store, key))
+}
+func (m *customDocumentVersionsModel) UpdateRestoredSourceTx(ctx context.Context, tx sqlx.Session, row *DocumentVersions, raw []byte) error {
+	return requireOne(tx.ExecCtx(ctx, fmt.Sprintf("update %s set source_storage='postgres',source_store_id='',source_key='',source_bytes=$4,source_epoch=source_epoch+1 where tenant_id=$1 and id=$2 and source_epoch=$3 and source_storage='s3'", m.table), row.TenantId, row.Id, row.SourceEpoch, raw))
 }
 func (m *customDocumentVersionsModel) FindOneForShareTx(ctx context.Context, tx sqlx.Session, tenant, id string) (*DocumentVersions, error) {
 	var row DocumentVersions

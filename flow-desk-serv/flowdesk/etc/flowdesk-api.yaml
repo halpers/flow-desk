@@ -21,3 +21,10 @@ InternalToken: ${INTERNAL_TOKEN}
 AgentUrl: ${AGENT_URL}
 AllowedOrigins: ${ALLOWED_ORIGINS}
 CookieSecure: ${COOKIE_SECURE}
+FileStoreProvider: ${FILE_STORE_PROVIDER}
+FileStoreEndpoint: ${FILE_STORE_ENDPOINT}
+FileStoreRegion: ${FILE_STORE_REGION}
+FileStoreBucket: ${FILE_STORE_BUCKET}
+FileStoreAccessKey: ${FILE_STORE_ACCESS_KEY}
+FileStoreSecretKey: ${FILE_STORE_SECRET_KEY}
+FileStoreAllowHTTP: ${FILE_STORE_ALLOW_HTTP}

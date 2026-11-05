@@ -62,6 +62,7 @@ type DocumentReq {
     DocumentId string `path:"document_id"`
 }
 type VersionData {
+    SourceStorage string `json:"source_storage"`
     OcrMode string `json:"ocr_mode"`
     OcrPageCount int64 `json:"ocr_page_count"`
     SourceFormat string `json:"source_format"`
@@ -214,6 +215,22 @@ type VersionPagesResp {
     RequestId string `json:"request_id"`
     Data VersionPagesData `json:"data"`
 }
+type OriginalSourceData {
+    Filename string `json:"filename"`
+    ContentHash string `json:"content_hash"`
+    ContentBase64 string `json:"content_base64"`
+    SourceFormat string `json:"source_format"`
+}
+type OriginalSourceResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data OriginalSourceData `json:"data"`
+}
+type ArchiveSourceReq {
+    DocumentId string `path:"document_id"`
+    VersionId string `path:"version_id"`
+    IdempotencyKey string `header:"Idempotency-Key"`
+}
 
 @server(prefix: /api/v1 middleware: SessionAuth)
 service flowdesk-api {
@@ -238,6 +255,15 @@ service flowdesk-api {
     @doc "PreviewVersionPages | permission=knowledge:manage | auth=required"
     @handler PreviewVersionPages
     get /documents/:document_id/versions/:version_id/pages (VersionPagesReq) returns (VersionPagesResp)
+    @doc "DownloadOriginalSource | permission=knowledge:manage | auth=required"
+    @handler DownloadOriginalSource
+    get /documents/:document_id/versions/:version_id/source (VersionPagesReq) returns (OriginalSourceResp)
+    @doc "RequestSourceArchive | permission=knowledge:manage | auth=required"
+    @handler RequestSourceArchive
+    post /documents/:document_id/versions/:version_id/archive (ArchiveSourceReq) returns (VersionResp)
+    @doc "RestoreOriginalSource | permission=knowledge:manage | auth=required"
+    @handler RestoreOriginalSource
+    post /documents/:document_id/versions/:version_id/restore-source (ArchiveSourceReq) returns (VersionResp)
     @doc "UploadDocumentVersion | permission=knowledge:manage | auth=required"
     @handler UploadDocumentVersion
     post /documents/:document_id/versions (UploadVersionReq) returns (VersionResp)

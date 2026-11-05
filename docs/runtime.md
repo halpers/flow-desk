@@ -65,6 +65,8 @@ pnpm.cmd --dir flow-desk-web test:e2e
 
 ## 当前边界
 
+原文件默认保存在 PostgreSQL。可选本地 S3 沙箱的启动和外部私有 S3 配置见[文件存储部署](../deploy/source-storage.md)，下载与故障恢复设计见[M7.4](m7-object-storage.md)。只在独立 mock 环境运行合成文件验收；不要为执行脚本而修改现有真实模型配置。
+
 阶段状态以 [实施记录](progress.md) 为准。M1–M6.5 已交付身份、持久化任务、知识检索、兼容模型、经批准的工单办理、固定评测，以及语义 RAG、MCP、部署监控和团队权限。当前使用三个固定角色，`users.role` 保存单一角色；M6.4 的团队成员与资源范围已实现，多角色关联表仍未实现。远程单机部署见[服务器手册](../deploy/server.md)。
 
 M7.1 的 PDF 解析器随 Agent 镜像安装，无需额外解析服务或 API key。管理员上传有文本层的 PDF 后先预览文本再激活；错误状态、文件限制和页码规则见 [PDF 说明](m7-knowledge-files.md)。默认 Web 及两种 TLS 代理的请求上限与 Go 均为 4 MiB；自建代理也需保持一致。

@@ -23,6 +23,8 @@
 | [M6.5 业务场景](m6-business-scenarios.md) | 物流建单、接手、办结、图版本兼容与固定场景 |
 | [M7.1 PDF 知识文件](m7-knowledge-files.md) | 文本 PDF 上传、受限解析、持久 manifest、预览与物理页码引用 |
 | [M7.2 任务运营台](m7-run-operations.md) | 授权元数据列表、脱敏执行记录、用量未知标记和受限重试 |
+| [M7.3 扫描 PDF OCR](m7-ocr.md) | 中英文识别、来源、人工审核和有界进程清理 |
+| [M7.4 原文件存储](m7-object-storage.md) | 可选 S3 归档、授权附件下载、事务恢复及存储回退 |
 
 ## 阅读与修改顺序
 

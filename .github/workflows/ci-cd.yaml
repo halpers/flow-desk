@@ -122,6 +122,12 @@ jobs:
         run: |
           docker compose run --rm --no-deps --volume "$PWD/flow-desk-agent/tests:/app/tests:ro" --env FLOWDESK_NATIVE_OCR_TESTS=1 agent python -m pytest -q tests/test_ocr.py -p no:cacheprovider
           python scripts/check-ocr.py --output work/ocr-ci.json
+      - name: Check original-file S3 archival and restore
+        run: |
+          python scripts/configure-source-storage.py
+          docker compose --file docker-compose.yaml --file deploy/compose.storage.yaml config --quiet
+          docker compose --file docker-compose.yaml --file deploy/compose.storage.yaml up --detach --wait --wait-timeout 180
+          python scripts/check-source-storage.py --output work/source-storage-ci.json
       - name: Validate local monitoring and TLS configuration
         run: |
           python scripts/configure-monitoring.py
@@ -131,7 +137,7 @@ jobs:
       - name: Clean up disposable Compose stack
         if: always()
         run: |
-          if [[ -f .env ]]; then docker compose down --volumes --remove-orphans; fi
+          if [[ -f .env ]]; then docker compose --file docker-compose.yaml --file deploy/compose.storage.yaml down --volumes --remove-orphans; fi
 
   publish:
     name: Publish ${{ matrix.service }} to GHCR and Aliyun

@@ -20,6 +20,7 @@
 3. 前端锁文件安装、单元测试和 TypeScript/Vite 构建。
 4. 生成临时随机 `.env`，验证 Compose，构建并启动完整服务，通过 Web 代理检查认证、Cookie 和权限。
 5. 执行固定业务场景验收，验证服务器 HTTP/HTTPS Compose 入口配置、Prometheus 规则和 Collector 配置。
+6. 基础 PostgreSQL 文件兼容/OCR 验收后，启动固定 digest 的私有 SeaweedFS，执行 S3 归档、授权下载、恢复及再次归档验收；只使用本轮随机存储凭据。
 
 测试库是 runner 上的临时 PostgreSQL，测试使用合成数据；模型使用 mock，不需要业务数据库或真实模型密钥。无论成功失败，清理临时 Compose 容器和卷。
 

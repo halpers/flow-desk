@@ -335,3 +335,9 @@ M1 建立每个 API/事件/工具的机器 schema 和合成样例；生成前端
 PDF 两个上传端点增加可选 ocr_mode，缺省 off，仅允许 off/auto/force；非 PDF 只允许 off。模式参与幂等请求摘要并存入不可变版本，内部 source 返回该模式。版本响应增加 ocr_mode/ocr_page_count；分页文本可选 extraction_method，旧文本页可以不包含此字段。新 OCR manifest 必须有 text/ocr/empty 来源、连续物理页号和至少一个非空 OCR 页；原生 OCR 最多 10 页，旧文本 parser 的回调不能声称 OCR。Go 检查模式、parser、来源、页数和文本总量，冻结后的结果只能一致重放。
 
 包含 OCR 页的版本激活必须增加 confirm_ocr=true；缺省 false，未确认返回 OCR_REVIEW_REQUIRED（409）。当前管理员授权、expected_version、审核审计及激活同事务处理。EvidenceData 的可选 extraction_method 由 Go 逐页派生并保存；模型候选不提供此字段，旧证据缺省为空。撤回后的引用沿用 EVIDENCE_REVOKED（409）等既有权限错误。固定识别错误、预算和手动复核流程见[扫描 PDF OCR](m7-ocr.md)。本阶段没有新增 SSE 类型。
+
+## M7.4 原文件接口
+
+版本元数据增加 source_storage（postgres/s3），source_size 始终表示原文件字节数，归档不会改变版本/hash/index_status。GET `/api/v1/documents/:document_id/versions/:version_id/source` 只允许当前租户管理员，返回标准 envelope，data 包含 filename/content_hash/source_format/content_base64；不返回存储定位。响应 Cache-Control: no-store，PDF 最多 2 MiB，TXT/MD 沿用现有限额。浏览器按附件保存；内部索引 source 端点沿用 job 绑定并通过 Go 读取有界原字节，Python 不持有 S3 凭据。
+
+POST 同一前缀的 `/archive` 返回 202，`/restore-source` 返回 200；均要求 Idempotency-Key，body 为 `{}`，返回当前 VersionData。archive 仅 PDF、配置启用 S3，重复投递复用同代次任务；restore-source 校验完整对象并在事务内恢复数据库字节、递增 source_epoch。当前会话/角色、租户和文档绑定在外部读取前后及幂等重放时检查，成功操作有审计。SOURCE_ARCHIVE_DISABLED、SOURCE_CHANGED 为 409；SOURCE_UNAVAILABLE、SOURCE_INTEGRITY_FAILED 为 503，响应不含供应商异常或原始路径。具体恢复边界见[M7.4](m7-object-storage.md)。未新增 SSE 类型。

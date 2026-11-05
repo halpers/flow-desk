@@ -1,0 +1,33 @@
+# Optional local S3 protocol sandbox. No storage port is published.
+services:
+  objectstore:
+    image: chrislusf/seaweedfs:4.52@sha256:57877e32bb90073b37dc109b438ba66e84fd5ed9ced5f5c04f56444ef243ce59
+    restart: unless-stopped
+    stop_grace_period: 30s
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - 'test -n "$$AWS_ACCESS_KEY_ID"; test -n "$$AWS_SECRET_ACCESS_KEY"; exec weed mini -dir=/data -ip=objectstore -ip.bind=0.0.0.0 -webdav=false -admin.ui=false'
+    environment:
+      AWS_ACCESS_KEY_ID: ${FILE_STORE_ACCESS_KEY:-}
+      AWS_SECRET_ACCESS_KEY: ${FILE_STORE_SECRET_KEY:-}
+      S3_BUCKET: ${FILE_STORE_BUCKET:-flowdesk-sources}
+    volumes:
+      - source_data:/data
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://127.0.0.1:9333/cluster/status"]
+      interval: 3s
+      timeout: 2s
+      retries: 30
+      start_period: 15s
+  api:
+    environment:
+      FILE_STORE_PROVIDER: s3
+      FILE_STORE_ENDPOINT: http://objectstore:8333
+      FILE_STORE_REGION: us-east-1
+      FILE_STORE_BUCKET: ${FILE_STORE_BUCKET:-flowdesk-sources}
+      FILE_STORE_ALLOW_HTTP: "true"
+    depends_on:
+      objectstore:
+        condition: service_healthy
+volumes:
+  source_data:

@@ -230,3 +230,9 @@ M1 建立生成器、迁移脚本和模型表清单。迁移按依赖拆为 iden
 ## M7.3 OCR 版本和引用来源
 
 Go 迁移 2026110406_knowledge_ocr.sql 为 document_versions 增加 ocr_mode（默认 off，枚举及非 PDF 约束），为 run_evidence 增加 extraction_method（旧行为默认空）。逐页方法保存于既有 page_texts JSONB，摘要查询只统计 OCR 页数，不加载原文件。确认激活在业务事务中记录 knowledge.ocr_review 审计，绑定版本、当前 actor 和租户；不保存识别置信度或原生 stderr。Python 沿用 knowledge_manifests.page_texts/parser_version 及 knowledge_jobs 的代次/错误持久化，不访问 Go 表。模式随版本不可变，变更需另建版本；不执行 Down 清理审核或引用来源。
+
+## M7.4 原文件定位和归档代次
+
+迁移 2026110501_source_storage.sql 增加 source_storage/size/store_id/key/epoch；历史行按原字节填充 size，旧版 INSERT 的 size 由 BEFORE INSERT 触发器填充。约束确保 PDF 原字节为 1 字节至 2 MiB：postgres 时长度与 size 相同且定位为空；s3 时原字节为空且指纹/键非空。TXT/MD 仍保留原 content。Go 自有 outbox 增加 knowledge.archive，dispatch_id 由版本和 source_epoch 确定。
+
+上传事务同时保存原文件、索引任务及可选归档任务；网络操作在事务外进行。切换定位时先锁版本，再校验并锁 outbox 当前 attempt/有效 lease，CAS 更新同 epoch 的数据库行。恢复只在原对象长度/hash 正确且当前授权有效时写回字节、递增 epoch；旧归档 payload 自动失效。死信再投递保留递增 attempt_count，每 8 次失败进入死信，禁止重置隔离代次。归档和恢复不改内容 hash、提取 manifest、激活指针或引用。无自动对象删除/GC；Down 保留全部原文件定位和审计。

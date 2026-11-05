@@ -18,6 +18,240 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 			[]rest.Middleware{serverCtx.SessionAuth},
 			[]rest.Route{
 				{
+					// GetCitation | permission=conversation:use | auth=required
+					Method:  http.MethodGet,
+					Path:    "/citations/:evidence_id",
+					Handler: GetCitationHandler(serverCtx),
+				},
+				{
+					// ActivateDocument | permission=knowledge:manage | auth=required
+					Method:  http.MethodPost,
+					Path:    "/documents/:document_id/activate",
+					Handler: ActivateDocumentHandler(serverCtx),
+				},
+				{
+					// ListDocumentVersions | permission=knowledge:manage | auth=required
+					Method:  http.MethodGet,
+					Path:    "/documents/:document_id/versions",
+					Handler: ListDocumentVersionsHandler(serverCtx),
+				},
+				{
+					// UploadDocumentVersion | permission=knowledge:manage | auth=required
+					Method:  http.MethodPost,
+					Path:    "/documents/:document_id/versions",
+					Handler: UploadDocumentVersionHandler(serverCtx),
+				},
+				{
+					// RequestSourceArchive | permission=knowledge:manage | auth=required
+					Method:  http.MethodPost,
+					Path:    "/documents/:document_id/versions/:version_id/archive",
+					Handler: RequestSourceArchiveHandler(serverCtx),
+				},
+				{
+					// PreviewVersionPages | permission=knowledge:manage | auth=required
+					Method:  http.MethodGet,
+					Path:    "/documents/:document_id/versions/:version_id/pages",
+					Handler: PreviewVersionPagesHandler(serverCtx),
+				},
+				{
+					// RestoreOriginalSource | permission=knowledge:manage | auth=required
+					Method:  http.MethodPost,
+					Path:    "/documents/:document_id/versions/:version_id/restore-source",
+					Handler: RestoreOriginalSourceHandler(serverCtx),
+				},
+				{
+					// DownloadOriginalSource | permission=knowledge:manage | auth=required
+					Method:  http.MethodGet,
+					Path:    "/documents/:document_id/versions/:version_id/source",
+					Handler: DownloadOriginalSourceHandler(serverCtx),
+				},
+				{
+					// WithdrawDocument | permission=knowledge:manage | auth=required
+					Method:  http.MethodPost,
+					Path:    "/documents/:document_id/withdraw",
+					Handler: WithdrawDocumentHandler(serverCtx),
+				},
+				{
+					// ListKnowledgeBases | permission=conversation:use | auth=required
+					Method:  http.MethodGet,
+					Path:    "/knowledge-bases",
+					Handler: ListKnowledgeBasesHandler(serverCtx),
+				},
+				{
+					// CreateKnowledgeBase | permission=knowledge:manage | auth=required
+					Method:  http.MethodPost,
+					Path:    "/knowledge-bases",
+					Handler: CreateKnowledgeBaseHandler(serverCtx),
+				},
+				{
+					// UpdateKnowledgeAcl | permission=knowledge:manage | auth=required
+					Method:  http.MethodPatch,
+					Path:    "/knowledge-bases/:knowledge_base_id",
+					Handler: UpdateKnowledgeAclHandler(serverCtx),
+				},
+				{
+					// ListDocuments | permission=conversation:use | auth=required
+					Method:  http.MethodGet,
+					Path:    "/knowledge-bases/:knowledge_base_id/documents",
+					Handler: ListDocumentsHandler(serverCtx),
+				},
+				{
+					// UploadDocument | permission=knowledge:manage | auth=required
+					Method:  http.MethodPost,
+					Path:    "/knowledge-bases/:knowledge_base_id/documents",
+					Handler: UploadDocumentHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithPrefix("/api/v1"),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.ServiceAuth},
+			[]rest.Route{
+				{
+					// CompleteIndex | permission=- | auth=service
+					Method:  http.MethodPost,
+					Path:    "/knowledge/versions/:version_id/complete",
+					Handler: CompleteIndexHandler(serverCtx),
+				},
+				{
+					// GetIndexSource | permission=- | auth=service
+					Method:  http.MethodGet,
+					Path:    "/knowledge/versions/:version_id/source",
+					Handler: GetIndexSourceHandler(serverCtx),
+				},
+				{
+					// GetKnowledgeScope | permission=- | auth=run_capability
+					Method:  http.MethodGet,
+					Path:    "/runs/:run_id/knowledge-scope",
+					Handler: GetKnowledgeScopeHandler(serverCtx),
+				},
+				{
+					// ValidateEvidence | permission=- | auth=run_capability
+					Method:  http.MethodPost,
+					Path:    "/runs/:run_id/knowledge/validate",
+					Handler: ValidateEvidenceHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithPrefix("/internal/v1"),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.SessionAuth},
+			[]rest.Route{
+				{
+					// Decide immutable action | permission=conversation:use | auth=required
+					Method:  http.MethodPost,
+					Path:    "/approvals/:approval_id/decision",
+					Handler: DecideApprovalHandler(serverCtx),
+				},
+				{
+					// Tenant audit | permission=audit:read | auth=required
+					Method:  http.MethodGet,
+					Path:    "/audit-events",
+					Handler: ListAuditEventsHandler(serverCtx),
+				},
+				{
+					// List own run approvals | permission=conversation:use | auth=required
+					Method:  http.MethodGet,
+					Path:    "/runs/:run_id/approvals",
+					Handler: ListApprovalsHandler(serverCtx),
+				},
+				{
+					// Cancel own run | permission=conversation:use | auth=required
+					Method:  http.MethodPost,
+					Path:    "/runs/:run_id/cancel",
+					Handler: CancelRunHandler(serverCtx),
+				},
+				{
+					// Supply requested input | permission=conversation:use | auth=required
+					Method:  http.MethodPost,
+					Path:    "/runs/:run_id/inputs",
+					Handler: SubmitInputHandler(serverCtx),
+				},
+				{
+					// List tenant tickets | permission=ticket:read | auth=required
+					Method:  http.MethodGet,
+					Path:    "/tickets",
+					Handler: ListTicketsHandler(serverCtx),
+				},
+				{
+					// Create manual ticket | permission=ticket:create | auth=required
+					Method:  http.MethodPost,
+					Path:    "/tickets",
+					Handler: CreateTicketHandler(serverCtx),
+				},
+				{
+					// Get tenant ticket | permission=ticket:read | auth=required
+					Method:  http.MethodGet,
+					Path:    "/tickets/:ticket_id",
+					Handler: GetTicketHandler(serverCtx),
+				},
+				{
+					// Assign ticket | permission=ticket:manage | auth=required
+					Method:  http.MethodPatch,
+					Path:    "/tickets/:ticket_id/assignment",
+					Handler: AssignTicketHandler(serverCtx),
+				},
+				{
+					// Ticket timeline | permission=ticket:read | auth=required
+					Method:  http.MethodGet,
+					Path:    "/tickets/:ticket_id/events",
+					Handler: ListTicketEventsHandler(serverCtx),
+				},
+				{
+					// Add internal note | permission=ticket:note | auth=required
+					Method:  http.MethodPost,
+					Path:    "/tickets/:ticket_id/notes",
+					Handler: AddTicketNoteHandler(serverCtx),
+				},
+				{
+					// Change ticket status | permission=ticket:manage | auth=required
+					Method:  http.MethodPatch,
+					Path:    "/tickets/:ticket_id/status",
+					Handler: ChangeTicketStatusHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithPrefix("/api/v1"),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.ServiceAuth},
+			[]rest.Route{
+				{
+					// Prepare immutable action | permission=- | auth=run_capability
+					Method:  http.MethodPost,
+					Path:    "/runs/:run_id/actions",
+					Handler: PrepareActionHandler(serverCtx),
+				},
+				{
+					// Execute approved action | permission=- | auth=run_capability
+					Method:  http.MethodPost,
+					Path:    "/runs/:run_id/actions/:action_id/execute",
+					Handler: ExecuteActionHandler(serverCtx),
+				},
+				{
+					// Read action receipt | permission=- | auth=run_capability
+					Method:  http.MethodGet,
+					Path:    "/runs/:run_id/actions/:action_id/receipt",
+					Handler: GetActionReceiptHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithPrefix("/internal/v1"),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.SessionAuth},
+			[]rest.Route{
+				{
 					// Set knowledge resource scope | permission=team:manage | auth=required
 					Method:  http.MethodPatch,
 					Path:    "/knowledge-bases/:knowledge_base_id/team",
@@ -252,221 +486,5 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 			}...,
 		),
 		rest.WithPrefix("/api/v1"),
-	)
-
-	server.AddRoutes(
-		rest.WithMiddlewares(
-			[]rest.Middleware{serverCtx.SessionAuth},
-			[]rest.Route{
-				{
-					// GetCitation | permission=conversation:use | auth=required
-					Method:  http.MethodGet,
-					Path:    "/citations/:evidence_id",
-					Handler: GetCitationHandler(serverCtx),
-				},
-				{
-					// ActivateDocument | permission=knowledge:manage | auth=required
-					Method:  http.MethodPost,
-					Path:    "/documents/:document_id/activate",
-					Handler: ActivateDocumentHandler(serverCtx),
-				},
-				{
-					// ListDocumentVersions | permission=knowledge:manage | auth=required
-					Method:  http.MethodGet,
-					Path:    "/documents/:document_id/versions",
-					Handler: ListDocumentVersionsHandler(serverCtx),
-				},
-				{
-					// UploadDocumentVersion | permission=knowledge:manage | auth=required
-					Method:  http.MethodPost,
-					Path:    "/documents/:document_id/versions",
-					Handler: UploadDocumentVersionHandler(serverCtx),
-				},
-				{
-					// PreviewVersionPages | permission=knowledge:manage | auth=required
-					Method:  http.MethodGet,
-					Path:    "/documents/:document_id/versions/:version_id/pages",
-					Handler: PreviewVersionPagesHandler(serverCtx),
-				},
-				{
-					// WithdrawDocument | permission=knowledge:manage | auth=required
-					Method:  http.MethodPost,
-					Path:    "/documents/:document_id/withdraw",
-					Handler: WithdrawDocumentHandler(serverCtx),
-				},
-				{
-					// ListKnowledgeBases | permission=conversation:use | auth=required
-					Method:  http.MethodGet,
-					Path:    "/knowledge-bases",
-					Handler: ListKnowledgeBasesHandler(serverCtx),
-				},
-				{
-					// CreateKnowledgeBase | permission=knowledge:manage | auth=required
-					Method:  http.MethodPost,
-					Path:    "/knowledge-bases",
-					Handler: CreateKnowledgeBaseHandler(serverCtx),
-				},
-				{
-					// UpdateKnowledgeAcl | permission=knowledge:manage | auth=required
-					Method:  http.MethodPatch,
-					Path:    "/knowledge-bases/:knowledge_base_id",
-					Handler: UpdateKnowledgeAclHandler(serverCtx),
-				},
-				{
-					// ListDocuments | permission=conversation:use | auth=required
-					Method:  http.MethodGet,
-					Path:    "/knowledge-bases/:knowledge_base_id/documents",
-					Handler: ListDocumentsHandler(serverCtx),
-				},
-				{
-					// UploadDocument | permission=knowledge:manage | auth=required
-					Method:  http.MethodPost,
-					Path:    "/knowledge-bases/:knowledge_base_id/documents",
-					Handler: UploadDocumentHandler(serverCtx),
-				},
-			}...,
-		),
-		rest.WithPrefix("/api/v1"),
-	)
-
-	server.AddRoutes(
-		rest.WithMiddlewares(
-			[]rest.Middleware{serverCtx.ServiceAuth},
-			[]rest.Route{
-				{
-					// CompleteIndex | permission=- | auth=service
-					Method:  http.MethodPost,
-					Path:    "/knowledge/versions/:version_id/complete",
-					Handler: CompleteIndexHandler(serverCtx),
-				},
-				{
-					// GetIndexSource | permission=- | auth=service
-					Method:  http.MethodGet,
-					Path:    "/knowledge/versions/:version_id/source",
-					Handler: GetIndexSourceHandler(serverCtx),
-				},
-				{
-					// GetKnowledgeScope | permission=- | auth=run_capability
-					Method:  http.MethodGet,
-					Path:    "/runs/:run_id/knowledge-scope",
-					Handler: GetKnowledgeScopeHandler(serverCtx),
-				},
-				{
-					// ValidateEvidence | permission=- | auth=run_capability
-					Method:  http.MethodPost,
-					Path:    "/runs/:run_id/knowledge/validate",
-					Handler: ValidateEvidenceHandler(serverCtx),
-				},
-			}...,
-		),
-		rest.WithPrefix("/internal/v1"),
-	)
-
-	server.AddRoutes(
-		rest.WithMiddlewares(
-			[]rest.Middleware{serverCtx.SessionAuth},
-			[]rest.Route{
-				{
-					// Decide immutable action | permission=conversation:use | auth=required
-					Method:  http.MethodPost,
-					Path:    "/approvals/:approval_id/decision",
-					Handler: DecideApprovalHandler(serverCtx),
-				},
-				{
-					// Tenant audit | permission=audit:read | auth=required
-					Method:  http.MethodGet,
-					Path:    "/audit-events",
-					Handler: ListAuditEventsHandler(serverCtx),
-				},
-				{
-					// List own run approvals | permission=conversation:use | auth=required
-					Method:  http.MethodGet,
-					Path:    "/runs/:run_id/approvals",
-					Handler: ListApprovalsHandler(serverCtx),
-				},
-				{
-					// Cancel own run | permission=conversation:use | auth=required
-					Method:  http.MethodPost,
-					Path:    "/runs/:run_id/cancel",
-					Handler: CancelRunHandler(serverCtx),
-				},
-				{
-					// Supply requested input | permission=conversation:use | auth=required
-					Method:  http.MethodPost,
-					Path:    "/runs/:run_id/inputs",
-					Handler: SubmitInputHandler(serverCtx),
-				},
-				{
-					// List tenant tickets | permission=ticket:read | auth=required
-					Method:  http.MethodGet,
-					Path:    "/tickets",
-					Handler: ListTicketsHandler(serverCtx),
-				},
-				{
-					// Create manual ticket | permission=ticket:create | auth=required
-					Method:  http.MethodPost,
-					Path:    "/tickets",
-					Handler: CreateTicketHandler(serverCtx),
-				},
-				{
-					// Get tenant ticket | permission=ticket:read | auth=required
-					Method:  http.MethodGet,
-					Path:    "/tickets/:ticket_id",
-					Handler: GetTicketHandler(serverCtx),
-				},
-				{
-					// Assign ticket | permission=ticket:manage | auth=required
-					Method:  http.MethodPatch,
-					Path:    "/tickets/:ticket_id/assignment",
-					Handler: AssignTicketHandler(serverCtx),
-				},
-				{
-					// Ticket timeline | permission=ticket:read | auth=required
-					Method:  http.MethodGet,
-					Path:    "/tickets/:ticket_id/events",
-					Handler: ListTicketEventsHandler(serverCtx),
-				},
-				{
-					// Add internal note | permission=ticket:note | auth=required
-					Method:  http.MethodPost,
-					Path:    "/tickets/:ticket_id/notes",
-					Handler: AddTicketNoteHandler(serverCtx),
-				},
-				{
-					// Change ticket status | permission=ticket:manage | auth=required
-					Method:  http.MethodPatch,
-					Path:    "/tickets/:ticket_id/status",
-					Handler: ChangeTicketStatusHandler(serverCtx),
-				},
-			}...,
-		),
-		rest.WithPrefix("/api/v1"),
-	)
-
-	server.AddRoutes(
-		rest.WithMiddlewares(
-			[]rest.Middleware{serverCtx.ServiceAuth},
-			[]rest.Route{
-				{
-					// Prepare immutable action | permission=- | auth=run_capability
-					Method:  http.MethodPost,
-					Path:    "/runs/:run_id/actions",
-					Handler: PrepareActionHandler(serverCtx),
-				},
-				{
-					// Execute approved action | permission=- | auth=run_capability
-					Method:  http.MethodPost,
-					Path:    "/runs/:run_id/actions/:action_id/execute",
-					Handler: ExecuteActionHandler(serverCtx),
-				},
-				{
-					// Read action receipt | permission=- | auth=run_capability
-					Method:  http.MethodGet,
-					Path:    "/runs/:run_id/actions/:action_id/receipt",
-					Handler: GetActionReceiptHandler(serverCtx),
-				},
-			}...,
-		),
-		rest.WithPrefix("/internal/v1"),
 	)
 }

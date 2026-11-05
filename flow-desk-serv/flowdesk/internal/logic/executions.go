@@ -437,7 +437,9 @@ func DispatchNext(ctx context.Context, s *svc.ServiceContext) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	if event.Topic == "knowledge.index" {
+	if event.Topic == "knowledge.archive" {
+		err = ArchiveOriginalSource(ctx, s, event)
+	} else if event.Topic == "knowledge.index" {
 		err = s.AgentClient.DispatchKnowledge(ctx, event.Payload)
 	} else if event.Topic == "run.cancel" {
 		err = s.AgentClient.Cancel(ctx, event.AggregateId, event.Payload)
@@ -445,6 +447,9 @@ func DispatchNext(ctx context.Context, s *svc.ServiceContext) (bool, error) {
 		err = s.AgentClient.Dispatch(ctx, event.Payload)
 	}
 	if err != nil {
+		if event.Topic == "knowledge.archive" {
+			return true, s.OutboxEventsModel.UpdateRetry(ctx, event.Id, event.AttemptCount, "SOURCE_ARCHIVE_UNAVAILABLE")
+		}
 		return true, s.OutboxEventsModel.UpdateRetry(ctx, event.Id, event.AttemptCount, "AGENT_UNAVAILABLE")
 	}
 	return true, s.OutboxEventsModel.UpdateDelivered(ctx, event.Id, event.AttemptCount)

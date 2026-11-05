@@ -1,0 +1,12 @@
+{
+  "phase": "M7.4",
+  "created_at": "2026-11-05T02:15:51.998018+00:00",
+  "model": "mock",
+  "storage": "S3-compatible",
+  "passed": 3,
+  "checks": [
+    "real S3 archival, immutable upload replay, index ready and exact original download",
+    "admin-only download/restore, document binding and idempotent restore to PostgreSQL",
+    "explicit new archive generation reuses the verified object"
+  ]
+}

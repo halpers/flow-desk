@@ -1449,6 +1449,7 @@
                           "items": {
                             "type": "object",
                             "required": [
+                              "source_storage",
                               "ocr_mode",
                               "ocr_page_count",
                               "source_format",
@@ -1499,6 +1500,9 @@
                               },
                               "source_size": {
                                 "type": "integer"
+                              },
+                              "source_storage": {
+                                "type": "string"
                               },
                               "text_page_count": {
                                 "type": "integer"
@@ -1579,6 +1583,7 @@
                     "data": {
                       "type": "object",
                       "required": [
+                        "source_storage",
                         "ocr_mode",
                         "ocr_page_count",
                         "source_format",
@@ -1629,6 +1634,123 @@
                         },
                         "source_size": {
                           "type": "integer"
+                        },
+                        "source_storage": {
+                          "type": "string"
+                        },
+                        "text_page_count": {
+                          "type": "integer"
+                        }
+                      }
+                    },
+                    "request_id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/documents/{document_id}/versions/{version_id}/archive": {
+      "post": {
+        "summary": "RequestSourceArchive | permission=knowledge:manage | auth=required",
+        "operationId": "requestSourceArchive",
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "version_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "source_storage",
+                        "ocr_mode",
+                        "ocr_page_count",
+                        "source_format",
+                        "source_size",
+                        "page_count",
+                        "text_page_count",
+                        "id",
+                        "document_id",
+                        "filename",
+                        "content_hash",
+                        "index_status",
+                        "chunk_count",
+                        "error_code"
+                      ],
+                      "properties": {
+                        "chunk_count": {
+                          "type": "integer"
+                        },
+                        "content_hash": {
+                          "type": "string"
+                        },
+                        "document_id": {
+                          "type": "string"
+                        },
+                        "error_code": {
+                          "type": "string"
+                        },
+                        "filename": {
+                          "type": "string"
+                        },
+                        "id": {
+                          "type": "string"
+                        },
+                        "index_status": {
+                          "type": "string"
+                        },
+                        "ocr_mode": {
+                          "type": "string"
+                        },
+                        "ocr_page_count": {
+                          "type": "integer"
+                        },
+                        "page_count": {
+                          "type": "integer"
+                        },
+                        "source_format": {
+                          "type": "string"
+                        },
+                        "source_size": {
+                          "type": "integer"
+                        },
+                        "source_storage": {
+                          "type": "string"
                         },
                         "text_page_count": {
                           "type": "integer"
@@ -1712,6 +1834,187 @@
                           "type": "string"
                         },
                         "version_id": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "request_id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/documents/{document_id}/versions/{version_id}/restore-source": {
+      "post": {
+        "summary": "RestoreOriginalSource | permission=knowledge:manage | auth=required",
+        "operationId": "restoreOriginalSource",
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "version_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "source_storage",
+                        "ocr_mode",
+                        "ocr_page_count",
+                        "source_format",
+                        "source_size",
+                        "page_count",
+                        "text_page_count",
+                        "id",
+                        "document_id",
+                        "filename",
+                        "content_hash",
+                        "index_status",
+                        "chunk_count",
+                        "error_code"
+                      ],
+                      "properties": {
+                        "chunk_count": {
+                          "type": "integer"
+                        },
+                        "content_hash": {
+                          "type": "string"
+                        },
+                        "document_id": {
+                          "type": "string"
+                        },
+                        "error_code": {
+                          "type": "string"
+                        },
+                        "filename": {
+                          "type": "string"
+                        },
+                        "id": {
+                          "type": "string"
+                        },
+                        "index_status": {
+                          "type": "string"
+                        },
+                        "ocr_mode": {
+                          "type": "string"
+                        },
+                        "ocr_page_count": {
+                          "type": "integer"
+                        },
+                        "page_count": {
+                          "type": "integer"
+                        },
+                        "source_format": {
+                          "type": "string"
+                        },
+                        "source_size": {
+                          "type": "integer"
+                        },
+                        "source_storage": {
+                          "type": "string"
+                        },
+                        "text_page_count": {
+                          "type": "integer"
+                        }
+                      }
+                    },
+                    "request_id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/documents/{document_id}/versions/{version_id}/source": {
+      "get": {
+        "summary": "DownloadOriginalSource | permission=knowledge:manage | auth=required",
+        "operationId": "downloadOriginalSource",
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "version_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "filename",
+                        "content_hash",
+                        "content_base64",
+                        "source_format"
+                      ],
+                      "properties": {
+                        "content_base64": {
+                          "type": "string"
+                        },
+                        "content_hash": {
+                          "type": "string"
+                        },
+                        "filename": {
+                          "type": "string"
+                        },
+                        "source_format": {
                           "type": "string"
                         }
                       }
@@ -2185,6 +2488,7 @@
                     "data": {
                       "type": "object",
                       "required": [
+                        "source_storage",
                         "ocr_mode",
                         "ocr_page_count",
                         "source_format",
@@ -2235,6 +2539,9 @@
                         },
                         "source_size": {
                           "type": "integer"
+                        },
+                        "source_storage": {
+                          "type": "string"
                         },
                         "text_page_count": {
                           "type": "integer"
@@ -5617,6 +5924,7 @@
                     "data": {
                       "type": "object",
                       "required": [
+                        "source_storage",
                         "ocr_mode",
                         "ocr_page_count",
                         "source_format",
@@ -5667,6 +5975,9 @@
                         },
                         "source_size": {
                           "type": "integer"
+                        },
+                        "source_storage": {
+                          "type": "string"
                         },
                         "text_page_count": {
                           "type": "integer"
