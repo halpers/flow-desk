@@ -1,0 +1,19 @@
+{
+  "stage": "M7.7",
+  "environment": "disposable local mock",
+  "created_at": "2026-11-05T05:56:54.669922+00:00",
+  "checks": [
+    {
+      "name": "retention policy, activation and stale-preview protection",
+      "passed": true
+    },
+    {
+      "name": "durable cleanup, immutable metadata, index tombstone and idempotent replay",
+      "passed": true
+    },
+    {
+      "name": "operator denial on preview and cleanup replay",
+      "passed": true
+    }
+  ]
+}

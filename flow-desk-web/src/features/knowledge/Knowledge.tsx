@@ -26,6 +26,16 @@ const roleOptions = [
   { value: "admin", label: "管理员" },
 ];
 const allRoles = roleOptions.map((item) => item.value);
+const retentionReasons: Record<string, string> = {
+  active: "当前激活版本",
+  referenced: "已被任务引用",
+  recent: "最近版本保留",
+  too_young: "未满最短保留期",
+  archive_history: "存在归档历史，原件受保护",
+  index_busy: "索引或投递尚未完成",
+  cleanup_pending: "清理中，可稍后刷新",
+  purged: "内容已清理，元数据保留",
+};
 const ocrOptions = [
   { value: "off", label: "仅文本层" },
   { value: "auto", label: "自动识别无文字页" },
@@ -53,6 +63,12 @@ function DocumentVersions({
 }) {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [retention, setRetention] = useState<Models["RetentionPlan"] | null>(
+    null,
+  );
+  const [cleanup, setCleanup] = useState<Models["RetentionItem"] | null>(null);
+  const [cleanupConfirmed, setCleanupConfirmed] = useState(false);
+  const cleanupKeys = useRef(new Map<string, string>());
   const [ocrMode, setOcrMode] = useState("off");
   const [pdfLayout, setPdfLayout] = useState("plain");
   const [review, setReview] = useState<{
@@ -69,7 +85,11 @@ function DocumentVersions({
     queryFn: () =>
       api<Models["VersionPage"]>(`/documents/${document.id}/versions`),
     refetchInterval: (query) =>
-      query.state.data?.items.some((item) => item.index_status === "pending")
+      query.state.data?.items.some(
+        (item) =>
+          item.index_status === "pending" ||
+          item.cleanup_state === "cleanup_pending",
+      )
         ? 2000
         : false,
   });
@@ -133,17 +153,35 @@ function DocumentVersions({
         >
           刷新版本
         </Button>
+        <Button
+          size="small"
+          disabled={busy}
+          onClick={async () => {
+            setError("");
+            try {
+              setRetention(await api(`/documents/${document.id}/retention`));
+            } catch (reason) {
+              setError((reason as Error).message);
+            }
+          }}
+        >
+          版本保留与清理
+        </Button>
       </Space>
       {versions.isError && <Alert type="error" title="版本加载失败" />}
       {versions.data?.items.map((version) => (
         <div className="knowledge-version" key={version.id}>
           <span>
             {version.filename} · {version.id.slice(0, 8)} ·{" "}
-            {version.index_status === "ready"
-              ? `${version.chunk_count} 个片段`
-              : version.index_status === "pending"
-                ? "正在索引"
-                : indexErrors[version.error_code] || "索引失败"}
+            {version.cleanup_state === "purged"
+              ? "内容已清理"
+              : version.cleanup_state === "cleanup_pending"
+                ? "正在清理"
+                : version.index_status === "ready"
+                  ? `${version.chunk_count} 个片段`
+                  : version.index_status === "pending"
+                    ? "正在索引"
+                    : indexErrors[version.error_code] || "索引失败"}
             {version.source_format === "pdf" &&
               version.index_status === "ready" &&
               ` · ${version.page_count} 页（${version.text_page_count} 页有文字）`}
@@ -156,35 +194,39 @@ function DocumentVersions({
           </span>
           <Button
             size="small"
-            disabled={busy}
+            disabled={busy || version.cleanup_state !== "retained"}
             onClick={() => void download(version.id)}
           >
             下载原文件
           </Button>
-          {version.source_format === "pdf" && (
-            <Button
-              size="small"
-              disabled={busy}
-              onClick={async () => {
-                setBusy(true);
-                setError("");
-                try {
-                  await api(
-                    `/documents/${document.id}/versions/${version.id}/${version.source_storage === "s3" ? "restore-source" : "archive"}`,
-                    post({}, newId()),
-                  );
-                  await versions.refetch();
-                } catch (reason) {
-                  setError((reason as Error).message);
-                } finally {
-                  setBusy(false);
-                }
-              }}
-            >
-              {version.source_storage === "s3" ? "恢复至数据库" : "归档原文件"}
-            </Button>
-          )}
           {version.source_format === "pdf" &&
+            version.cleanup_state === "retained" && (
+              <Button
+                size="small"
+                disabled={busy}
+                onClick={async () => {
+                  setBusy(true);
+                  setError("");
+                  try {
+                    await api(
+                      `/documents/${document.id}/versions/${version.id}/${version.source_storage === "s3" ? "restore-source" : "archive"}`,
+                      post({}, newId()),
+                    );
+                    await versions.refetch();
+                  } catch (reason) {
+                    setError((reason as Error).message);
+                  } finally {
+                    setBusy(false);
+                  }
+                }}
+              >
+                {version.source_storage === "s3"
+                  ? "恢复至数据库"
+                  : "归档原文件"}
+              </Button>
+            )}
+          {version.source_format === "pdf" &&
+            version.cleanup_state === "retained" &&
             version.index_status === "ready" && (
               <Button
                 size="small"
@@ -209,6 +251,7 @@ function DocumentVersions({
             loading={busy}
             disabled={
               version.index_status !== "ready" ||
+              version.cleanup_state !== "retained" ||
               document.active_version_id === version.id
             }
             onClick={() => {
@@ -305,6 +348,113 @@ function DocumentVersions({
         </Button>
       </Space>
       {error && <Alert title={error} type="error" />}
+      <Drawer
+        title="版本保留与清理"
+        open={retention !== null}
+        onClose={() => setRetention(null)}
+        size="large"
+      >
+        <p>
+          保留最近 {retention?.keep_latest} 个版本，至少保存{" "}
+          {retention?.minimum_age_days}{" "}
+          天。激活、引用、索引中及归档历史版本受保护。清理不删除引用和审计，也不会删除
+          S3 对象。
+        </p>
+        <Button
+          disabled={busy}
+          onClick={async () => {
+            try {
+              setRetention(await api(`/documents/${document.id}/retention`));
+            } catch (reason) {
+              setError((reason as Error).message);
+            }
+          }}
+        >
+          刷新清理预览
+        </Button>
+        {retention?.items.map((item) => (
+          <section key={item.version_id} className="retention-item">
+            <strong>{item.filename}</strong>
+            <p>
+              {item.version_id.slice(0, 8)} ·{" "}
+              {new Date(item.created_at).toLocaleString()} · {item.source_size}{" "}
+              字节
+            </p>
+            <p>
+              {item.reasons.length
+                ? item.reasons
+                    .map((reason) => retentionReasons[reason] || reason)
+                    .join("、")
+                : "可清理"}
+            </p>
+            <Button
+              danger
+              disabled={busy || !item.eligible}
+              onClick={() => {
+                setCleanup(item);
+                setCleanupConfirmed(false);
+              }}
+            >
+              清理此版本
+            </Button>
+          </section>
+        ))}
+        {error && <Alert title={error} type="error" />}
+      </Drawer>
+      <Modal
+        title="确认清理知识版本"
+        open={cleanup !== null}
+        confirmLoading={busy}
+        okText="确认不可撤销清理"
+        okButtonProps={{ danger: true, disabled: !cleanupConfirmed }}
+        onCancel={() => {
+          if (!busy) setCleanup(null);
+        }}
+        onOk={async () => {
+          if (!cleanup || !retention || !cleanupConfirmed) return;
+          setBusy(true);
+          setError("");
+          const fingerprint = `${cleanup.version_id}:${retention.document_version}`;
+          let key = cleanupKeys.current.get(fingerprint);
+          if (!key) {
+            key = newId();
+            cleanupKeys.current.set(fingerprint, key);
+          }
+          try {
+            await api(
+              `/documents/${document.id}/versions/${cleanup.version_id}/cleanup`,
+              post(
+                {
+                  confirm: true,
+                  expected_document_version: retention.document_version,
+                },
+                key,
+              ),
+            );
+            setCleanup(null);
+            await versions.refetch();
+            setRetention(await api(`/documents/${document.id}/retention`));
+          } catch (reason) {
+            setError((reason as Error).message);
+          } finally {
+            setBusy(false);
+          }
+        }}
+      >
+        <p>
+          {cleanup?.filename} · {cleanup?.version_id}
+        </p>
+        <p>
+          将删除数据库原文与检索索引；版本元数据保留。清理后无法重新激活或下载，恢复需要备份。
+        </p>
+        <Checkbox
+          checked={cleanupConfirmed}
+          onChange={(event) => setCleanupConfirmed(event.target.checked)}
+        >
+          我已确认备份与清理范围
+        </Checkbox>
+        {error && <Alert title={error} type="error" />}
+      </Modal>
       <Modal
         title="PDF 提取文本"
         open={preview !== null}

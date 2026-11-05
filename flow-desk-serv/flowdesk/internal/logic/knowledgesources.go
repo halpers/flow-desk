@@ -22,6 +22,9 @@ func sourceIntegrity() error {
 	return failure(503, "SOURCE_INTEGRITY_FAILED", "原文件完整性校验失败，请联系管理员恢复备份")
 }
 func readOriginal(ctx context.Context, s *svc.ServiceContext, row *model.DocumentVersions) ([]byte, error) {
+	if err := requireRetained(row); err != nil {
+		return nil, err
+	}
 	raw := row.SourceBytes
 	if row.SourceFormat != "pdf" {
 		raw = []byte(row.Content)
@@ -102,6 +105,9 @@ func DownloadOriginalSource(ctx context.Context, s *svc.ServiceContext, req *typ
 		if current.ContentHash != row.ContentHash {
 			return sourceIntegrity()
 		}
+		if err = requireRetained(current); err != nil {
+			return err
+		}
 		return s.AuditEventsModel.InsertTx(ctx, tx, &model.AuditEvents{Id: orderedID(), TenantId: row.TenantId, ActorUserId: Current(ctx).User.Id, Operation: "knowledge.source_download", ObjectType: "document_version", ObjectId: row.Id, Source: "manual", Summary: "Original file downloaded after authorization and integrity checks"})
 	})
 	if err != nil {
@@ -116,6 +122,9 @@ type sourceArchivePayload struct {
 }
 
 func enqueueSourceArchiveTx(ctx context.Context, s *svc.ServiceContext, tx sqlx.Session, row *model.DocumentVersions) error {
+	if err := requireRetained(row); err != nil {
+		return err
+	}
 	dispatch := uuid.NewSHA1(uuid.MustParse(row.Id), []byte(fmt.Sprintf("knowledge.archive:%d", row.SourceEpoch))).String()
 	return s.OutboxEventsModel.UpsertArchiveTx(ctx, tx, &model.OutboxEvents{Id: uuid.NewString(), TenantId: row.TenantId, AggregateId: row.DocumentId, DispatchId: dispatch, Payload: marshal(sourceArchivePayload{row.Id, row.SourceEpoch})})
 }

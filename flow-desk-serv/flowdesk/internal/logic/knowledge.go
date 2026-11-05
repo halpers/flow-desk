@@ -61,10 +61,10 @@ func versionData(row *model.DocumentVersions) types.VersionData {
 		}
 	}
 	size := int(row.SourceSize)
-	if row.SourceFormat != "pdf" {
+	if row.SourceFormat != "pdf" && row.CleanupState != versionPurged {
 		size = len(row.Content)
 	}
-	return types.VersionData{PdfLayout: row.PdfLayout, SourceStorage: row.SourceStorage, OcrMode: row.OcrMode, OcrPageCount: ocrPageCount(pages), SourceFormat: row.SourceFormat, SourceSize: int64(size), PageCount: int64(len(pages)), TextPageCount: textPages, Id: row.Id, DocumentId: row.DocumentId, Filename: row.Filename, ContentHash: row.ContentHash, IndexStatus: row.IndexStatus, ChunkCount: row.ChunkCount, ErrorCode: row.ErrorCode}
+	return types.VersionData{CleanupState: row.CleanupState, PdfLayout: row.PdfLayout, SourceStorage: row.SourceStorage, OcrMode: row.OcrMode, OcrPageCount: ocrPageCount(pages), SourceFormat: row.SourceFormat, SourceSize: int64(size), PageCount: int64(len(pages)), TextPageCount: textPages, Id: row.Id, DocumentId: row.DocumentId, Filename: row.Filename, ContentHash: row.ContentHash, IndexStatus: row.IndexStatus, ChunkCount: row.ChunkCount, ErrorCode: row.ErrorCode}
 }
 func evidenceData(row *model.RunEvidence) types.EvidenceData {
 	return types.EvidenceData{ExtractionMethod: row.ExtractionMethod, PageNumber: row.PageNumber, Id: row.Id, VersionId: row.VersionId, ChunkId: row.ChunkId, Title: row.Title, Excerpt: row.Excerpt}
@@ -357,7 +357,7 @@ func ListDocumentVersions(ctx context.Context, s *svc.ServiceContext, documentID
 			return err
 		}
 		for _, row := range rows {
-			result.Items = append(result.Items, types.VersionData{Id: row.Id, DocumentId: row.DocumentId, Filename: row.Filename,
+			result.Items = append(result.Items, types.VersionData{CleanupState: row.CleanupState, Id: row.Id, DocumentId: row.DocumentId, Filename: row.Filename,
 				ContentHash: row.ContentHash, IndexStatus: row.IndexStatus, ChunkCount: row.ChunkCount, ErrorCode: row.ErrorCode,
 				PdfLayout: row.PdfLayout, SourceStorage: row.SourceStorage, OcrMode: row.OcrMode, OcrPageCount: row.OcrPageCount, SourceFormat: row.SourceFormat, SourceSize: row.SourceSize, PageCount: row.PageCount, TextPageCount: row.TextPageCount})
 		}
@@ -393,6 +393,9 @@ func changeDocument(ctx context.Context, s *svc.ServiceContext, id, versionID st
 			}
 			if v.DocumentId != id {
 				return errMissing
+			}
+			if err = requireRetained(v); err != nil {
+				return err
 			}
 			if v.IndexStatus != "ready" {
 				return failure(409, "INDEX_NOT_READY", "索引尚未就绪")
@@ -469,6 +472,9 @@ func CompleteIndex(ctx context.Context, s *svc.ServiceContext, req *types.IndexC
 		}
 		v, err := s.DocumentVersionsModel.FindOneByJobIdForUpdateTx(ctx, tx, req.JobId)
 		if err != nil {
+			return err
+		}
+		if err = requireRetained(v); err != nil {
 			return err
 		}
 		pending := v.IndexStatus == "pending"

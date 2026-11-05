@@ -276,6 +276,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/documents/{document_id}/retention": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** GetRetentionPlan | permission=knowledge:manage | auth=required */
+        get: operations["getRetentionPlan"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/documents/{document_id}/versions": {
         parameters: {
             query?: never;
@@ -305,6 +322,23 @@ export interface paths {
         put?: never;
         /** RequestSourceArchive | permission=knowledge:manage | auth=required */
         post: operations["requestSourceArchive"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/documents/{document_id}/versions/{version_id}/cleanup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** CleanupDocumentVersion | permission=knowledge:manage | auth=required */
+        post: operations["cleanupDocumentVersion"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1909,6 +1943,45 @@ export interface operations {
             };
         };
     };
+    getRetentionPlan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            document_id: string;
+                            document_version: number;
+                            items: {
+                                cleanup_state: string;
+                                created_at: string;
+                                eligible: boolean;
+                                filename: string;
+                                reasons: string[];
+                                source_size: number;
+                                version_id: string;
+                            }[];
+                            keep_latest: number;
+                            minimum_age_days: number;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
     listDocumentVersions: {
         parameters: {
             query?: never;
@@ -1930,6 +2003,7 @@ export interface operations {
                         data?: {
                             items: {
                                 chunk_count: number;
+                                cleanup_state: string;
                                 content_hash: string;
                                 document_id: string;
                                 error_code: string;
@@ -1984,6 +2058,7 @@ export interface operations {
                         code?: string;
                         data?: {
                             chunk_count: number;
+                            cleanup_state: string;
                             content_hash: string;
                             document_id: string;
                             error_code: string;
@@ -2028,6 +2103,59 @@ export interface operations {
                         code?: string;
                         data?: {
                             chunk_count: number;
+                            cleanup_state: string;
+                            content_hash: string;
+                            document_id: string;
+                            error_code: string;
+                            filename: string;
+                            id: string;
+                            index_status: string;
+                            ocr_mode: string;
+                            ocr_page_count: number;
+                            page_count: number;
+                            pdf_layout: string;
+                            source_format: string;
+                            source_size: number;
+                            source_storage: string;
+                            text_page_count: number;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    cleanupDocumentVersion: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                document_id: string;
+                version_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    confirm: boolean;
+                    expected_document_version: number;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            chunk_count: number;
+                            cleanup_state: string;
                             content_hash: string;
                             document_id: string;
                             error_code: string;
@@ -2106,6 +2234,7 @@ export interface operations {
                         code?: string;
                         data?: {
                             chunk_count: number;
+                            cleanup_state: string;
                             content_hash: string;
                             document_id: string;
                             error_code: string;
@@ -2364,6 +2493,7 @@ export interface operations {
                         code?: string;
                         data?: {
                             chunk_count: number;
+                            cleanup_state: string;
                             content_hash: string;
                             document_id: string;
                             error_code: string;
@@ -3663,6 +3793,7 @@ export interface operations {
                         code?: string;
                         data?: {
                             chunk_count: number;
+                            cleanup_state: string;
                             content_hash: string;
                             document_id: string;
                             error_code: string;

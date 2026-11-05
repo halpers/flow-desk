@@ -187,4 +187,6 @@ YAML 的环境插值需显式启用并验证 go-zero 配置加载选项；文档
 代码实现与验收顺序遵循 [质量与交付计划](../../../docs/quality-and-roadmap.md)。
 ## M7.5 PDF 阅读方式与审核
 
+后续 M7.7 清理流程见[版本保留与清理](../../../docs/m7-retention.md)：文档排他锁串行化激活/上传/清理，事务内复核当前授权与保护条件，原子写入 cleanup_pending、审计及 knowledge.cleanup outbox。Agent 调用在事务外；索引删除确认且投递租约有效后，清除数据库原文并置 purged。失败持续退避重试，间隔上限 30 秒。归档历史版本不可清理。
+
 Go 保存不可变 pdf_layout，验证文件/OCR 组合、上传幂等及索引 parser/来源绑定，不在业务服务中解析 PDF。只有当前租户管理员显式提交 confirm_layout 后才可激活非 plain 版本，knowledge.layout_review 与文档更新同事务。预览与物理页码证据、撤回、S3 归档沿用现有授权边界。迁移、回调和旧请求兼容见[M7.5](../../../docs/m7-pdf-layout.md)。

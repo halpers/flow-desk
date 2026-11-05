@@ -10,6 +10,7 @@ import re
 from uuid import UUID, uuid4, uuid5
 
 from flowdesk_agent.embeddings import configured_embedder, vector_literal
+from flowdesk_agent.knowledge_cleanup import lock_version, tombstone
 from flowdesk_agent.pdf import PDFError, PDFManifest, extract_pdf
 from flowdesk_agent.semantic_index import SemanticIndex
 from flowdesk_agent.tools.go_client import ToolError
@@ -48,7 +49,13 @@ class KnowledgeIndex:
         self.embedder = embedder
 
     async def accept(self, job, version):
-        async with self.pool.connection() as conn:
+        async with self.pool.connection() as conn, conn.transaction():
+            await lock_version(conn, version)
+            retired = await tombstone(conn, version)
+            if retired:
+                if str(retired["job_id"]) != str(job):
+                    raise ToolError("INDEX_COMMAND_CONFLICT")
+                return
             await conn.execute(
                 "INSERT INTO knowledge_jobs(job_id,version_id) VALUES(%s,%s) "
                 "ON CONFLICT(job_id) DO NOTHING",
@@ -153,6 +160,9 @@ class KnowledgeIndex:
         async with self.pool.connection() as conn, conn.transaction():
             # The command row is the transaction fence. An expired owner cannot overwrite
             # a successor's manifest or acknowledge its delivery.
+            await lock_version(conn, job["version_id"])
+            if await tombstone(conn, job["version_id"]):
+                return
             owned = await (
                 await conn.execute(
                     "SELECT attempts FROM knowledge_jobs WHERE job_id=%s AND status='working' "

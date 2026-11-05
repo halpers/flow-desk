@@ -18,6 +18,57 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 			[]rest.Middleware{serverCtx.SessionAuth},
 			[]rest.Route{
 				{
+					// Set knowledge resource scope | permission=team:manage | auth=required
+					Method:  http.MethodPatch,
+					Path:    "/knowledge-bases/:knowledge_base_id/team",
+					Handler: SetKnowledgeTeamHandler(serverCtx),
+				},
+				{
+					// Tenant member directory | permission=team:manage | auth=required
+					Method:  http.MethodGet,
+					Path:    "/team-users",
+					Handler: ListTeamUsersHandler(serverCtx),
+				},
+				{
+					// List accessible teams | permission=authenticated | auth=required
+					Method:  http.MethodGet,
+					Path:    "/teams",
+					Handler: ListTeamsHandler(serverCtx),
+				},
+				{
+					// Create team | permission=team:manage | auth=required
+					Method:  http.MethodPost,
+					Path:    "/teams",
+					Handler: CreateTeamHandler(serverCtx),
+				},
+				{
+					// Team members | permission=team:manage | auth=required
+					Method:  http.MethodGet,
+					Path:    "/teams/:team_id/members",
+					Handler: ListTeamMembersHandler(serverCtx),
+				},
+				{
+					// Update membership | permission=team:manage | auth=required
+					Method:  http.MethodPut,
+					Path:    "/teams/:team_id/members/:user_id",
+					Handler: UpdateTeamMembershipHandler(serverCtx),
+				},
+				{
+					// Set ticket resource scope | permission=team:manage | auth=required
+					Method:  http.MethodPatch,
+					Path:    "/tickets/:ticket_id/team",
+					Handler: SetTicketTeamHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithPrefix("/api/v1"),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.SessionAuth},
+			[]rest.Route{
+				{
 					// Tenant roles and permission catalog | permission=account:manage or role:manage | auth=required
 					Method:  http.MethodGet,
 					Path:    "/admin/roles",
@@ -271,6 +322,12 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 					Handler: ActivateDocumentHandler(serverCtx),
 				},
 				{
+					// GetRetentionPlan | permission=knowledge:manage | auth=required
+					Method:  http.MethodGet,
+					Path:    "/documents/:document_id/retention",
+					Handler: GetRetentionPlanHandler(serverCtx),
+				},
+				{
 					// ListDocumentVersions | permission=knowledge:manage | auth=required
 					Method:  http.MethodGet,
 					Path:    "/documents/:document_id/versions",
@@ -287,6 +344,12 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 					Method:  http.MethodPost,
 					Path:    "/documents/:document_id/versions/:version_id/archive",
 					Handler: RequestSourceArchiveHandler(serverCtx),
+				},
+				{
+					// CleanupDocumentVersion | permission=knowledge:manage | auth=required
+					Method:  http.MethodPost,
+					Path:    "/documents/:document_id/versions/:version_id/cleanup",
+					Handler: CleanupDocumentVersionHandler(serverCtx),
 				},
 				{
 					// PreviewVersionPages | permission=knowledge:manage | auth=required
@@ -486,56 +549,5 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 			}...,
 		),
 		rest.WithPrefix("/internal/v1"),
-	)
-
-	server.AddRoutes(
-		rest.WithMiddlewares(
-			[]rest.Middleware{serverCtx.SessionAuth},
-			[]rest.Route{
-				{
-					// Set knowledge resource scope | permission=team:manage | auth=required
-					Method:  http.MethodPatch,
-					Path:    "/knowledge-bases/:knowledge_base_id/team",
-					Handler: SetKnowledgeTeamHandler(serverCtx),
-				},
-				{
-					// Tenant member directory | permission=team:manage | auth=required
-					Method:  http.MethodGet,
-					Path:    "/team-users",
-					Handler: ListTeamUsersHandler(serverCtx),
-				},
-				{
-					// List accessible teams | permission=authenticated | auth=required
-					Method:  http.MethodGet,
-					Path:    "/teams",
-					Handler: ListTeamsHandler(serverCtx),
-				},
-				{
-					// Create team | permission=team:manage | auth=required
-					Method:  http.MethodPost,
-					Path:    "/teams",
-					Handler: CreateTeamHandler(serverCtx),
-				},
-				{
-					// Team members | permission=team:manage | auth=required
-					Method:  http.MethodGet,
-					Path:    "/teams/:team_id/members",
-					Handler: ListTeamMembersHandler(serverCtx),
-				},
-				{
-					// Update membership | permission=team:manage | auth=required
-					Method:  http.MethodPut,
-					Path:    "/teams/:team_id/members/:user_id",
-					Handler: UpdateTeamMembershipHandler(serverCtx),
-				},
-				{
-					// Set ticket resource scope | permission=team:manage | auth=required
-					Method:  http.MethodPatch,
-					Path:    "/tickets/:ticket_id/team",
-					Handler: SetTicketTeamHandler(serverCtx),
-				},
-			}...,
-		),
-		rest.WithPrefix("/api/v1"),
 	)
 }

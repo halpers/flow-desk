@@ -13,8 +13,15 @@ from psycopg.rows import dict_row
 from psycopg_pool import AsyncConnectionPool
 from pydantic import BaseModel
 
-from flowdesk_agent.api.schemas import CancelCommand, CommandReceipt, ExecutionCommand, IndexCommand
+from flowdesk_agent.api.schemas import (
+    CancelCommand,
+    CleanupCommand,
+    CommandReceipt,
+    ExecutionCommand,
+    IndexCommand,
+)
 from flowdesk_agent.embeddings import configured_embedder
+from flowdesk_agent.knowledge_cleanup import cleanup_index
 from flowdesk_agent.observability import metrics, telemetry
 from flowdesk_agent.observability.operations import AgentTraceData, read_trace
 from flowdesk_agent.retrieval import KnowledgeIndex
@@ -88,6 +95,15 @@ async def accept_index(command: IndexCommand):
     except ToolError as exc:
         raise HTTPException(409, "index command conflict") from exc
     return {"job_id": str(command.job_id), "status": "accepted"}
+
+
+@app.post("/internal/v1/knowledge/cleanup", status_code=202, dependencies=[Depends(service_auth)])
+async def accept_cleanup(command: CleanupCommand):
+    try:
+        await cleanup_index(app.state.pool, command)
+    except ToolError as exc:
+        raise HTTPException(409, "cleanup command conflict") from exc
+    return {"version_id": str(command.version_id), "status": "purged"}
 
 
 @app.post(

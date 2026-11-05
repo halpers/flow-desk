@@ -8,6 +8,12 @@ type JsonResponse<T> = T extends {
 type Data<T> =
   JsonResponse<T> extends { data?: infer Body } ? NonNullable<Body> : never;
 export type Models = {
+  RetentionPlan: Data<
+    paths["/api/v1/documents/{document_id}/retention"]["get"]
+  >;
+  RetentionItem: Data<
+    paths["/api/v1/documents/{document_id}/retention"]["get"]
+  >["items"][number];
   ManagedUserPage: Data<paths["/api/v1/admin/users"]["get"]>;
   ManagedRolePage: Data<paths["/api/v1/admin/roles"]["get"]>;
   OriginalSourceData: Data<

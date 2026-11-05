@@ -63,5 +63,5 @@ func (m *customOutboxEventsModel) UpdateDelivered(ctx context.Context, id string
 	return requireOne(m.conn.ExecCtx(ctx, fmt.Sprintf("update %s set status='delivered',lease_expires_at=null where id=$1 and status='delivering' and attempt_count=$2", m.table), id, attempt))
 }
 func (m *customOutboxEventsModel) UpdateRetry(ctx context.Context, id string, attempt int64, code string) error {
-	return requireOne(m.conn.ExecCtx(ctx, fmt.Sprintf("update %s set status=case when attempt_count%%8=0 then 'dead_letter' else 'pending' end,available_at=now()+interval '1 second'*least(30,power(2,least(attempt_count,5))),last_error_code=$3,lease_expires_at=null where id=$1 and status='delivering' and attempt_count=$2", m.table), id, attempt, code))
+	return requireOne(m.conn.ExecCtx(ctx, fmt.Sprintf("update %s set status=case when topic='knowledge.cleanup' then 'pending' when attempt_count%%8=0 then 'dead_letter' else 'pending' end,available_at=now()+interval '1 second'*least(30,power(2,least(attempt_count,5))),last_error_code=$3,lease_expires_at=null where id=$1 and status='delivering' and attempt_count=$2", m.table), id, attempt, code))
 }

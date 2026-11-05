@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
+	"time"
 )
 
 var _ DocumentVersionsModel = (*customDocumentVersionsModel)(nil)
@@ -12,6 +13,9 @@ type (
 	// DocumentVersionsModel is an interface to be customized, add more methods here,
 	// and implement the added methods in customDocumentVersionsModel.
 	DocumentVersionsModel interface {
+		FindOneForUpdateTx(context.Context, sqlx.Session, string, string) (*DocumentVersions, error)
+		ListRetentionTx(context.Context, sqlx.Session, string, string) ([]RetentionVersion, error)
+		UpdateCleanupStateTx(context.Context, sqlx.Session, string, string, string, string) error
 		UpdateArchivedSourceTx(context.Context, sqlx.Session, *DocumentVersions, string, string) error
 		UpdateRestoredSourceTx(context.Context, sqlx.Session, *DocumentVersions, []byte) error
 		documentVersionsModel
@@ -51,6 +55,7 @@ type ActiveKnowledgeVersion struct {
 
 // Listing metadata must not load every original PDF into API memory.
 type DocumentVersionSummary struct {
+	CleanupState  string `db:"cleanup_state"`
 	PdfLayout     string `db:"pdf_layout"`
 	SourceStorage string `db:"source_storage"`
 	OcrMode       string `db:"ocr_mode"`
@@ -69,6 +74,9 @@ type DocumentVersionSummary struct {
 }
 
 func (m *customDocumentVersionsModel) InsertTx(ctx context.Context, tx sqlx.Session, row *DocumentVersions) error {
+	if row.CleanupState == "" {
+		row.CleanupState = "retained"
+	}
 	if row.PdfLayout == "" {
 		row.PdfLayout = "plain"
 	}
@@ -99,7 +107,7 @@ func (m *customDocumentVersionsModel) InsertTx(ctx context.Context, tx sqlx.Sess
 }
 func (m *customDocumentVersionsModel) CountByDocumentTx(ctx context.Context, tx sqlx.Session, tenant, document string) (int64, error) {
 	var count int64
-	err := tx.QueryRowCtx(ctx, &count, fmt.Sprintf("select count(*) from %s where tenant_id=$1 and document_id=$2", m.table), tenant, document)
+	err := tx.QueryRowCtx(ctx, &count, fmt.Sprintf("select count(*) from %s where tenant_id=$1 and document_id=$2 and cleanup_state<>'purged'", m.table), tenant, document)
 	return count, err
 }
 func (m *customDocumentVersionsModel) FindOneByJobIdForUpdateTx(ctx context.Context, tx sqlx.Session, job string) (*DocumentVersions, error) {
@@ -112,12 +120,12 @@ func (m *customDocumentVersionsModel) UpdateIndexResultTx(ctx context.Context, t
 }
 func (m *customDocumentVersionsModel) ListByDocument(ctx context.Context, tenant, document string) ([]DocumentVersionSummary, error) {
 	rows := []DocumentVersionSummary{}
-	query := fmt.Sprintf(`select id,document_id,filename,content_hash,index_status,chunk_count,error_code,source_format,ocr_mode,
+	query := fmt.Sprintf(`select cleanup_state,id,document_id,filename,content_hash,index_status,chunk_count,error_code,source_format,ocr_mode,
     source_size,source_storage,pdf_layout,
     jsonb_array_length(page_texts) as page_count,
     (select count(*) from jsonb_array_elements(page_texts) p where p->>'text' ~ '[^[:space:]]') as text_page_count,
  (select count(*) from jsonb_array_elements(page_texts) p where p->>'extraction_method'='ocr') as ocr_page_count
-    from %s where tenant_id=$1 and document_id=$2 order by created_at,id limit 101`, m.table)
+    from %s where tenant_id=$1 and document_id=$2 order by (cleanup_state='purged'),created_at desc,id desc limit 101`, m.table)
 	err := m.conn.QueryRowsCtx(ctx, &rows, query, tenant, document)
 	return rows, err
 }
@@ -155,4 +163,46 @@ func (m *customDocumentVersionsModel) ListActiveForShareTx(ctx context.Context, 
 
 func (m *customDocumentVersionsModel) withSession(session sqlx.Session) DocumentVersionsModel {
 	return NewDocumentVersionsModel(sqlx.NewSqlConnFromSession(session))
+}
+
+func (m *customDocumentVersionsModel) FindOneForUpdateTx(ctx context.Context, tx sqlx.Session, tenant, id string) (*DocumentVersions, error) {
+	var row DocumentVersions
+	err := tx.QueryRowCtx(ctx, &row, fmt.Sprintf("select %s from %s where tenant_id=$1 and id=$2 for update", documentVersionsRows, m.table), tenant, id)
+	return &row, err
+}
+
+// RetentionVersion contains no document body or original bytes.
+type RetentionVersion struct {
+	Id           string    `db:"id"`
+	Filename     string    `db:"filename"`
+	CleanupState string    `db:"cleanup_state"`
+	SourceSize   int64     `db:"source_size"`
+	CreatedAt    time.Time `db:"created_at"`
+	RecentRank   int64     `db:"recent_rank"`
+	Referenced   bool      `db:"referenced"`
+	HasArchive   bool      `db:"has_archive"`
+	Busy         bool      `db:"busy"`
+}
+
+func (m *customDocumentVersionsModel) ListRetentionTx(ctx context.Context, tx sqlx.Session, tenant, document string) ([]RetentionVersion, error) {
+	rows := []RetentionVersion{}
+	query := fmt.Sprintf(`select v.id,v.filename,v.cleanup_state,v.source_size,v.created_at,
+ (select count(*) from %s n where n.tenant_id=v.tenant_id and n.document_id=v.document_id
+  and n.cleanup_state='retained' and (n.created_at,n.id)>=(v.created_at,v.id)) as recent_rank,
+ exists(select 1 from business.run_evidence e where e.tenant_id=v.tenant_id and e.version_id=v.id) as referenced,
+ (v.source_storage='s3' or v.source_epoch>0 or exists(select 1 from business.outbox_events o where o.tenant_id=v.tenant_id
+  and o.topic='knowledge.archive' and o.payload->>'version_id'=v.id::text)) as has_archive,
+ (v.index_status='pending' or exists(select 1 from business.outbox_events o where o.tenant_id=v.tenant_id
+  and o.topic='knowledge.index' and o.payload->>'version_id'=v.id::text and o.status<>'delivered')) as busy
+ from %s v where v.tenant_id=$1 and v.document_id=$2
+ order by (v.cleanup_state='purged'),v.created_at desc,v.id desc limit 101`, m.table, m.table)
+	err := tx.QueryRowsCtx(ctx, &rows, query, tenant, document)
+	return rows, err
+}
+func (m *customDocumentVersionsModel) UpdateCleanupStateTx(ctx context.Context, tx sqlx.Session, tenant, id, before, after string) error {
+	return requireOne(tx.ExecCtx(ctx, fmt.Sprintf(`update %s set cleanup_state=$4,
+ content=case when $4='purged' then '' else content end,
+ source_bytes=case when $4='purged' then ''::bytea else source_bytes end,
+ page_texts=case when $4='purged' then '[]'::jsonb else page_texts end
+ where tenant_id=$1 and id=$2 and cleanup_state=$3 and source_storage='postgres'`, m.table), tenant, id, before, after))
 }

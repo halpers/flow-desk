@@ -91,6 +91,14 @@ type CitationResp struct {
 	Data      EvidenceData `json:"data"`
 }
 
+type CleanupVersionReq struct {
+	DocumentId              string `path:"document_id"`
+	VersionId               string `path:"version_id"`
+	ExpectedDocumentVersion int64  `json:"expected_document_version"`
+	Confirm                 bool   `json:"confirm"`
+	IdempotencyKey          string `header:"Idempotency-Key"`
+}
+
 type ConversationData struct {
 	Id          string `json:"id"`
 	Title       string `json:"title"`
@@ -612,6 +620,30 @@ type ResetManagedPasswordReq struct {
 	IdempotencyKey   string `header:"Idempotency-Key"`
 }
 
+type RetentionItem struct {
+	VersionId    string   `json:"version_id"`
+	Filename     string   `json:"filename"`
+	CreatedAt    string   `json:"created_at"`
+	CleanupState string   `json:"cleanup_state"`
+	SourceSize   int64    `json:"source_size"`
+	Eligible     bool     `json:"eligible"`
+	Reasons      []string `json:"reasons"`
+}
+
+type RetentionPlan struct {
+	DocumentId      string          `json:"document_id"`
+	DocumentVersion int64           `json:"document_version"`
+	KeepLatest      int64           `json:"keep_latest"`
+	MinimumAgeDays  int64           `json:"minimum_age_days"`
+	Items           []RetentionItem `json:"items"`
+}
+
+type RetentionResp struct {
+	Code      string        `json:"code"`
+	RequestId string        `json:"request_id"`
+	Data      RetentionPlan `json:"data"`
+}
+
 type RetryRunReq struct {
 	RunId           string `path:"run_id"`
 	IdempotencyKey  string `header:"Idempotency-Key"`
@@ -956,6 +988,7 @@ type UserResp struct {
 }
 
 type VersionData struct {
+	CleanupState  string `json:"cleanup_state"`
 	PdfLayout     string `json:"pdf_layout"`
 	SourceStorage string `json:"source_storage"`
 	OcrMode       string `json:"ocr_mode"`

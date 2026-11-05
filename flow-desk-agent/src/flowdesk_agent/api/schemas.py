@@ -33,6 +33,14 @@ class IndexCommand(BaseModel):
     version_id: UUID
 
 
+class CleanupCommand(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    tenant_id: UUID
+    version_id: UUID
+    job_id: UUID
+    content_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+
 class TrustedContext(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     run_id: UUID

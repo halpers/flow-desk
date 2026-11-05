@@ -1,6 +1,7 @@
 """Add immutable semantic profiles alongside the original, stable lexical chunks."""
 
 from flowdesk_agent.embeddings import vector_literal
+from flowdesk_agent.knowledge_cleanup import lock_version, tombstone
 from flowdesk_agent.tools.go_client import ToolError
 
 
@@ -46,6 +47,9 @@ class SemanticIndex:
         if guard:
             await guard()
         async with self.pool.connection() as connection, connection.transaction():
+            await lock_version(connection, version_id)
+            if await tombstone(connection, version_id):
+                raise ToolError("VERSION_RETIRED")
             if job:
                 owned = await (
                     await connection.execute(

@@ -234,6 +234,9 @@ func PreviewVersionPages(ctx context.Context, s *svc.ServiceContext, req *types.
 	if row.IndexStatus != "ready" {
 		return result, failure(409, "INDEX_NOT_READY", "提取文本尚未就绪")
 	}
+	if err = requireRetained(row); err != nil {
+		return result, err
+	}
 	result.VersionId, result.ParserVersion, result.Pages = row.Id, row.ParserVersion, pageTexts(row.PageTexts)
 	return result, nil
 }

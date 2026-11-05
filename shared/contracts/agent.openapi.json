@@ -72,6 +72,39 @@
         "title": "CancelCommand",
         "type": "object"
       },
+      "CleanupCommand": {
+        "additionalProperties": false,
+        "properties": {
+          "content_hash": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Content Hash",
+            "type": "string"
+          },
+          "job_id": {
+            "format": "uuid",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "tenant_id": {
+            "format": "uuid",
+            "title": "Tenant Id",
+            "type": "string"
+          },
+          "version_id": {
+            "format": "uuid",
+            "title": "Version Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tenant_id",
+          "version_id",
+          "job_id",
+          "content_hash"
+        ],
+        "title": "CleanupCommand",
+        "type": "object"
+      },
       "CommandReceipt": {
         "properties": {
           "dispatch_id": {
@@ -610,6 +643,54 @@
           }
         },
         "summary": "Cancel Execution"
+      }
+    },
+    "/internal/v1/knowledge/cleanup": {
+      "post": {
+        "operationId": "accept_cleanup_internal_v1_knowledge_cleanup_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Authorization",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CleanupCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Accept Cleanup"
       }
     },
     "/internal/v1/knowledge/index": {

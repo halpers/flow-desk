@@ -64,6 +64,7 @@ type DocumentReq {
     DocumentId string `path:"document_id"`
 }
 type VersionData {
+    CleanupState string `json:"cleanup_state"`
     PdfLayout string `json:"pdf_layout"`
     SourceStorage string `json:"source_storage"`
     OcrMode string `json:"ocr_mode"`
@@ -237,8 +238,43 @@ type ArchiveSourceReq {
     IdempotencyKey string `header:"Idempotency-Key"`
 }
 
+type RetentionItem {
+    VersionId string `json:"version_id"`
+    Filename string `json:"filename"`
+    CreatedAt string `json:"created_at"`
+    CleanupState string `json:"cleanup_state"`
+    SourceSize int64 `json:"source_size"`
+    Eligible bool `json:"eligible"`
+    Reasons []string `json:"reasons"`
+}
+type RetentionPlan {
+    DocumentId string `json:"document_id"`
+    DocumentVersion int64 `json:"document_version"`
+    KeepLatest int64 `json:"keep_latest"`
+    MinimumAgeDays int64 `json:"minimum_age_days"`
+    Items []RetentionItem `json:"items"`
+}
+type RetentionResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data RetentionPlan `json:"data"`
+}
+type CleanupVersionReq {
+    DocumentId string `path:"document_id"`
+    VersionId string `path:"version_id"`
+    ExpectedDocumentVersion int64 `json:"expected_document_version"`
+    Confirm bool `json:"confirm"`
+    IdempotencyKey string `header:"Idempotency-Key"`
+}
+
 @server(prefix: /api/v1 middleware: SessionAuth)
 service flowdesk-api {
+    @doc "GetRetentionPlan | permission=knowledge:manage | auth=required"
+    @handler GetRetentionPlan
+    get /documents/:document_id/retention (DocumentReq) returns (RetentionResp)
+    @doc "CleanupDocumentVersion | permission=knowledge:manage | auth=required"
+    @handler CleanupDocumentVersion
+    post /documents/:document_id/versions/:version_id/cleanup (CleanupVersionReq) returns (VersionResp)
     @doc "ListKnowledgeBases | permission=conversation:use | auth=required"
     @handler ListKnowledgeBases
     get /knowledge-bases returns (KnowledgeBasesResp)

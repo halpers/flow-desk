@@ -2158,6 +2158,107 @@
         }
       }
     },
+    "/api/v1/documents/{document_id}/retention": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "GetRetentionPlan | permission=knowledge:manage | auth=required",
+        "operationId": "getRetentionPlan",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "document_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "document_id",
+                    "document_version",
+                    "keep_latest",
+                    "minimum_age_days",
+                    "items"
+                  ],
+                  "properties": {
+                    "document_id": {
+                      "type": "string"
+                    },
+                    "document_version": {
+                      "type": "integer"
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "version_id",
+                          "filename",
+                          "created_at",
+                          "cleanup_state",
+                          "source_size",
+                          "eligible",
+                          "reasons"
+                        ],
+                        "properties": {
+                          "cleanup_state": {
+                            "type": "string"
+                          },
+                          "created_at": {
+                            "type": "string"
+                          },
+                          "eligible": {
+                            "type": "boolean"
+                          },
+                          "filename": {
+                            "type": "string"
+                          },
+                          "reasons": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "source_size": {
+                            "type": "integer"
+                          },
+                          "version_id": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "keep_latest": {
+                      "type": "integer"
+                    },
+                    "minimum_age_days": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/documents/{document_id}/versions": {
       "get": {
         "produces": [
@@ -2196,6 +2297,7 @@
                       "items": {
                         "type": "object",
                         "required": [
+                          "cleanup_state",
                           "pdf_layout",
                           "source_storage",
                           "ocr_mode",
@@ -2215,6 +2317,9 @@
                         "properties": {
                           "chunk_count": {
                             "type": "integer"
+                          },
+                          "cleanup_state": {
+                            "type": "string"
                           },
                           "content_hash": {
                             "type": "string"
@@ -2336,6 +2441,7 @@
                 "data": {
                   "type": "object",
                   "required": [
+                    "cleanup_state",
                     "pdf_layout",
                     "source_storage",
                     "ocr_mode",
@@ -2355,6 +2461,9 @@
                   "properties": {
                     "chunk_count": {
                       "type": "integer"
+                    },
+                    "cleanup_state": {
+                      "type": "string"
                     },
                     "content_hash": {
                       "type": "string"
@@ -2453,6 +2562,7 @@
                 "data": {
                   "type": "object",
                   "required": [
+                    "cleanup_state",
                     "pdf_layout",
                     "source_storage",
                     "ocr_mode",
@@ -2472,6 +2582,150 @@
                   "properties": {
                     "chunk_count": {
                       "type": "integer"
+                    },
+                    "cleanup_state": {
+                      "type": "string"
+                    },
+                    "content_hash": {
+                      "type": "string"
+                    },
+                    "document_id": {
+                      "type": "string"
+                    },
+                    "error_code": {
+                      "type": "string"
+                    },
+                    "filename": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "index_status": {
+                      "type": "string"
+                    },
+                    "ocr_mode": {
+                      "type": "string"
+                    },
+                    "ocr_page_count": {
+                      "type": "integer"
+                    },
+                    "page_count": {
+                      "type": "integer"
+                    },
+                    "pdf_layout": {
+                      "type": "string"
+                    },
+                    "source_format": {
+                      "type": "string"
+                    },
+                    "source_size": {
+                      "type": "integer"
+                    },
+                    "source_storage": {
+                      "type": "string"
+                    },
+                    "text_page_count": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/documents/{document_id}/versions/{version_id}/cleanup": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "CleanupDocumentVersion | permission=knowledge:manage | auth=required",
+        "operationId": "cleanupDocumentVersion",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "document_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "version_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "Idempotency-Key",
+            "in": "header"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": [
+                "expected_document_version",
+                "confirm"
+              ],
+              "properties": {
+                "confirm": {
+                  "type": "boolean"
+                },
+                "expected_document_version": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "cleanup_state",
+                    "pdf_layout",
+                    "source_storage",
+                    "ocr_mode",
+                    "ocr_page_count",
+                    "source_format",
+                    "source_size",
+                    "page_count",
+                    "text_page_count",
+                    "id",
+                    "document_id",
+                    "filename",
+                    "content_hash",
+                    "index_status",
+                    "chunk_count",
+                    "error_code"
+                  ],
+                  "properties": {
+                    "chunk_count": {
+                      "type": "integer"
+                    },
+                    "cleanup_state": {
+                      "type": "string"
                     },
                     "content_hash": {
                       "type": "string"
@@ -2649,6 +2903,7 @@
                 "data": {
                   "type": "object",
                   "required": [
+                    "cleanup_state",
                     "pdf_layout",
                     "source_storage",
                     "ocr_mode",
@@ -2668,6 +2923,9 @@
                   "properties": {
                     "chunk_count": {
                       "type": "integer"
+                    },
+                    "cleanup_state": {
+                      "type": "string"
                     },
                     "content_hash": {
                       "type": "string"
@@ -3269,6 +3527,7 @@
                 "data": {
                   "type": "object",
                   "required": [
+                    "cleanup_state",
                     "pdf_layout",
                     "source_storage",
                     "ocr_mode",
@@ -3288,6 +3547,9 @@
                   "properties": {
                     "chunk_count": {
                       "type": "integer"
+                    },
+                    "cleanup_state": {
+                      "type": "string"
                     },
                     "content_hash": {
                       "type": "string"
@@ -6757,6 +7019,7 @@
                 "data": {
                   "type": "object",
                   "required": [
+                    "cleanup_state",
                     "pdf_layout",
                     "source_storage",
                     "ocr_mode",
@@ -6776,6 +7039,9 @@
                   "properties": {
                     "chunk_count": {
                       "type": "integer"
+                    },
+                    "cleanup_state": {
+                      "type": "string"
                     },
                     "content_hash": {
                       "type": "string"

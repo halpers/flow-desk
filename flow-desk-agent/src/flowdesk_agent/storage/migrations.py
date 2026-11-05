@@ -157,6 +157,12 @@ MIGRATIONS = [
     );
     CREATE INDEX run_observation_tenant ON run_observation_scopes(tenant_id,run_id);
     """,
+    """
+    CREATE TABLE knowledge_tombstones (
+        version_id UUID PRIMARY KEY, tenant_id UUID NOT NULL, job_id UUID NOT NULL UNIQUE,
+        content_hash TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+    """,
 ]
 
 

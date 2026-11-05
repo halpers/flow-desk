@@ -116,6 +116,11 @@ jobs:
         run: python scripts/smoke.py
       - name: Check account roles, password recovery and session revocation
         run: python scripts/check-accounts.py --output work/accounts-ci.json
+      - name: Check knowledge retention and durable index cleanup
+        run: |
+          mkdir -p work
+          install -m 600 .env work/retention-ci.env
+          python scripts/check-retention.py --env-file work/retention-ci.env --output work/retention-ci.json
       - name: Check fixed business scenarios through public API
         run: python scripts/check-business-scenarios.py --output work/business-scenarios-ci.json
       - name: Check scoped run traces and safe retry through public API
