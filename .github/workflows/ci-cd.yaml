@@ -143,12 +143,14 @@ jobs:
         run: python scripts/check-pdf-layout.py --require-s3 --output work/pdf-layout-ci.json
       - name: Check tracked archive copy cleanup and generation isolation
         run: |
-          python scripts/configure-source-storage.py --enable-cleanup
+          python scripts/configure-source-storage.py --enable-cleanup --enable-inventory
           docker compose --file docker-compose.yaml --file deploy/compose.storage.yaml up --detach --wait --wait-timeout 180
           CGO_ENABLED=0 go -C flow-desk-serv/flowdesk test -c -o "$PWD/work/source-store.test" ./internal/client
           docker compose --file docker-compose.yaml --file deploy/compose.storage.yaml run --rm --no-deps --volume "$PWD/work/source-store.test:/tmp/source-store.test:ro" --env FLOWDESK_S3_SANDBOX_TESTS=1 --env MODEL_PROVIDER=mock --entrypoint /tmp/source-store.test api -test.run '^TestS3SandboxRetirementContracts$' -test.v
           install -m 600 .env work/source-cleanup-ci.env
           python scripts/check-source-cleanup.py --env-file work/source-cleanup-ci.env --output work/source-cleanup-ci.json
+      - name: Check scoped object inventory and registration reconciliation
+        run: python scripts/check-source-inventory.py --env-file work/source-cleanup-ci.env --output work/source-inventory-ci.json
       - name: Validate local monitoring and TLS configuration
         run: |
           python scripts/configure-monitoring.py

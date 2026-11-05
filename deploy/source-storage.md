@@ -18,7 +18,7 @@ FILE_STORE_SECRET_KEY=
 FILE_STORE_ALLOW_HTTP=false
 ```
 
-Go 账号仅需目标桶 `knowledge/` 前缀的对象读取/写入，应用没有 DeleteObject、建桶或列桶操作。关闭公共读取，限制网络来源，使用验证通过的 TLS 证书；自签根证书需按服务器信任链部署，应用没有跳过 TLS 校验选项。按存储策略选择版本保护并做独立备份；启用或曾启用版本控制的桶不能开启下节的副本字节清理，生命周期规则不得自动过期仍被引用的原件或清理标记。
+Go 账号仅需目标桶 `knowledge/` 前缀的对象读取/写入，默认没有 DeleteObject、建桶或列桶操作；启用 M7.11 只读巡检才增加下节限定范围的 ListBucket。关闭公共读取，限制网络来源，使用验证通过的 TLS 证书；自签根证书需按服务器信任链部署，应用没有跳过 TLS 校验选项。按存储策略选择版本保护并做独立备份；启用或曾启用版本控制的桶不能开启下节的副本字节清理，生命周期规则不得自动过期仍被引用的原件或清理标记。
 
 按原服务器发布方式重新创建 API（包括所需 server/TLS/monitoring override），配置只注入 Go API。常规发布脚本从根 Compose 读取这些变量，外部存储无需增加 `--storage` 参数，也无需运行本地沙箱 overlay。readiness 检查不依赖外部 S3；就绪后还须单独验收原件读取。
 
@@ -41,7 +41,7 @@ overlay 使用 SeaweedFS 4.52 固定 digest，`source_data` 卷同时保存对�
 
 ## 归档副本清理（M7.8，可选）
 
-默认 `FILE_STORE_CLEANUP_ENABLED=false`。开启前升级同一 SHA 的 API/Web 和增量迁移 `2026110505_source_objects.sql`，独立备份数据库及对象；使用从未启用版本控制的私有桶。应用账号额外需要桶级 `s3:GetBucketVersioning`，仍无需 DeleteObject/ListBucket。必须验证 GetBucketVersioning 返回无 Status、错误 If-Match 被拒绝、正确 ETag 条件替换和 If-None-Match 防覆盖；当前仅实测固定 SeaweedFS 沙箱。启用/暂停版本控制、查询失败、对象锁或条件写不兼容时保持关闭，不通过授权通配符绕过。
+默认 `FILE_STORE_CLEANUP_ENABLED=false`。开启前升级同一 SHA 的 API/Web 和增量迁移 `2026110505_source_objects.sql`，独立备份数据库及对象；使用从未启用版本控制的私有桶。应用账号额外需要桶级 `s3:GetBucketVersioning`，清理本身仍无需 DeleteObject/ListBucket（另行开启巡检时需要限定 ListBucket）。必须验证 GetBucketVersioning 返回无 Status、错误 If-Match 被拒绝、正确 ETag 条件替换和 If-None-Match 防覆盖；当前仅实测固定 SeaweedFS 沙箱。启用/暂停版本控制、查询失败、对象锁或条件写不兼容时保持关闭，不通过授权通配符绕过。
 
 确认条件满足后设 `FILE_STORE_CLEANUP_ENABLED=true`，按原发布脚本/全部 override 重建 API；浏览器按[服务器手册 §18](server.md#18-归档副本清理)先恢复原件、下载校验，再预览和人工确认。清理仅把已登记的旧副本替换为零字节永久标记，归档对象名/元数据数量不会减少；不会扫描未登记历史孤儿、清除供应商历史版本或缩小备份。标记不能删除或被生命周期过期，否则迟到归档任务可能重新上传旧文件。没有保留时间自动清理任务。
 
@@ -102,3 +102,19 @@ docker compose --file docker-compose.yaml --file deploy/compose.storage.yaml up 
 恢复演练使用全新独立 Compose 项目及空卷，先校验 SHA256SUMS。数据库按服务器手册恢复到全新库；对象数据在启动 SeaweedFS 前，将 source-data.tgz 解包到该项目的空 source_data 卷 `/data`，必须包含 filerldb2 元数据而非只复制 volume 文件。保持相同固定镜像、bucket 和内部 endpoint，启动前检查权限/磁盘，启动后逐个下载校验。这里只提供运维步骤；本阶段实际验收包含对象重启后下载和应用级恢复，未执行远程供应商快照或服务器整机恢复。
 
 实现、故障测试及交付证据见[M7.4 说明](../docs/m7-object-storage.md)、[M7.8 说明](../docs/m7-source-cleanup.md)和[实施记录](../docs/progress.md)。
+
+## 版本范围的只读对象巡检
+
+M7.11 增加 `FILE_STORE_INVENTORY_ENABLED=false`，与清理开关独立。只有明确授予目标桶 `knowledge/*` 前缀的 `s3:ListBucket`，且验证普通桶 ListObjectsV2、StartAfter、按键排序及 URL 编码兼容性后才启用；没有 DeleteObject、ListObjectVersions 或全桶扫描要求。示例权限和逐步操作见[服务器手册 §21](server.md#21-s3-对象巡检与登记对账)。readiness 不探测列举权限，须另行验证页面。
+
+巡检失败不会返回空列表或改变原件。SeaweedFS 4.52 对含空格键的列表使用有歧义的原始加号，此类页面会被拒绝；应用标准键不含空格。未登记不表示可删，零字节列表不证明清理标记有效，列表未出现也不证明文件丢失。外部供应商仍需独立测试桶验收。
+
+以下仅用于 `work/` 中的独立 mock 栈，脚本会创建合成 PDF、反复归档/恢复并删除该新版本的一条登记，以模拟旧未登记对象，不能在生产运行：
+
+```bash
+python scripts/configure-source-storage.py --enable-inventory
+docker compose --file docker-compose.yaml --file deploy/compose.storage.yaml up --detach --wait --wait-timeout 180
+mkdir -p work
+install -m 600 .env work/source-inventory.env
+python scripts/check-source-inventory.py --env-file work/source-inventory.env --output work/source-inventory.json
+```

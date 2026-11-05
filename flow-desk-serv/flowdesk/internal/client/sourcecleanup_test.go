@@ -40,7 +40,9 @@ func TestS3SandboxRetirementContracts(t *testing.T) {
 	digest := sha256.Sum256(raw)
 	hash := hex.EncodeToString(digest[:])
 	id := uuid.NewString()
-	key := "knowledge/" + uuid.NewString() + "/" + id + "/" + hash + "/0.pdf"
+	tenant := uuid.NewString()
+	prefix := "knowledge/" + tenant + "/" + id + "/"
+	key := prefix + hash + "/0.pdf"
 	if err = source.PutIfAbsent(ctx, key, raw); err != nil {
 		t.Fatal(err)
 	}
@@ -63,6 +65,34 @@ func TestS3SandboxRetirementContracts(t *testing.T) {
 	}
 	if err = source.Retire(ctx, key, hash, int64(len(raw)), id); err != nil {
 		t.Fatal("marker replay", err)
+	}
+	legacy := prefix + hash + ".pdf"
+	if err = source.PutIfAbsent(ctx, legacy, raw); err != nil {
+		t.Fatal(err)
+	}
+	encoded := prefix + "z%2F+文件.pdf"
+	if _, err = source.api.PutObject(ctx, &s3.PutObjectInput{Bucket: aws.String(source.bucket), Key: aws.String(encoded), Body: bytes.NewReader(raw), IfNoneMatch: aws.String("*")}); err != nil {
+		t.Fatal(err)
+	}
+	first, err := source.ListVersionObjects(ctx, tenant, id, "", 1)
+	if err != nil || len(first.Items) != 1 || !first.HasMore || first.Items[0].Key != legacy || first.Items[0].Size != int64(len(raw)) {
+		t.Fatal("legacy inventory", err)
+	}
+	next, err := source.ListVersionObjects(ctx, tenant, id, first.Items[0].Key, 1)
+	if err != nil || len(next.Items) != 1 || !next.HasMore || next.Items[0].Key != key || next.Items[0].Size != 0 {
+		t.Fatal("zero-byte inventory", err)
+	}
+	last, err := source.ListVersionObjects(ctx, tenant, id, next.Items[0].Key, 1)
+	if err != nil || len(last.Items) != 1 || last.HasMore || last.Items[0].Key != encoded {
+		t.Fatal("encoded inventory", err)
+	}
+	// SeaweedFS 4.52 encodes spaces as raw '+' in listing responses. The
+	// ambiguity must fail closed, rather than fingerprint a different key.
+	if _, err = source.api.PutObject(ctx, &s3.PutObjectInput{Bucket: aws.String(source.bucket), Key: aws.String(prefix + "zz space.pdf"), Body: bytes.NewReader(raw), IfNoneMatch: aws.String("*")}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = source.ListVersionObjects(ctx, tenant, id, encoded, 1); err != ErrSourceUnavailable {
+		t.Fatal("ambiguous provider encoding accepted", err)
 	}
 }
 

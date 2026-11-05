@@ -824,6 +824,41 @@ type SendMessageReq struct {
 	Attachments     []string `json:"attachments,optional"`
 }
 
+type SourceInventoryItem struct {
+	ObjectRef        string `json:"object_ref"`
+	RegisteredId     string `json:"registered_id"`
+	RegisteredStatus string `json:"registered_status"`
+	KeyKind          string `json:"key_kind"`
+	SourceEpoch      int64  `json:"source_epoch"`
+	Size             int64  `json:"size"`
+	ModifiedAt       string `json:"modified_at"`
+	Reconciliation   string `json:"reconciliation"`
+}
+
+type SourceInventoryPage struct {
+	VersionId       string                `json:"version_id"`
+	SourceSize      int64                 `json:"source_size"`
+	SourceEpoch     int64                 `json:"source_epoch"`
+	ObservedAt      string                `json:"observed_at"`
+	ContentVerified bool                  `json:"content_verified"`
+	Items           []SourceInventoryItem `json:"items"`
+	HasMore         bool                  `json:"has_more"`
+	NextCursor      string                `json:"next_cursor"`
+}
+
+type SourceInventoryReq struct {
+	DocumentId string `path:"document_id"`
+	VersionId  string `path:"version_id"`
+	Cursor     string `form:"cursor,optional"`
+	Limit      int64  `form:"limit,optional"`
+}
+
+type SourceInventoryResp struct {
+	Code      string              `json:"code"`
+	RequestId string              `json:"request_id"`
+	Data      SourceInventoryPage `json:"data"`
+}
+
 type SubmitInputReq struct {
 	RunId           string `path:"run_id"`
 	IdempotencyKey  string `header:"Idempotency-Key"`

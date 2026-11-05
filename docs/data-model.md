@@ -1,5 +1,7 @@
 # 数据模型与一致性设计
 
+M7.11 不增加表或迁移。Go 在当前授权事务内按 tenant_id/version_id/store_id 和本页键集合查询 source_objects，将外部列表元数据与登记记录对账；成功页面写入 knowledge.source_inventory 审计，仅保存对象版本、数量和未登记计数。外部请求不持数据库锁，结束后重新锁定版本及权限范围并复核 source_epoch/当前定位。未登记对象不自动补写账本，失败或撤权结果不发布，不修改原件、清理状态或 Python 索引。详见[巡检设计](m7-source-inventory.md)。
+
 M7.10 迁移 `2026110507_metadata_archive.sql` 增加 Go 自有 version_metadata_archives（版本/租户/文档身份、文件名、parser、错误码、片段数、OCR/版面、归档人/时间），并在 document_versions 增加 metadata_archived。归档表复合外键指向原版本及当前租户用户；归档事务先锁文档、ACL/团队、版本，再复核资格、插入详情、精简热行和记录审计/幂等回执。热行约束要求归档后为 purged，且文件名/parser/错误码为空、片段数归零、OCR/版面为默认值；原租户/文档/版本/job/hash/创建时间、source 元数据及清理状态不变。
 
 热查询用 NOT metadata_archived 过滤及部分索引；完整历史由原版本按 created_at/id 定位，并在同一 Go 授权事务内左联归档详情。归档时间与原创建时间独立，翻页顺序不因归档改变。回执、引用、审计、Python 墓碑和 source_objects 不迁移或删除；身份锚点和历史表仍会增长，此功能不等于数据库压缩或完整生命周期数据擦除。归档表须纳入同一数据库备份，禁止 Down 删除后再回退旧应用。

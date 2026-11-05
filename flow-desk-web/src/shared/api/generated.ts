@@ -464,6 +464,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/documents/{document_id}/versions/{version_id}/source-inventory": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** GetSourceInventory | permission=knowledge:manage | auth=required */
+        get: operations["getSourceInventory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/documents/{document_id}/withdraw": {
         parameters: {
             query?: never;
@@ -2540,6 +2557,53 @@ export interface operations {
                             content_hash: string;
                             filename: string;
                             source_format: string;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    getSourceInventory: {
+        parameters: {
+            query?: {
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                document_id: string;
+                version_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            content_verified: boolean;
+                            has_more: boolean;
+                            items: {
+                                key_kind: string;
+                                modified_at: string;
+                                object_ref: string;
+                                reconciliation: string;
+                                registered_id: string;
+                                registered_status: string;
+                                size: number;
+                                source_epoch: number;
+                            }[];
+                            next_cursor: string;
+                            observed_at: string;
+                            source_epoch: number;
+                            source_size: number;
+                            version_id: string;
                         };
                         request_id?: string;
                     };

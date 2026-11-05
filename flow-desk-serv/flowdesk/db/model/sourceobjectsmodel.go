@@ -3,6 +3,7 @@ package model
 import (
 	"context"
 	"fmt"
+	"github.com/lib/pq"
 
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
@@ -13,6 +14,7 @@ type (
 	// SourceObjectsModel is an interface to be customized, add more methods here,
 	// and implement the added methods in customSourceObjectsModel.
 	SourceObjectsModel interface {
+		ListInventoryRegistrationsTx(context.Context, sqlx.Session, string, string, string, []string) ([]SourceObjects, error)
 		InsertIfAbsentTx(context.Context, sqlx.Session, *SourceObjects) error
 		FindOneForUpdateTx(context.Context, sqlx.Session, string, string) (*SourceObjects, error)
 		FindOneByStorageTx(context.Context, sqlx.Session, string, string) (*SourceObjects, error)
@@ -33,6 +35,15 @@ func NewSourceObjectsModel(conn sqlx.SqlConn) SourceObjectsModel {
 	return &customSourceObjectsModel{
 		defaultSourceObjectsModel: newSourceObjectsModel(conn),
 	}
+}
+
+func (m *customSourceObjectsModel) ListInventoryRegistrationsTx(ctx context.Context, tx sqlx.Session, tenant, version, store string, keys []string) ([]SourceObjects, error) {
+	rows := []SourceObjects{}
+	if len(keys) == 0 {
+		return rows, nil
+	}
+	err := tx.QueryRowsCtx(ctx, &rows, fmt.Sprintf("select %s from %s where tenant_id=$1 and version_id=$2 and store_id=$3 and object_key=any($4::text[])", sourceObjectsRows, m.table), tenant, version, store, pq.Array(keys))
+	return rows, err
 }
 
 func (m *customSourceObjectsModel) InsertIfAbsentTx(ctx context.Context, tx sqlx.Session, row *SourceObjects) error {

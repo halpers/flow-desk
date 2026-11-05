@@ -23,6 +23,7 @@ AllowedOrigins: ${ALLOWED_ORIGINS}
 CookieSecure: ${COOKIE_SECURE}
 FileStoreProvider: ${FILE_STORE_PROVIDER}
 FileStoreCleanupEnabled: ${FILE_STORE_CLEANUP_ENABLED}
+FileStoreInventoryEnabled: ${FILE_STORE_INVENTORY_ENABLED}
 FileStoreEndpoint: ${FILE_STORE_ENDPOINT}
 FileStoreRegion: ${FILE_STORE_REGION}
 FileStoreBucket: ${FILE_STORE_BUCKET}

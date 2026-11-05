@@ -21,6 +21,7 @@ import { indexErrors, readKnowledgeFile } from "./files";
 import { ArchiveCopies } from "./ArchiveCopies";
 import { RetentionPolicy } from "./RetentionPolicy";
 import { VersionHistory } from "./VersionHistory";
+import { SourceInventory } from "./SourceInventory";
 
 type Document = Models["DocumentPage"]["items"][number];
 const roleOptions = [
@@ -182,6 +183,13 @@ function DocumentVersions({
       {versions.isError && <Alert type="error" title="版本加载失败" />}
       {versions.data?.items.map((version) => (
         <div className="knowledge-version" key={version.id}>
+          {version.source_format === "pdf" && (
+            <SourceInventory
+              documentId={document.id}
+              versionId={version.id}
+              scope={scope}
+            />
+          )}
           <span>
             {version.filename} · {version.id.slice(0, 8)} ·{" "}
             {version.cleanup_state === "purged"

@@ -1,5 +1,7 @@
 # 接口与跨服务契约
 
+M7.11 的 `GET /api/v1/documents/:document_id/versions/:version_id/source-inventory?limit=20&cursor=...` 为知识管理者提供版本范围的只读 S3 对账。data 含 version_id/source_epoch/source_size/observed_at/content_verified=false、items、has_more/next_cursor；items 仅含对象指纹、登记 ID/状态、可识别的键类别/代次、观察大小/时间及对账分类。默认 20、最大 50 条，Cache-Control: no-store。加密认证游标绑定当前用户/租户/文档/版本/hash/存储，15 分钟过期；400 表示参数或游标错误，410 INVENTORY_CURSOR_EXPIRED 需刷新，409 SOURCE_CHANGED 表示观察期间或翻页前原件代次变化，409 SOURCE_INVENTORY_DISABLED 表示未显式启用，503 SOURCE_INVENTORY_UNAVAILABLE 表示存储列举/兼容性失败。每页外部 I/O 前后复核当前授权；不返回对象定位，不将失败视为空列表。分类与非快照边界见[对象巡检](m7-source-inventory.md)。
+
 M7.10 的 `GET /api/v1/documents/:document_id/history` 返回有界完整版本历史，默认 20 条、最多 50 条，按 created_at/id 降序；data 含 document_version/items/has_more/next_cursor。游标绑定租户、用户及文档，每页重查当前会话/权限/ACL/团队。next_cursor 为空表示结束，不返回对象存储地址或原文。原 versions/retention 列表排除已归档元数据，其他语义保持。
 
 `POST /api/v1/documents/:document_id/versions/:version_id/archive-metadata` 要求 Idempotency-Key、confirm=true 和 expected_document_version，返回 200 MetadataArchiveData（version_id/document_id/archived_at）。仅 purged 且无激活/引用/归档历史/未完成知识任务的版本可归档，冲突为 METADATA_ARCHIVE_PROTECTED 或 VERSION_CONFLICT（409）；参数/游标错误 400，当前权限不足 403，对象范围不可见 404。归档详情、热行精简、审计和幂等结果同事务；丢失响应重放返回原回执，撤权后拒绝重放。无新 SSE 类型，详细边界见[历史归档](m7-history-archive.md)。

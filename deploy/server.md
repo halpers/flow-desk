@@ -441,3 +441,40 @@ SELECT count(*) AS missing_archive_count FROM business.document_versions v
 归档表与原版本、审计、幂等回执须包含在同一数据库备份中。原版本行、job/hash 和 Python 墓碑必须保留，不能按“已归档”手工删除。此功能把终态详情移出热行，身份锚点和归档表仍会增长；不保证 PostgreSQL 文件缩小，不清除数据库/WAL/对象备份，也不处理 source_objects、消息或 checkpoint 的历史保留。
 
 回退前在维护窗口停止归档新请求并等待在途事务结束，查询 archived_version_count。为 0 时可在满足第 17–19 节约束后切换旧镜像，保留新表和列，不执行 Down。已有归档时，旧版不能正确展示精简后的热行，需使用支持归档读取的版本或从升级前一致备份整体恢复；不要将旧版 API 与新版 Web 混用，也不要只恢复归档表。独立 mock 验收脚本只用于临时环境，不能在服务器运行；详见[历史归档说明](../docs/m7-history-archive.md)。
+
+## 21. S3 对象巡检与登记对账
+
+M7.11 无新增服务、端口或数据库迁移；IP:port 与域名入口都支持。它只在仍有版本身份且当前账号有管理权限时，列举当前配置桶中的该版本前缀；不能发现身份已丢失的全桶孤儿。默认 `FILE_STORE_INVENTORY_ENABLED=false`，与归档副本清理开关独立，开启巡检不启用清理。
+
+1. 按第 11 节备份数据库及对象，发布同一 SHA 的配套镜像。原文件存储须已配置为 s3，且原件读取/归档验收正常。
+2. 通过存储管理端给 Go 专用账号追加目标桶 knowledge/ 前缀的只读列举权限。以下是 AWS S3 IAM 的增量示例，替换桶名；其他供应商使用其等价权限配置，原 GetObject/PutObject 权限保留。不授予 DeleteObject 或全桶通配权限。
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Effect": "Allow",
+    "Action": "s3:ListBucket",
+    "Resource": "arn:aws:s3:::flowdesk-sources",
+    "Condition": {"StringLike": {"s3:prefix": "knowledge/*"}}
+  }]
+}
+```
+
+3. 先在独立测试桶确认 ListObjectsV2 支持 Prefix、StartAfter、MaxKeys、普通桶按键排序及无歧义 URL 编码。Directory bucket 和非排序列举不支持；SeaweedFS 4.52 对含空格对象名的编码不兼容，相关页会明确失败，不能通过替换加号猜测对象名。应用标准键只含 UUID、hash、规范代次和分隔符，不受此限制。
+4. 在服务器 `.env` 增加 `FILE_STORE_INVENTORY_ENABLED=true`，保持文件权限 600。按第 10 节原发布方式、相同 overrides 重新创建 API；外部 S3 无需 storage 沙箱 overlay。readiness 不检查列举权限，继续执行页面验收。
+5. 管理员或有 knowledge:manage 且能管理目标库的账号进入“知识库”→PDF 版本→“对象巡检”。确认观察时间、当前批次、原件大小和第一页；“下一页/上一页”逐页核对，“刷新巡检”回到第一页。只有成功页面记录一次 knowledge.source_inventory 审计。未配置或无权限时不能把失败当作对象不存在。
+
+“当前原件/已登记，列表大小匹配”只比较列表元数据与登记，不下载或验证 PDF hash。“登记已清理，列表为零字节”只表示观察为零，不核验防重写标记。“未登记”“非标准定位”“登记信息异常”“列表大小异常”应保留审计和备份后人工调查，禁止直接清理或补写登记。需验证当前原件时下载并离线核对 SHA256；有完整性异常时暂停清理，按第 18 节排查。该页面没有认领、修复或删除按钮。
+
+运维可用受控存储清单离线关联对象指纹：存储指纹为 `hex(SHA256(endpoint 去尾斜线 + 换行 + region + 换行 + bucket))`，默认 region 为 us-east-1；页面对象指纹为 `hex(SHA256(存储指纹 + 换行 + 对象 key))`。只在受控环境处理清单，不把桶/key/凭据粘贴到公开报告，也不要改数据库以满足页面状态。
+
+| 现象 | 操作 |
+| --- | --- |
+| SOURCE_INVENTORY_DISABLED（409） | 核对显式开关及 API 重建；只需巡检时不要打开清理开关 |
+| SOURCE_INVENTORY_UNAVAILABLE（503） | 核对 ListBucket 范围、网络、排序/编码和有界响应兼容性；保留原件，不将错误视为空页 |
+| 参数/游标错误（400）或 INVENTORY_CURSOR_EXPIRED（410） | 刷新第一页；游标不跨用户、版本、存储配置复用，有效期 15 分钟 |
+| SOURCE_CHANGED（409） | 观察期间或翻页前发生恢复/重新归档，刷新后重新核对 |
+| 401/403/404 | 核对当前登录、角色权限、库 ACL 和团队范围；禁止绕过授权查其他租户 |
+
+分页是实时观察而非快照；期间外部新增/消失的对象须刷新复核。它不检查未列出的已登记文件是否存在，不处理供应商历史版本，也不证明全库完整性。停用时将开关改回 false 并按原方式重建 API，可撤销新增 ListBucket；无数据迁移或对象回写需要撤销。回退旧镜像仍须满足第 17–20 节已有功能的约束，不能删除原身份、登记或永久标记。设计及独立合成验收见[巡检说明](../docs/m7-source-inventory.md)；验收脚本严禁在服务器业务库执行。

@@ -3512,6 +3512,144 @@
         }
       }
     },
+    "/api/v1/documents/{document_id}/versions/{version_id}/source-inventory": {
+      "get": {
+        "summary": "GetSourceInventory | permission=knowledge:manage | auth=required",
+        "operationId": "getSourceInventory",
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "version_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "allowEmptyValue": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "allowEmptyValue": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "version_id",
+                        "source_size",
+                        "source_epoch",
+                        "observed_at",
+                        "content_verified",
+                        "items",
+                        "has_more",
+                        "next_cursor"
+                      ],
+                      "properties": {
+                        "content_verified": {
+                          "type": "boolean"
+                        },
+                        "has_more": {
+                          "type": "boolean"
+                        },
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "object_ref",
+                              "registered_id",
+                              "registered_status",
+                              "key_kind",
+                              "source_epoch",
+                              "size",
+                              "modified_at",
+                              "reconciliation"
+                            ],
+                            "properties": {
+                              "key_kind": {
+                                "type": "string"
+                              },
+                              "modified_at": {
+                                "type": "string"
+                              },
+                              "object_ref": {
+                                "type": "string"
+                              },
+                              "reconciliation": {
+                                "type": "string"
+                              },
+                              "registered_id": {
+                                "type": "string"
+                              },
+                              "registered_status": {
+                                "type": "string"
+                              },
+                              "size": {
+                                "type": "integer"
+                              },
+                              "source_epoch": {
+                                "type": "integer"
+                              }
+                            }
+                          }
+                        },
+                        "next_cursor": {
+                          "type": "string"
+                        },
+                        "observed_at": {
+                          "type": "string"
+                        },
+                        "source_epoch": {
+                          "type": "integer"
+                        },
+                        "source_size": {
+                          "type": "integer"
+                        },
+                        "version_id": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "request_id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/documents/{document_id}/withdraw": {
       "post": {
         "summary": "WithdrawDocument | permission=knowledge:manage | auth=required",

@@ -11,20 +11,28 @@ parser.add_argument(
     action="store_true",
     help="Enable copy cleanup only in an explicit mock sandbox",
 )
+parser.add_argument(
+    "--enable-inventory",
+    action="store_true",
+    help="Enable read-only object listing in an explicit mock sandbox",
+)
 args = parser.parse_args()
 lines = args.env_file.read_text(encoding="utf-8").splitlines()
 settings = dict(
     line.split("=", 1) for line in lines if "=" in line and not line.startswith("#")
 )
-if args.enable_cleanup:
+if args.enable_cleanup or args.enable_inventory:
     if settings.get("MODEL_PROVIDER") != "mock":
         parser.error(
-            "--enable-cleanup requires an isolated MODEL_PROVIDER=mock sandbox"
+            "Optional storage checks require an isolated MODEL_PROVIDER=mock sandbox"
         )
-    lines = [
-        line for line in lines if not line.startswith("FILE_STORE_CLEANUP_ENABLED=")
-    ]
-    lines.append("FILE_STORE_CLEANUP_ENABLED=true")
+    for enabled, name in (
+        (args.enable_cleanup, "FILE_STORE_CLEANUP_ENABLED"),
+        (args.enable_inventory, "FILE_STORE_INVENTORY_ENABLED"),
+    ):
+        if enabled:
+            lines = [line for line in lines if not line.startswith(name + "=")]
+            lines.append(name + "=true")
 for key, value in {
     "FILE_STORE_ACCESS_KEY": secrets.token_hex(16),
     "FILE_STORE_SECRET_KEY": secrets.token_hex(32),
