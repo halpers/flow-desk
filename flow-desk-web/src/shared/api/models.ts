@@ -30,6 +30,9 @@ export type Models = {
   TicketPage: Data<paths["/api/v1/tickets"]["get"]>;
   TimelinePage: Data<paths["/api/v1/tickets/{ticket_id}/events"]["get"]>;
   KnowledgeBasePage: Data<paths["/api/v1/knowledge-bases"]["get"]>;
+  RetentionPolicyData: Data<
+    paths["/api/v1/knowledge-bases/{knowledge_base_id}/retention-policy"]["get"]
+  >;
   DocumentPage: Data<
     paths["/api/v1/knowledge-bases/{knowledge_base_id}/documents"]["get"]
   >;

@@ -315,6 +315,18 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 					Path:    "/knowledge-bases/:knowledge_base_id/documents",
 					Handler: UploadDocumentHandler(serverCtx),
 				},
+				{
+					// GetRetentionPolicy | permission=knowledge:manage | auth=required
+					Method:  http.MethodGet,
+					Path:    "/knowledge-bases/:knowledge_base_id/retention-policy",
+					Handler: GetRetentionPolicyHandler(serverCtx),
+				},
+				{
+					// UpdateRetentionPolicy | permission=knowledge:manage | auth=required
+					Method:  http.MethodPut,
+					Path:    "/knowledge-bases/:knowledge_base_id/retention-policy",
+					Handler: UpdateRetentionPolicyHandler(serverCtx),
+				},
 			}...,
 		),
 		rest.WithPrefix("/api/v1"),

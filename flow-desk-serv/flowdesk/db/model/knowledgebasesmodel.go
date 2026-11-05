@@ -3,6 +3,7 @@ package model
 import (
 	"context"
 	"fmt"
+
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
 
@@ -23,6 +24,7 @@ type (
 		FindOneForUpdateTx(context.Context, sqlx.Session, string, string) (*KnowledgeBases, error)
 		UpdateAclTx(context.Context, sqlx.Session, string, string, int64, string) error
 		UpdateTeamTx(context.Context, sqlx.Session, *KnowledgeBases) error
+		UpdateRetentionPolicyTx(context.Context, sqlx.Session, *KnowledgeBases, int64, int64) error
 	}
 
 	customKnowledgeBasesModel struct {
@@ -38,7 +40,8 @@ func NewKnowledgeBasesModel(conn sqlx.SqlConn) KnowledgeBasesModel {
 }
 
 func (m *customKnowledgeBasesModel) InsertTx(ctx context.Context, tx sqlx.Session, row *KnowledgeBases) error {
-	_, err := m.withSession(tx).Insert(ctx, row)
+	// New knowledge bases always inherit database policy defaults.
+	_, err := tx.ExecCtx(ctx, fmt.Sprintf("insert into %s(id,tenant_id,name,read_roles,acl_revision,team_id) values($1,$2,$3,$4,$5,$6)", m.table), row.Id, row.TenantId, row.Name, row.ReadRoles, row.AclRevision, row.TeamId)
 	return err
 }
 func (m *customKnowledgeBasesModel) CountByTenantTx(ctx context.Context, tx sqlx.Session, tenant string) (int64, error) {
@@ -79,4 +82,8 @@ func (m *customKnowledgeBasesModel) withSession(session sqlx.Session) KnowledgeB
 }
 func (m *customKnowledgeBasesModel) UpdateTeamTx(ctx context.Context, tx sqlx.Session, row *KnowledgeBases) error {
 	return requireOne(tx.ExecCtx(ctx, fmt.Sprintf("update %s set team_id=$3,acl_revision=acl_revision+1 where tenant_id=$1 and id=$2 and acl_revision=$4", m.table), row.TenantId, row.Id, row.TeamId, row.AclRevision))
+}
+
+func (m *customKnowledgeBasesModel) UpdateRetentionPolicyTx(ctx context.Context, tx sqlx.Session, row *KnowledgeBases, keepLatest, minimumAgeDays int64) error {
+	return requireOne(tx.ExecCtx(ctx, fmt.Sprintf("update %s set retention_keep_latest=$4,retention_minimum_age_days=$5,retention_revision=retention_revision+1 where tenant_id=$1 and id=$2 and retention_revision=$3", m.table), row.TenantId, row.Id, row.RetentionRevision, keepLatest, minimumAgeDays))
 }

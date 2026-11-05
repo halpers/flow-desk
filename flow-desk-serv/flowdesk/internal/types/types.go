@@ -129,6 +129,7 @@ type CleanupArchiveCopyReq struct {
 }
 
 type CleanupVersionReq struct {
+	ExpectedPolicyRevision  int64  `json:"expected_policy_revision,optional,omitempty"`
 	DocumentId              string `path:"document_id"`
 	VersionId               string `path:"version_id"`
 	ExpectedDocumentVersion int64  `json:"expected_document_version"`
@@ -668,11 +669,25 @@ type RetentionItem struct {
 }
 
 type RetentionPlan struct {
+	PolicyRevision  int64           `json:"policy_revision"`
 	DocumentId      string          `json:"document_id"`
 	DocumentVersion int64           `json:"document_version"`
 	KeepLatest      int64           `json:"keep_latest"`
 	MinimumAgeDays  int64           `json:"minimum_age_days"`
 	Items           []RetentionItem `json:"items"`
+}
+
+type RetentionPolicyData struct {
+	KnowledgeBaseId string `json:"knowledge_base_id"`
+	KeepLatest      int64  `json:"keep_latest"`
+	MinimumAgeDays  int64  `json:"minimum_age_days"`
+	Revision        int64  `json:"revision"`
+}
+
+type RetentionPolicyResp struct {
+	Code      string              `json:"code"`
+	RequestId string              `json:"request_id"`
+	Data      RetentionPolicyData `json:"data"`
 }
 
 type RetentionResp struct {
@@ -985,6 +1000,14 @@ type UpdateManagedUserReq struct {
 	RoleIds          []string `json:"role_ids"`
 	ExpectedRevision int64    `json:"expected_revision"`
 	IdempotencyKey   string   `header:"Idempotency-Key"`
+}
+
+type UpdateRetentionPolicyReq struct {
+	KnowledgeBaseId  string `path:"knowledge_base_id"`
+	KeepLatest       int64  `json:"keep_latest"`
+	MinimumAgeDays   int64  `json:"minimum_age_days"`
+	ExpectedRevision int64  `json:"expected_revision"`
+	IdempotencyKey   string `header:"Idempotency-Key"`
 }
 
 type UploadDocumentReq struct {

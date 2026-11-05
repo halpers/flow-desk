@@ -15,6 +15,27 @@ type KnowledgeBaseWriteReq {
 type KnowledgeBaseReq {
     KnowledgeBaseId string `path:"knowledge_base_id"`
 }
+
+type RetentionPolicyData {
+    KnowledgeBaseId string `json:"knowledge_base_id"`
+    KeepLatest int64 `json:"keep_latest"`
+    MinimumAgeDays int64 `json:"minimum_age_days"`
+    Revision int64 `json:"revision"`
+}
+
+type RetentionPolicyResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data RetentionPolicyData `json:"data"`
+}
+
+type UpdateRetentionPolicyReq {
+    KnowledgeBaseId string `path:"knowledge_base_id"`
+    KeepLatest int64 `json:"keep_latest"`
+    MinimumAgeDays int64 `json:"minimum_age_days"`
+    ExpectedRevision int64 `json:"expected_revision"`
+    IdempotencyKey string `header:"Idempotency-Key"`
+}
 type KnowledgeAclReq {
     KnowledgeBaseId string `path:"knowledge_base_id"`
     ReadRoles []string `json:"read_roles"`
@@ -249,6 +270,7 @@ type RetentionItem {
     Reasons []string `json:"reasons"`
 }
 type RetentionPlan {
+    PolicyRevision int64 `json:"policy_revision"`
     DocumentId string `json:"document_id"`
     DocumentVersion int64 `json:"document_version"`
     KeepLatest int64 `json:"keep_latest"`
@@ -261,6 +283,7 @@ type RetentionResp {
     Data RetentionPlan `json:"data"`
 }
 type CleanupVersionReq {
+    ExpectedPolicyRevision int64 `json:"expected_policy_revision,optional,omitempty"`
     DocumentId string `path:"document_id"`
     VersionId string `path:"version_id"`
     ExpectedDocumentVersion int64 `json:"expected_document_version"`
@@ -303,6 +326,12 @@ type ArchiveCopyResp {
 
 @server(prefix: /api/v1 middleware: SessionAuth)
 service flowdesk-api {
+    @doc "GetRetentionPolicy | permission=knowledge:manage | auth=required"
+    @handler GetRetentionPolicy
+    get /knowledge-bases/:knowledge_base_id/retention-policy (KnowledgeBaseReq) returns (RetentionPolicyResp)
+    @doc "UpdateRetentionPolicy | permission=knowledge:manage | auth=required"
+    @handler UpdateRetentionPolicy
+    put /knowledge-bases/:knowledge_base_id/retention-policy (UpdateRetentionPolicyReq) returns (RetentionPolicyResp)
     @doc "ListArchiveCopies | permission=knowledge:manage | auth=required"
     @handler ListArchiveCopies
     get /documents/:document_id/versions/:version_id/archive-copies (VersionPagesReq) returns (ArchiveCopiesResp)

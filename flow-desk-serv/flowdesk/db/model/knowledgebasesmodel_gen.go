@@ -38,13 +38,16 @@ type (
 	}
 
 	KnowledgeBases struct {
-		Id          string         `db:"id"`
-		TenantId    string         `db:"tenant_id"`
-		Name        string         `db:"name"`
-		ReadRoles   string         `db:"read_roles"`
-		AclRevision int64          `db:"acl_revision"`
-		CreatedAt   time.Time      `db:"created_at"`
-		TeamId      sql.NullString `db:"team_id"`
+		Id                      string         `db:"id"`
+		TenantId                string         `db:"tenant_id"`
+		Name                    string         `db:"name"`
+		ReadRoles               string         `db:"read_roles"`
+		AclRevision             int64          `db:"acl_revision"`
+		CreatedAt               time.Time      `db:"created_at"`
+		TeamId                  sql.NullString `db:"team_id"`
+		RetentionKeepLatest     int64          `db:"retention_keep_latest"`
+		RetentionMinimumAgeDays int64          `db:"retention_minimum_age_days"`
+		RetentionRevision       int64          `db:"retention_revision"`
 	}
 )
 
@@ -90,14 +93,14 @@ func (m *defaultKnowledgeBasesModel) FindOneByTenantIdId(ctx context.Context, te
 }
 
 func (m *defaultKnowledgeBasesModel) Insert(ctx context.Context, data *KnowledgeBases) (sql.Result, error) {
-	query := fmt.Sprintf("insert into %s (%s) values ($1, $2, $3, $4, $5, $6)", m.table, knowledgeBasesRowsExpectAutoSet)
-	ret, err := m.conn.ExecCtx(ctx, query, data.Id, data.TenantId, data.Name, data.ReadRoles, data.AclRevision, data.TeamId)
+	query := fmt.Sprintf("insert into %s (%s) values ($1, $2, $3, $4, $5, $6, $7, $8, $9)", m.table, knowledgeBasesRowsExpectAutoSet)
+	ret, err := m.conn.ExecCtx(ctx, query, data.Id, data.TenantId, data.Name, data.ReadRoles, data.AclRevision, data.TeamId, data.RetentionKeepLatest, data.RetentionMinimumAgeDays, data.RetentionRevision)
 	return ret, err
 }
 
 func (m *defaultKnowledgeBasesModel) Update(ctx context.Context, newData *KnowledgeBases) error {
 	query := fmt.Sprintf("update %s set %s where id = $1", m.table, knowledgeBasesRowsWithPlaceHolder)
-	_, err := m.conn.ExecCtx(ctx, query, newData.Id, newData.TenantId, newData.Name, newData.ReadRoles, newData.AclRevision, newData.TeamId)
+	_, err := m.conn.ExecCtx(ctx, query, newData.Id, newData.TenantId, newData.Name, newData.ReadRoles, newData.AclRevision, newData.TeamId, newData.RetentionKeepLatest, newData.RetentionMinimumAgeDays, newData.RetentionRevision)
 	return err
 }
 

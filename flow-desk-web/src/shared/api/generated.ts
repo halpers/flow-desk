@@ -500,6 +500,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/knowledge-bases/{knowledge_base_id}/retention-policy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** GetRetentionPolicy | permission=knowledge:manage | auth=required */
+        get: operations["getRetentionPolicy"];
+        /** UpdateRetentionPolicy | permission=knowledge:manage | auth=required */
+        put: operations["updateRetentionPolicy"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/knowledge-bases/{knowledge_base_id}/team": {
         parameters: {
             query?: never;
@@ -2009,6 +2027,7 @@ export interface operations {
                             }[];
                             keep_latest: number;
                             minimum_age_days: number;
+                            policy_revision: number;
                         };
                         request_id?: string;
                     };
@@ -2257,6 +2276,7 @@ export interface operations {
                 "application/json": {
                     confirm: boolean;
                     expected_document_version: number;
+                    expected_policy_revision?: number;
                 };
             };
         };
@@ -2623,6 +2643,76 @@ export interface operations {
                             source_size: number;
                             source_storage: string;
                             text_page_count: number;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    getRetentionPolicy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                knowledge_base_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            keep_latest: number;
+                            knowledge_base_id: string;
+                            minimum_age_days: number;
+                            revision: number;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    updateRetentionPolicy: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                knowledge_base_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    expected_revision: number;
+                    keep_latest: number;
+                    minimum_age_days: number;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            keep_latest: number;
+                            knowledge_base_id: string;
+                            minimum_age_days: number;
+                            revision: number;
                         };
                         request_id?: string;
                     };

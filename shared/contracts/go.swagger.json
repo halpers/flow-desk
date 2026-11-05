@@ -2188,6 +2188,7 @@
                 "data": {
                   "type": "object",
                   "required": [
+                    "policy_revision",
                     "document_id",
                     "document_version",
                     "keep_latest",
@@ -2246,6 +2247,9 @@
                       "type": "integer"
                     },
                     "minimum_age_days": {
+                      "type": "integer"
+                    },
+                    "policy_revision": {
                       "type": "integer"
                     }
                   }
@@ -2894,6 +2898,9 @@
                   "type": "boolean"
                 },
                 "expected_document_version": {
+                  "type": "integer"
+                },
+                "expected_policy_revision": {
                   "type": "integer"
                 }
               }
@@ -3800,6 +3807,154 @@
                       "type": "string"
                     },
                     "text_page_count": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/knowledge-bases/{knowledge_base_id}/retention-policy": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "GetRetentionPolicy | permission=knowledge:manage | auth=required",
+        "operationId": "getRetentionPolicy",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "knowledge_base_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "knowledge_base_id",
+                    "keep_latest",
+                    "minimum_age_days",
+                    "revision"
+                  ],
+                  "properties": {
+                    "keep_latest": {
+                      "type": "integer"
+                    },
+                    "knowledge_base_id": {
+                      "type": "string"
+                    },
+                    "minimum_age_days": {
+                      "type": "integer"
+                    },
+                    "revision": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "UpdateRetentionPolicy | permission=knowledge:manage | auth=required",
+        "operationId": "updateRetentionPolicy",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "knowledge_base_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "Idempotency-Key",
+            "in": "header"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": [
+                "keep_latest",
+                "minimum_age_days",
+                "expected_revision"
+              ],
+              "properties": {
+                "expected_revision": {
+                  "type": "integer"
+                },
+                "keep_latest": {
+                  "type": "integer"
+                },
+                "minimum_age_days": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "knowledge_base_id",
+                    "keep_latest",
+                    "minimum_age_days",
+                    "revision"
+                  ],
+                  "properties": {
+                    "keep_latest": {
+                      "type": "integer"
+                    },
+                    "knowledge_base_id": {
+                      "type": "string"
+                    },
+                    "minimum_age_days": {
+                      "type": "integer"
+                    },
+                    "revision": {
                       "type": "integer"
                     }
                   }

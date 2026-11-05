@@ -185,6 +185,10 @@ YAML 的环境插值需显式启用并验证 go-zero 配置加载选项；文档
 - 实施后运行 gofmt、go test、go vet；依赖数据库的套件显式启用并隔离，报告实际执行结果。
 
 代码实现与验收顺序遵循 [质量与交付计划](../../../docs/quality-and-roadmap.md)。
+## M7.9 保留策略修订
+
+M7.9 的[知识库保留策略](../../../docs/m7-retention-policy.md)由 KnowledgeBasesModel 保存三个独立字段；新库 InsertTx 使用数据库默认策略，更新在知识库排他锁下复核当前 ACL/团队/会话并按策略修订 CAS，审计和幂等结果同事务保存。预览及版本清理持共享锁读取策略，旧预览拒绝，新字段零值省略保留旧请求摘要。已确认清理继续使用既有 outbox/Agent 协议，不跨写或重置索引。
+
 ## M7.8 原文件副本清理
 
 M7.8 的对象登记和清理见[归档副本清理](../../../docs/m7-source-cleanup.md)。SourceObjectsModel 在 ServiceContext 初始化，SQL 由模型负责；归档先登记带 epoch 的对象身份再上传。清理请求在当前授权、PG 原件完整性及代次校验下，同事务登记状态/审计/outbox；worker 在事务外执行受条件写保护的零字节替换，提交前验证租约。默认关闭，桶版本控制或兼容能力不满足时拒绝操作，不提供任意 key 删除接口。

@@ -19,6 +19,7 @@ import type { Models } from "../../shared/api/models";
 import { TeamScope } from "../teams/Teams";
 import { indexErrors, readKnowledgeFile } from "./files";
 import { ArchiveCopies } from "./ArchiveCopies";
+import { RetentionPolicy } from "./RetentionPolicy";
 
 type Document = Models["DocumentPage"]["items"][number];
 const roleOptions = [
@@ -369,6 +370,10 @@ function DocumentVersions({
           天。激活、引用、索引中及归档历史版本受保护。清理不删除引用和审计，也不会删除
           S3 对象。
         </p>
+        <p>
+          策略修订 {retention?.policy_revision}
+          ；规则变更后请刷新预览并重新确认。
+        </p>
         <Button
           disabled={busy}
           onClick={async () => {
@@ -423,7 +428,7 @@ function DocumentVersions({
           if (!cleanup || !retention || !cleanupConfirmed) return;
           setBusy(true);
           setError("");
-          const fingerprint = `${cleanup.version_id}:${retention.document_version}`;
+          const fingerprint = `${cleanup.version_id}:${retention.document_version}:${retention.policy_revision}`;
           let key = cleanupKeys.current.get(fingerprint);
           if (!key) {
             key = newId();
@@ -436,6 +441,7 @@ function DocumentVersions({
                 {
                   confirm: true,
                   expected_document_version: retention.document_version,
+                  expected_policy_revision: retention.policy_revision,
                 },
                 key,
               ),
@@ -693,6 +699,9 @@ export function Knowledge({ user }: { user: User }) {
               保存访问权限
             </Button>
           </Card>
+        )}
+        {admin && selected && (
+          <RetentionPolicy key={selected} baseId={selected} scope={scope} />
         )}
         {admin && selected && (
           <Card size="small" title="上传政策文档" style={{ marginTop: 16 }}>

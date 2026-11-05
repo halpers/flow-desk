@@ -227,6 +227,10 @@ M1 建立生成器、迁移脚本和模型表清单。迁移按依赖拆为 iden
 
 必须覆盖的数据库集成案例：跨租户外键拒绝、同会话并发发起、重复 action、并发确认/取消、回执提交后响应丢失、后续步骤失败回滚、旧文档索引回调乱序、旧 lease_generation 被拒。测试只使用隔离 schema/可丢弃数据库。
 
+## M7.9 按库保留策略
+
+M7.9 的 `2026110506_retention_policy.sql` 给 knowledge_bases 增加 retention_keep_latest（默认 3，1–100）、retention_minimum_age_days（默认 30，1–3650）、retention_revision（默认 1，正整数）。历史行/旧 INSERT 使用默认值。策略写入由知识库排他锁和 expected_revision CAS 保护，参数/修订/审计/幂等结果同事务提交；不改变 acl_revision。清理预览和提交持知识库共享锁，执行前验证 expected_policy_revision；已确认命令不因后续策略变更取消。旧清理请求省略字段时保留原摘要，仅在初始策略下可新建命令，已提交命令仍能重放。见[保留策略](m7-retention-policy.md)。
+
 ## M7.8 归档副本登记与清理
 
 后续 M7.8 的 `2026110505_source_objects.sql` 新增 Go 所有的 source_objects，按租户/版本保存对象身份、存储指纹、对象键、hash、大小、归档代次和 registered/cleanup_pending/retired 状态。存储指纹/对象键唯一，版本使用租户复合外键；旧 s3 行回填当前定位，迁移前已丢失定位的孤儿不自动登记。上传前登记意图，限制每版本最多 100 个未 retired 副本；列表优先展示未 retired 项，最多返回 101 条，历史元数据继续保留在数据库。
