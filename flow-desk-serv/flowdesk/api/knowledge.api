@@ -239,6 +239,7 @@ type ArchiveSourceReq {
 }
 
 type RetentionItem {
+
     VersionId string `json:"version_id"`
     Filename string `json:"filename"`
     CreatedAt string `json:"created_at"`
@@ -267,8 +268,47 @@ type CleanupVersionReq {
     IdempotencyKey string `header:"Idempotency-Key"`
 }
 
+type ArchiveCopyItem {
+    Id string `json:"id"`
+    SourceEpoch int64 `json:"source_epoch"`
+    SourceSize int64 `json:"source_size"`
+    Status string `json:"status"`
+    Eligible bool `json:"eligible"`
+    Reasons []string `json:"reasons"`
+}
+type ArchiveCopiesData {
+    VersionId string `json:"version_id"`
+    SourceEpoch int64 `json:"source_epoch"`
+    Enabled bool `json:"enabled"`
+    Items []ArchiveCopyItem `json:"items"`
+}
+type ArchiveCopiesResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data ArchiveCopiesData `json:"data"`
+}
+type CleanupArchiveCopyReq {
+    DocumentId string `path:"document_id"`
+    VersionId string `path:"version_id"`
+    ObjectId string `path:"object_id"`
+    ExpectedSourceEpoch int64 `json:"expected_source_epoch"`
+    Confirm bool `json:"confirm"`
+    IdempotencyKey string `header:"Idempotency-Key"`
+}
+type ArchiveCopyResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data ArchiveCopyItem `json:"data"`
+}
+
 @server(prefix: /api/v1 middleware: SessionAuth)
 service flowdesk-api {
+    @doc "ListArchiveCopies | permission=knowledge:manage | auth=required"
+    @handler ListArchiveCopies
+    get /documents/:document_id/versions/:version_id/archive-copies (VersionPagesReq) returns (ArchiveCopiesResp)
+    @doc "CleanupArchiveCopy | permission=knowledge:manage | auth=required"
+    @handler CleanupArchiveCopy
+    post /documents/:document_id/versions/:version_id/archive-copies/:object_id/cleanup (CleanupArchiveCopyReq) returns (ArchiveCopyResp)
     @doc "GetRetentionPlan | permission=knowledge:manage | auth=required"
     @handler GetRetentionPlan
     get /documents/:document_id/retention (DocumentReq) returns (RetentionResp)

@@ -3,6 +3,7 @@ package logic
 import (
 	"context"
 	"encoding/base64"
+	"fmt"
 	"testing"
 
 	"flowdesk/db/model"
@@ -87,7 +88,7 @@ func sourceFixture(t *testing.T) (*svc.ServiceContext, context.Context, context.
 	return s, admin, operator, row, claimed, store
 }
 func sourceKey(row *model.DocumentVersions) string {
-	return "knowledge/" + row.TenantId + "/" + row.Id + "/" + row.ContentHash + ".pdf"
+	return fmt.Sprintf("knowledge/%s/%s/%s/%d.pdf", row.TenantId, row.Id, row.ContentHash, row.SourceEpoch)
 }
 func sourceRequest(row *model.DocumentVersions) *types.VersionPagesReq {
 	return &types.VersionPagesReq{DocumentId: row.DocumentId, VersionId: row.Id}

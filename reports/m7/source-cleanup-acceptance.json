@@ -1,0 +1,23 @@
+{
+  "stage": "M7.8",
+  "environment": "disposable local mock with S3",
+  "created_at": "2026-11-05T06:37:24.488226+00:00",
+  "checks": [
+    {
+      "name": "current copy protected; restore integrity and source generation revalidated",
+      "passed": true
+    },
+    {
+      "name": "real S3 zero-byte marker read back; durable idempotent completion and database original preserved",
+      "passed": true
+    },
+    {
+      "name": "new archive generation uses an independent object and remains downloadable",
+      "passed": true
+    },
+    {
+      "name": "operator cannot preview, clean or replay privileged cleanup",
+      "passed": true
+    }
+  ]
+}

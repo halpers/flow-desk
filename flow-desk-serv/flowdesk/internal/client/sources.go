@@ -21,7 +21,7 @@ import (
 
 var ErrSourceMissing = errors.New("source missing")
 var ErrSourceUnavailable = errors.New("source unavailable")
-var sourceKeyPattern = regexp.MustCompile(`^knowledge/[0-9a-f-]{36}/[0-9a-f-]{36}/[0-9a-f]{64}\.pdf$`)
+var sourceKeyPattern = regexp.MustCompile(`^knowledge/[0-9a-f-]{36}/[0-9a-f-]{36}/[0-9a-f]{64}(\.pdf|/[0-9]{1,19}\.pdf)$`)
 var bucketPattern = regexp.MustCompile(`^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$`)
 
 type SourceStore interface {

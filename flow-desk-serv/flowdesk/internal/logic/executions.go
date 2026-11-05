@@ -440,7 +440,9 @@ func DispatchNext(ctx context.Context, s *svc.ServiceContext) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	if event.Topic == "knowledge.cleanup" {
+	if event.Topic == "knowledge.source_cleanup" {
+		err = CleanupSourceObject(ctx, s, event)
+	} else if event.Topic == "knowledge.cleanup" {
 		err = CleanupVersionIndex(ctx, s, event)
 	} else if event.Topic == "knowledge.archive" {
 		err = ArchiveOriginalSource(ctx, s, event)
@@ -454,6 +456,9 @@ func DispatchNext(ctx context.Context, s *svc.ServiceContext) (bool, error) {
 	if err != nil {
 		if event.Topic == "knowledge.archive" {
 			return true, s.OutboxEventsModel.UpdateRetry(ctx, event.Id, event.AttemptCount, "SOURCE_ARCHIVE_UNAVAILABLE")
+		}
+		if event.Topic == "knowledge.source_cleanup" {
+			return true, s.OutboxEventsModel.UpdateRetry(ctx, event.Id, event.AttemptCount, "SOURCE_CLEANUP_UNAVAILABLE")
 		}
 		if event.Topic == "knowledge.cleanup" {
 			return true, s.OutboxEventsModel.UpdateRetry(ctx, event.Id, event.AttemptCount, "KNOWLEDGE_CLEANUP_UNAVAILABLE")

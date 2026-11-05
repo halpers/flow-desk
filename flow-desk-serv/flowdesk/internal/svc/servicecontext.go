@@ -18,6 +18,7 @@ const loginRequestsPerSecond = 2
 const loginBurst = 10
 
 type ServiceContext struct {
+	SourceObjectsModel      model.SourceObjectsModel
 	RolesModel              model.RolesModel
 	UserRolesModel          model.UserRolesModel
 	SourceStore             client.SourceStore
@@ -72,6 +73,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		panic("invalid file store provider")
 	}
 	return &ServiceContext{
+		SourceObjectsModel:      model.NewSourceObjectsModel(conn),
 		RolesModel:              model.NewRolesModel(conn),
 		UserRolesModel:          model.NewUserRolesModel(conn),
 		SourceStore:             sourceStore,

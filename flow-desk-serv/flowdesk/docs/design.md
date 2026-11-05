@@ -185,6 +185,10 @@ YAML 的环境插值需显式启用并验证 go-zero 配置加载选项；文档
 - 实施后运行 gofmt、go test、go vet；依赖数据库的套件显式启用并隔离，报告实际执行结果。
 
 代码实现与验收顺序遵循 [质量与交付计划](../../../docs/quality-and-roadmap.md)。
+## M7.8 原文件副本清理
+
+M7.8 的对象登记和清理见[归档副本清理](../../../docs/m7-source-cleanup.md)。SourceObjectsModel 在 ServiceContext 初始化，SQL 由模型负责；归档先登记带 epoch 的对象身份再上传。清理请求在当前授权、PG 原件完整性及代次校验下，同事务登记状态/审计/outbox；worker 在事务外执行受条件写保护的零字节替换，提交前验证租约。默认关闭，桶版本控制或兼容能力不满足时拒绝操作，不提供任意 key 删除接口。
+
 ## M7.5 PDF 阅读方式与审核
 
 后续 M7.7 清理流程见[版本保留与清理](../../../docs/m7-retention.md)：文档排他锁串行化激活/上传/清理，事务内复核当前授权与保护条件，原子写入 cleanup_pending、审计及 knowledge.cleanup outbox。Agent 调用在事务外；索引删除确认且投递租约有效后，清除数据库原文并置 purged。失败持续退避重试，间隔上限 30 秒。归档历史版本不可清理。

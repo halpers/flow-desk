@@ -328,6 +328,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/documents/{document_id}/versions/{version_id}/archive-copies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** ListArchiveCopies | permission=knowledge:manage | auth=required */
+        get: operations["listArchiveCopies"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/documents/{document_id}/versions/{version_id}/archive-copies/{object_id}/cleanup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** CleanupArchiveCopy | permission=knowledge:manage | auth=required */
+        post: operations["cleanupArchiveCopy"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/documents/{document_id}/versions/{version_id}/cleanup": {
         parameters: {
             query?: never;
@@ -2118,6 +2152,87 @@ export interface operations {
                             source_size: number;
                             source_storage: string;
                             text_page_count: number;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    listArchiveCopies: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document_id: string;
+                version_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            enabled: boolean;
+                            items: {
+                                eligible: boolean;
+                                id: string;
+                                reasons: string[];
+                                source_epoch: number;
+                                source_size: number;
+                                status: string;
+                            }[];
+                            source_epoch: number;
+                            version_id: string;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    cleanupArchiveCopy: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                document_id: string;
+                version_id: string;
+                object_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    confirm: boolean;
+                    expected_source_epoch: number;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            eligible: boolean;
+                            id: string;
+                            reasons: string[];
+                            source_epoch: number;
+                            source_size: number;
+                            status: string;
                         };
                         request_id?: string;
                     };

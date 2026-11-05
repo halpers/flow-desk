@@ -2629,6 +2629,222 @@
         }
       }
     },
+    "/api/v1/documents/{document_id}/versions/{version_id}/archive-copies": {
+      "get": {
+        "summary": "ListArchiveCopies | permission=knowledge:manage | auth=required",
+        "operationId": "listArchiveCopies",
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "version_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "version_id",
+                        "source_epoch",
+                        "enabled",
+                        "items"
+                      ],
+                      "properties": {
+                        "enabled": {
+                          "type": "boolean"
+                        },
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "id",
+                              "source_epoch",
+                              "source_size",
+                              "status",
+                              "eligible",
+                              "reasons"
+                            ],
+                            "properties": {
+                              "eligible": {
+                                "type": "boolean"
+                              },
+                              "id": {
+                                "type": "string"
+                              },
+                              "reasons": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              },
+                              "source_epoch": {
+                                "type": "integer"
+                              },
+                              "source_size": {
+                                "type": "integer"
+                              },
+                              "status": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        },
+                        "source_epoch": {
+                          "type": "integer"
+                        },
+                        "version_id": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "request_id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/documents/{document_id}/versions/{version_id}/archive-copies/{object_id}/cleanup": {
+      "post": {
+        "summary": "CleanupArchiveCopy | permission=knowledge:manage | auth=required",
+        "operationId": "cleanupArchiveCopy",
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "version_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "object_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "expected_source_epoch",
+                  "confirm"
+                ],
+                "properties": {
+                  "confirm": {
+                    "type": "boolean"
+                  },
+                  "expected_source_epoch": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "id",
+                        "source_epoch",
+                        "source_size",
+                        "status",
+                        "eligible",
+                        "reasons"
+                      ],
+                      "properties": {
+                        "eligible": {
+                          "type": "boolean"
+                        },
+                        "id": {
+                          "type": "string"
+                        },
+                        "reasons": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "source_epoch": {
+                          "type": "integer"
+                        },
+                        "source_size": {
+                          "type": "integer"
+                        },
+                        "status": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "request_id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/documents/{document_id}/versions/{version_id}/cleanup": {
       "post": {
         "summary": "CleanupDocumentVersion | permission=knowledge:manage | auth=required",

@@ -69,6 +69,34 @@ type ApprovalsResp struct {
 	Data      ApprovalPage `json:"data"`
 }
 
+type ArchiveCopiesData struct {
+	VersionId   string            `json:"version_id"`
+	SourceEpoch int64             `json:"source_epoch"`
+	Enabled     bool              `json:"enabled"`
+	Items       []ArchiveCopyItem `json:"items"`
+}
+
+type ArchiveCopiesResp struct {
+	Code      string            `json:"code"`
+	RequestId string            `json:"request_id"`
+	Data      ArchiveCopiesData `json:"data"`
+}
+
+type ArchiveCopyItem struct {
+	Id          string   `json:"id"`
+	SourceEpoch int64    `json:"source_epoch"`
+	SourceSize  int64    `json:"source_size"`
+	Status      string   `json:"status"`
+	Eligible    bool     `json:"eligible"`
+	Reasons     []string `json:"reasons"`
+}
+
+type ArchiveCopyResp struct {
+	Code      string          `json:"code"`
+	RequestId string          `json:"request_id"`
+	Data      ArchiveCopyItem `json:"data"`
+}
+
 type ArchiveSourceReq struct {
 	DocumentId     string `path:"document_id"`
 	VersionId      string `path:"version_id"`
@@ -89,6 +117,15 @@ type CitationResp struct {
 	Code      string       `json:"code"`
 	RequestId string       `json:"request_id"`
 	Data      EvidenceData `json:"data"`
+}
+
+type CleanupArchiveCopyReq struct {
+	DocumentId          string `path:"document_id"`
+	VersionId           string `path:"version_id"`
+	ObjectId            string `path:"object_id"`
+	ExpectedSourceEpoch int64  `json:"expected_source_epoch"`
+	Confirm             bool   `json:"confirm"`
+	IdempotencyKey      string `header:"Idempotency-Key"`
 }
 
 type CleanupVersionReq struct {

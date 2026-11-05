@@ -227,6 +227,12 @@ M1 建立生成器、迁移脚本和模型表清单。迁移按依赖拆为 iden
 
 必须覆盖的数据库集成案例：跨租户外键拒绝、同会话并发发起、重复 action、并发确认/取消、回执提交后响应丢失、后续步骤失败回滚、旧文档索引回调乱序、旧 lease_generation 被拒。测试只使用隔离 schema/可丢弃数据库。
 
+## M7.8 归档副本登记与清理
+
+后续 M7.8 的 `2026110505_source_objects.sql` 新增 Go 所有的 source_objects，按租户/版本保存对象身份、存储指纹、对象键、hash、大小、归档代次和 registered/cleanup_pending/retired 状态。存储指纹/对象键唯一，版本使用租户复合外键；旧 s3 行回填当前定位，迁移前已丢失定位的孤儿不自动登记。上传前登记意图，限制每版本最多 100 个未 retired 副本；列表优先展示未 retired 项，最多返回 101 条，历史元数据继续保留在数据库。
+
+恢复递增 source_epoch，新归档键包含代次。确认清理时版本/对象锁下原子保存状态、审计和 knowledge.source_cleanup outbox；条件写零字节对象墓碑在事务外，提交退休状态前复核当前定位及有效投递租约。此流程保留数据库原件，M7.7 的归档历史保护仍适用。完整协议见[归档副本清理](m7-source-cleanup.md)。
+
 ## M7.7 版本清理状态
 
 Go 迁移 2026110504_knowledge_retention.sql 为 document_versions 增加 cleanup_state（retained/cleanup_pending/purged），仅 purged 可清空正文、原始字节及页文本，保留原 source_size、hash 和版本身份；引用和 outbox 新增版本过滤索引。Python knowledge_tombstones 永久绑定 version/tenant/job/hash，同事务清理语义向量、语义 manifest、词法片段及基础 manifest，保留无正文 job。两服务不跨写，协议见[版本保留与清理](m7-retention.md)。

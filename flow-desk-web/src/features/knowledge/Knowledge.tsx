@@ -18,6 +18,7 @@ import { newId } from "../../shared/id";
 import type { Models } from "../../shared/api/models";
 import { TeamScope } from "../teams/Teams";
 import { indexErrors, readKnowledgeFile } from "./files";
+import { ArchiveCopies } from "./ArchiveCopies";
 
 type Document = Models["DocumentPage"]["items"][number];
 const roleOptions = [
@@ -199,6 +200,14 @@ function DocumentVersions({
           >
             下载原文件
           </Button>
+          {version.source_format === "pdf" &&
+            version.cleanup_state === "retained" && (
+              <ArchiveCopies
+                documentId={document.id}
+                versionId={version.id}
+                scope={scope}
+              />
+            )}
           {version.source_format === "pdf" &&
             version.cleanup_state === "retained" && (
               <Button

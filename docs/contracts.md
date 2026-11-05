@@ -2,6 +2,8 @@
 
 M7.7 的保留规则、两阶段清理和索引墓碑协议见[知识版本清理](m7-retention.md)。
 
+M7.8 的归档对象登记、恢复后副本清理及存储墓碑见[归档副本清理](m7-source-cleanup.md)。
+
 版本：v0.1；本文保留完整目标行为契约。M1–M4 的实际交付范围分别见 [实施记录](progress.md)、[M2](m2-read-tasks.md)、[M3](m3-rag.md) 和 [M4](m4-actions.md)；机器契约在 shared/contracts。以 .api/FastAPI 源及实施记录判定当前可用范围，不能将本文全部示例当成已上线接口。
 
 ## 1. 通用约定

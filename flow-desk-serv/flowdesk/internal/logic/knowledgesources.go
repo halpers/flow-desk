@@ -180,7 +180,26 @@ func ArchiveOriginalSource(ctx context.Context, s *svc.ServiceContext, event *mo
 	if err != nil {
 		return err
 	}
-	key := "knowledge/" + row.TenantId + "/" + row.Id + "/" + row.ContentHash + ".pdf"
+	key := fmt.Sprintf("knowledge/%s/%s/%s/%d.pdf", row.TenantId, row.Id, row.ContentHash, row.SourceEpoch)
+	err = s.Conn.TransactCtx(ctx, func(ctx context.Context, tx sqlx.Session) error {
+		current, err := s.DocumentVersionsModel.FindOneByJobIdForUpdateTx(ctx, tx, row.JobId)
+		if err != nil {
+			return err
+		}
+		if _, err = s.OutboxEventsModel.FindOneOwnedForUpdateTx(ctx, tx, event.Id, event.AttemptCount); err != nil {
+			return err
+		}
+		if current.SourceEpoch != payload.Epoch || current.SourceStorage != "postgres" {
+			return failure(409, "SOURCE_CHANGED", "原文件状态已变化")
+		}
+		if err = requireRetained(current); err != nil {
+			return err
+		}
+		return registerSourceObjectTx(ctx, s, tx, current, s.SourceStore.ID(), key)
+	})
+	if err != nil {
+		return err
+	}
 	stored, err := s.SourceStore.Read(ctx, key, maxPDFBytes)
 	if errors.Is(err, client.ErrSourceMissing) {
 		if err = s.SourceStore.PutIfAbsent(ctx, key, raw); err != nil {
