@@ -344,6 +344,55 @@ type CleanupVersionReq {
     IdempotencyKey string `header:"Idempotency-Key"`
 }
 
+type SourceCopyHistoryReq {
+    DocumentId string `path:"document_id"`
+    VersionId string `path:"version_id"`
+    Cursor string `form:"cursor,optional"`
+    Limit int64 `form:"limit,optional"`
+}
+type SourceCopyHistoryItem {
+    Id string `json:"id"`
+    SourceEpoch int64 `json:"source_epoch"`
+    SourceSize int64 `json:"source_size"`
+    Status string `json:"status"`
+    CreatedAt string `json:"created_at"`
+    RetiredAt string `json:"retired_at"`
+    MetadataArchived bool `json:"metadata_archived"`
+    ArchivedAt string `json:"archived_at"`
+    CanArchive bool `json:"can_archive"`
+    ArchiveBlockReason string `json:"archive_block_reason"`
+}
+type SourceCopyHistoryPage {
+    VersionId string `json:"version_id"`
+    SourceEpoch int64 `json:"source_epoch"`
+    Items []SourceCopyHistoryItem `json:"items"`
+    HasMore bool `json:"has_more"`
+    NextCursor string `json:"next_cursor"`
+}
+type SourceCopyHistoryResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data SourceCopyHistoryPage `json:"data"`
+}
+type ArchiveSourceMetadataReq {
+    DocumentId string `path:"document_id"`
+    VersionId string `path:"version_id"`
+    ObjectId string `path:"object_id"`
+    ExpectedSourceEpoch int64 `json:"expected_source_epoch"`
+    Confirm bool `json:"confirm"`
+    IdempotencyKey string `header:"Idempotency-Key"`
+}
+type SourceMetadataArchiveData {
+    ObjectId string `json:"object_id"`
+    VersionId string `json:"version_id"`
+    ArchivedAt string `json:"archived_at"`
+}
+type SourceMetadataArchiveResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data SourceMetadataArchiveData `json:"data"`
+}
+
 type ArchiveCopyItem {
     Id string `json:"id"`
     SourceEpoch int64 `json:"source_epoch"`
@@ -488,6 +537,12 @@ service flowdesk-api {
     @doc "UpdateRetentionPolicy | permission=knowledge:manage | auth=required"
     @handler UpdateRetentionPolicy
     put /knowledge-bases/:knowledge_base_id/retention-policy (UpdateRetentionPolicyReq) returns (RetentionPolicyResp)
+    @doc "ListSourceCopyHistory | permission=knowledge:manage | auth=required"
+    @handler ListSourceCopyHistory
+    get /documents/:document_id/versions/:version_id/archive-copies/history (SourceCopyHistoryReq) returns (SourceCopyHistoryResp)
+    @doc "ArchiveSourceMetadata | permission=knowledge:manage | auth=required"
+    @handler ArchiveSourceMetadata
+    post /documents/:document_id/versions/:version_id/archive-copies/:object_id/archive-metadata (ArchiveSourceMetadataReq) returns (SourceMetadataArchiveResp)
     @doc "ListArchiveCopies | permission=knowledge:manage | auth=required"
     @handler ListArchiveCopies
     get /documents/:document_id/versions/:version_id/archive-copies (VersionPagesReq) returns (ArchiveCopiesResp)

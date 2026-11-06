@@ -14,62 +14,6 @@ import (
 
 func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 	server.AddRoutes(
-		[]rest.Route{
-			{
-				// Liveness | permission=- | auth=public
-				Method:  http.MethodGet,
-				Path:    "/health/live",
-				Handler: LiveHandler(serverCtx),
-			},
-			{
-				// Readiness | permission=- | auth=public
-				Method:  http.MethodGet,
-				Path:    "/health/ready",
-				Handler: ReadyHandler(serverCtx),
-			},
-		},
-	)
-
-	server.AddRoutes(
-		[]rest.Route{
-			{
-				// Login | permission=- | auth=public
-				Method:  http.MethodPost,
-				Path:    "/login",
-				Handler: LoginHandler(serverCtx),
-			},
-			{
-				// Logout | permission=- | auth=refresh_cookie
-				Method:  http.MethodPost,
-				Path:    "/logout",
-				Handler: LogoutHandler(serverCtx),
-			},
-			{
-				// Refresh | permission=- | auth=refresh_cookie
-				Method:  http.MethodPost,
-				Path:    "/refresh",
-				Handler: RefreshHandler(serverCtx),
-			},
-		},
-		rest.WithPrefix("/api/v1/auth"),
-	)
-
-	server.AddRoutes(
-		rest.WithMiddlewares(
-			[]rest.Middleware{serverCtx.SessionAuth},
-			[]rest.Route{
-				{
-					// Current user | permission=- | auth=required
-					Method:  http.MethodGet,
-					Path:    "/me",
-					Handler: MeHandler(serverCtx),
-				},
-			}...,
-		),
-		rest.WithPrefix("/api/v1/auth"),
-	)
-
-	server.AddRoutes(
 		rest.WithMiddlewares(
 			[]rest.Middleware{serverCtx.SessionAuth},
 			[]rest.Route{
@@ -256,10 +200,22 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 					Handler: ListArchiveCopiesHandler(serverCtx),
 				},
 				{
+					// ArchiveSourceMetadata | permission=knowledge:manage | auth=required
+					Method:  http.MethodPost,
+					Path:    "/documents/:document_id/versions/:version_id/archive-copies/:object_id/archive-metadata",
+					Handler: ArchiveSourceMetadataHandler(serverCtx),
+				},
+				{
 					// CleanupArchiveCopy | permission=knowledge:manage | auth=required
 					Method:  http.MethodPost,
 					Path:    "/documents/:document_id/versions/:version_id/archive-copies/:object_id/cleanup",
 					Handler: CleanupArchiveCopyHandler(serverCtx),
+				},
+				{
+					// ListSourceCopyHistory | permission=knowledge:manage | auth=required
+					Method:  http.MethodGet,
+					Path:    "/documents/:document_id/versions/:version_id/archive-copies/history",
+					Handler: ListSourceCopyHistoryHandler(serverCtx),
 				},
 				{
 					// ArchiveVersionMetadata | permission=knowledge:manage | auth=required
@@ -603,5 +559,61 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 			}...,
 		),
 		rest.WithPrefix("/api/v1"),
+	)
+
+	server.AddRoutes(
+		[]rest.Route{
+			{
+				// Liveness | permission=- | auth=public
+				Method:  http.MethodGet,
+				Path:    "/health/live",
+				Handler: LiveHandler(serverCtx),
+			},
+			{
+				// Readiness | permission=- | auth=public
+				Method:  http.MethodGet,
+				Path:    "/health/ready",
+				Handler: ReadyHandler(serverCtx),
+			},
+		},
+	)
+
+	server.AddRoutes(
+		[]rest.Route{
+			{
+				// Login | permission=- | auth=public
+				Method:  http.MethodPost,
+				Path:    "/login",
+				Handler: LoginHandler(serverCtx),
+			},
+			{
+				// Logout | permission=- | auth=refresh_cookie
+				Method:  http.MethodPost,
+				Path:    "/logout",
+				Handler: LogoutHandler(serverCtx),
+			},
+			{
+				// Refresh | permission=- | auth=refresh_cookie
+				Method:  http.MethodPost,
+				Path:    "/refresh",
+				Handler: RefreshHandler(serverCtx),
+			},
+		},
+		rest.WithPrefix("/api/v1/auth"),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.SessionAuth},
+			[]rest.Route{
+				{
+					// Current user | permission=- | auth=required
+					Method:  http.MethodGet,
+					Path:    "/me",
+					Handler: MeHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithPrefix("/api/v1/auth"),
 	)
 }

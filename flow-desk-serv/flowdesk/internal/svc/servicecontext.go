@@ -20,6 +20,7 @@ const loginBurst = 10
 type ServiceContext struct {
 	VersionMetadataArchivesModel model.VersionMetadataArchivesModel
 	SourceObjectsModel           model.SourceObjectsModel
+	SourceObjectArchivesModel    model.SourceObjectArchivesModel
 	RolesModel                   model.RolesModel
 	UserRolesModel               model.UserRolesModel
 	SourceStore                  client.SourceStore
@@ -76,6 +77,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	return &ServiceContext{
 		VersionMetadataArchivesModel: model.NewVersionMetadataArchivesModel(conn),
 		SourceObjectsModel:           model.NewSourceObjectsModel(conn),
+		SourceObjectArchivesModel:    model.NewSourceObjectArchivesModel(conn),
 		RolesModel:                   model.NewRolesModel(conn),
 		UserRolesModel:               model.NewUserRolesModel(conn),
 		SourceStore:                  sourceStore,

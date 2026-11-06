@@ -105,6 +105,15 @@ type ArchiveMetadataReq struct {
 	IdempotencyKey          string `header:"Idempotency-Key"`
 }
 
+type ArchiveSourceMetadataReq struct {
+	DocumentId          string `path:"document_id"`
+	VersionId           string `path:"version_id"`
+	ObjectId            string `path:"object_id"`
+	ExpectedSourceEpoch int64  `json:"expected_source_epoch"`
+	Confirm             bool   `json:"confirm"`
+	IdempotencyKey      string `header:"Idempotency-Key"`
+}
+
 type ArchiveSourceReq struct {
 	DocumentId     string `path:"document_id"`
 	VersionId      string `path:"version_id"`
@@ -848,6 +857,40 @@ type SourceAdoptionResp struct {
 	Data      SourceAdoptionData `json:"data"`
 }
 
+type SourceCopyHistoryItem struct {
+	Id                 string `json:"id"`
+	SourceEpoch        int64  `json:"source_epoch"`
+	SourceSize         int64  `json:"source_size"`
+	Status             string `json:"status"`
+	CreatedAt          string `json:"created_at"`
+	RetiredAt          string `json:"retired_at"`
+	MetadataArchived   bool   `json:"metadata_archived"`
+	ArchivedAt         string `json:"archived_at"`
+	CanArchive         bool   `json:"can_archive"`
+	ArchiveBlockReason string `json:"archive_block_reason"`
+}
+
+type SourceCopyHistoryPage struct {
+	VersionId   string                  `json:"version_id"`
+	SourceEpoch int64                   `json:"source_epoch"`
+	Items       []SourceCopyHistoryItem `json:"items"`
+	HasMore     bool                    `json:"has_more"`
+	NextCursor  string                  `json:"next_cursor"`
+}
+
+type SourceCopyHistoryReq struct {
+	DocumentId string `path:"document_id"`
+	VersionId  string `path:"version_id"`
+	Cursor     string `form:"cursor,optional"`
+	Limit      int64  `form:"limit,optional"`
+}
+
+type SourceCopyHistoryResp struct {
+	Code      string                `json:"code"`
+	RequestId string                `json:"request_id"`
+	Data      SourceCopyHistoryPage `json:"data"`
+}
+
 type SourceInventoryItem struct {
 	AdoptionEligible bool   `json:"adoption_eligible"`
 	AdoptionReason   string `json:"adoption_reason"`
@@ -885,6 +928,18 @@ type SourceInventoryResp struct {
 	Code      string              `json:"code"`
 	RequestId string              `json:"request_id"`
 	Data      SourceInventoryPage `json:"data"`
+}
+
+type SourceMetadataArchiveData struct {
+	ObjectId   string `json:"object_id"`
+	VersionId  string `json:"version_id"`
+	ArchivedAt string `json:"archived_at"`
+}
+
+type SourceMetadataArchiveResp struct {
+	Code      string                    `json:"code"`
+	RequestId string                    `json:"request_id"`
+	Data      SourceMetadataArchiveData `json:"data"`
 }
 
 type SubmitInputReq struct {

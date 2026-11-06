@@ -362,6 +362,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/documents/{document_id}/versions/{version_id}/archive-copies/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** ListSourceCopyHistory | permission=knowledge:manage | auth=required */
+        get: operations["listSourceCopyHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/documents/{document_id}/versions/{version_id}/archive-copies/{object_id}/archive-metadata": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** ArchiveSourceMetadata | permission=knowledge:manage | auth=required */
+        post: operations["archiveSourceMetadata"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/documents/{document_id}/versions/{version_id}/archive-copies/{object_id}/cleanup": {
         parameters: {
             query?: never;
@@ -1213,6 +1247,14 @@ export interface components {
                     assignee_user_id?: string;
                     expected_version: number;
                     status?: string;
+                };
+            };
+        };
+        archiveSourceMetadataBody: {
+            content: {
+                "application/json": {
+                    confirm: boolean;
+                    expected_source_epoch: number;
                 };
             };
         };
@@ -2353,6 +2395,85 @@ export interface operations {
             };
         };
     };
+    listSourceCopyHistory: {
+        parameters: {
+            query?: {
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                document_id: string;
+                version_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            has_more: boolean;
+                            items: {
+                                archive_block_reason: string;
+                                archived_at: string;
+                                can_archive: boolean;
+                                created_at: string;
+                                id: string;
+                                metadata_archived: boolean;
+                                retired_at: string;
+                                source_epoch: number;
+                                source_size: number;
+                                status: string;
+                            }[];
+                            next_cursor: string;
+                            source_epoch: number;
+                            version_id: string;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    archiveSourceMetadata: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                document_id: string;
+                version_id: string;
+                object_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: components["requestBodies"]["archiveSourceMetadataBody"];
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            archived_at: string;
+                            object_id: string;
+                            version_id: string;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
     cleanupArchiveCopy: {
         parameters: {
             query?: never;
@@ -2366,14 +2487,7 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": {
-                    confirm: boolean;
-                    expected_source_epoch: number;
-                };
-            };
-        };
+        requestBody: components["requestBodies"]["archiveSourceMetadataBody"];
         responses: {
             200: {
                 headers: {

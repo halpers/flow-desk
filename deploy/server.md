@@ -529,3 +529,39 @@ M7.13 在既有版本巡检之外，增加不依赖版本记录的当前租户�
 该功能仅提供逐页列表观察与当前数据库关联，不保存调查结论，不核验文件内容/清理标记，不证明未列出的原件丢失；分页期间对象可能变化。自动认领/修复、物理删除对象名、供应商历史版本及租户身份未知目录仍待后续。停用时将独立开关改回 false，按原方式重建 API，既有版本巡检可保留；若所有巡检均停用可收回 ListBucket。没有新增对象或数据库迁移需要撤销，既有防重放记录和标记继续保留。
 
 独立合成测试、实际结果及复跑步骤见[租户巡检设计](../docs/m7-tenant-source-inventory.md)和[存储手册](source-storage.md#租户范围对象巡检)。未在真实服务器或任意供应商环境验证，服务器业务库不得运行合成验收脚本。
+
+
+## 24. 完整副本历史与退休登记归档
+
+M7.14 新增迁移 2026110601_source_object_archives.sql。保持同一 SHA 的 API/Agent/Web；IP:端口和域名入口都可使用，不增加服务、端口、环境开关或 S3 权限。完整历史读取及手工归档均要求当前 knowledge:manage 和目标库权限，普通 operator 不开放。归档仅移动 PostgreSQL 退休登记，不删除存储标记，不承诺数据库总磁盘缩小。
+
+1. 按第 11 节备份整库及对象，记录当前 SHA、迁移状态及备份位置。数据库备份必须包含 source_objects、source_object_archives、document_versions、api_idempotency、outbox_events 和 audit_events，不能按“历史”排除新表。对象备份仍包含零字节防重写标记。
+2. 按第 10 节原有发布方式使用同一 SHA 配套镜像；迁移任务自动应用新表和索引，检查迁移成功、API readiness 和登录。保留既有清理/巡检开关值。开启历史登记归档无需额外存储权限或开关。
+3. 管理员进入“知识库”→目标 PDF→“归档副本清理”→“完整副本历史”。已精简的 PDF 版本可从“完整版本历史”对应项进入。检查副本 ID、批次、原大小和时间，逐页查看；日常清理预览最多 101 条，完整历史可继续翻页。
+4. 要归档旧登记，先按第 18 节独立完成副本字节清理，等清理任务 delivered。仅 retired、退休时间完整、早于当前代次、非当前原件定位、无未完成清理投递的记录可归档。点击“归档此副本登记”，核对备份后勾选并确认。不要手改状态、代次或投递以解锁按钮。
+5. 成功后记录页面副本 ID 和归档时间；完整历史显示“登记已归档”，日常清理列表移除该行。巡检仍将其识别为已登记的退休副本，旧清理/登记回执在当前授权下继续恢复。列表观察不等于内容验证，原件完整性需独立下载并校验。
+
+| 现象 | 操作 |
+| --- | --- |
+| SOURCE_METADATA_ARCHIVE_PROTECTED（409） | 刷新资格，核对退休时间、当前代次及清理 outbox；已归档时不要用新键重复提交 |
+| SOURCE_CHANGED（409） | 恢复/重新归档改变代次，刷新后重新核对；已提交的原键同参数回放仍返回原回执 |
+| IDEMPOTENCY_CONFLICT（409） | 原键绑定的正文已不同；丢失响应须在原确认框重试，不修改原代次或改用新键猜测结果 |
+| 400 | 刷新第一页，不跨用户/文档/版本复用游标，limit 为 1–50 |
+| 401/403/404 或入口不可用 | 检查当前会话、管理权限、库 ACL、团队及资源身份；失败不应显示缓存历史 |
+| 网络失败或 5xx | 在原确认框使用同键同正文重试；保留请求 ID，检查数据库及日志，不直接补写历史表 |
+
+获授权运维可在维护窗口通过 owner 连接执行以下只读查询。overlap_count、pending_archived_cleanup_count 应为 0；异常时保留一致备份和请求 ID 交由研发排查，禁止删除任一表记录或零字节标记：
+
+```sql
+SELECT count(*) AS hot_registration_count FROM business.source_objects;
+SELECT count(*) AS archived_registration_count FROM business.source_object_archives;
+SELECT count(*) AS overlap_count FROM business.source_objects h
+ JOIN business.source_object_archives a ON h.id=a.id OR (h.store_id=a.store_id AND h.object_key=a.object_key);
+SELECT count(*) AS pending_archived_cleanup_count FROM business.source_object_archives a
+ JOIN business.outbox_events e ON e.tenant_id=a.tenant_id AND e.payload->>'object_id'=a.id::text
+ WHERE e.topic='knowledge.source_cleanup' AND e.status<>'delivered';
+```
+
+回退前在维护窗口停止 Web/API/Agent 并等待请求/worker 退出，保留一致备份，查询 archived_registration_count。为 0 时可按既有章节条件回退，保留新表与迁移记录，不执行 Down；已有历史行时，旧 API 不能识别完整登记，必须保留支持联合读取的版本，或将整套数据库和对象一致恢复到升级前备份。禁止只恢复热表、把归档行复制回去、只切换旧 API/Web、TRUNCATE 新表或移除永久存储标记。停写及恢复方式继续遵守第 11、17–23 节。
+
+自动批量归档、物理对象名回收、供应商历史版本及消息/审计/回执/checkpoint 生命周期尚未实现。独立验收脚本不得在服务器执行；本地证据与复跑见[副本历史设计](../docs/m7-source-history.md)。

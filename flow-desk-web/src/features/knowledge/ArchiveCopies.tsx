@@ -4,6 +4,7 @@ import { Alert, Button, Checkbox, Drawer, Empty, Modal } from "antd";
 import { api } from "../../shared/api/client";
 import type { Models } from "../../shared/api/models";
 import { newId } from "../../shared/id";
+import { SourceCopyHistory } from "./SourceCopyHistory";
 
 type Copy = Models["ArchiveCopiesData"]["items"][number];
 const reasons: Record<string, string> = {
@@ -74,6 +75,12 @@ export function ArchiveCopies({
         >
           刷新归档副本
         </Button>
+        <SourceCopyHistory
+          documentId={documentId}
+          versionId={versionId}
+          scope={scope}
+          onArchived={() => copies.refetch()}
+        />
         {(copies.error || error) && (
           <Alert
             type="error"

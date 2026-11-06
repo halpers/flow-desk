@@ -13,6 +13,7 @@ import {
 import { api } from "../../shared/api/client";
 import type { Models } from "../../shared/api/models";
 import { newId } from "../../shared/id";
+import { SourceCopyHistory } from "./SourceCopyHistory";
 
 const reasons: Record<string, string> = {
   already_archived: "元数据已归档",
@@ -136,6 +137,14 @@ export function VersionHistory({
                 提取方式：{item.parser_version || "未记录"} · OCR：
                 {item.ocr_mode} · 阅读方式：{item.pdf_layout}
               </p>
+              {item.source_format === "pdf" && (
+                <SourceCopyHistory
+                  documentId={documentId}
+                  versionId={item.id}
+                  scope={scope}
+                  onArchived={onArchived}
+                />
+              )}
               {item.error_code && <p>索引错误：{item.error_code}</p>}
               {item.archived_at && <p>归档时间：{item.archived_at}</p>}
               <p>

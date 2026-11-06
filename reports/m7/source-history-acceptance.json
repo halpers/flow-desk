@@ -1,0 +1,26 @@
+{
+  "stage": "M7.14",
+  "environment": "disposable local mock with real S3-compatible storage",
+  "created_at": "2026-11-06T02:49:32.295157+00:00",
+  "history_rows": 109,
+  "pages": 6,
+  "paging_only_synthetic_rows": 107,
+  "checks": [
+    {
+      "name": "atomic hot-to-history move preserves every original identity field and immutable receipt; stale/new/conflicting attempts rejected",
+      "passed": true
+    },
+    {
+      "name": "real S3 retirement markers remain zero bytes and registered after archive; old cleanup receipts replay and database original matches SHA256",
+      "passed": true
+    },
+    {
+      "name": "109 registrations page continuously across hot/history with timestamp ties; daily preview remains bounded; cursor/limit errors rejected",
+      "passed": true
+    },
+    {
+      "name": "ordinary operator cannot view privileged history or replay archive receipt",
+      "passed": true
+    }
+  ]
+}

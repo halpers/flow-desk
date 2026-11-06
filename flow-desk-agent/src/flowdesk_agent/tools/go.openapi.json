@@ -2888,6 +2888,221 @@
         }
       }
     },
+    "/api/v1/documents/{document_id}/versions/{version_id}/archive-copies/history": {
+      "get": {
+        "summary": "ListSourceCopyHistory | permission=knowledge:manage | auth=required",
+        "operationId": "listSourceCopyHistory",
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "version_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "allowEmptyValue": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "allowEmptyValue": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "version_id",
+                        "source_epoch",
+                        "items",
+                        "has_more",
+                        "next_cursor"
+                      ],
+                      "properties": {
+                        "has_more": {
+                          "type": "boolean"
+                        },
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "id",
+                              "source_epoch",
+                              "source_size",
+                              "status",
+                              "created_at",
+                              "retired_at",
+                              "metadata_archived",
+                              "archived_at",
+                              "can_archive",
+                              "archive_block_reason"
+                            ],
+                            "properties": {
+                              "archive_block_reason": {
+                                "type": "string"
+                              },
+                              "archived_at": {
+                                "type": "string"
+                              },
+                              "can_archive": {
+                                "type": "boolean"
+                              },
+                              "created_at": {
+                                "type": "string"
+                              },
+                              "id": {
+                                "type": "string"
+                              },
+                              "metadata_archived": {
+                                "type": "boolean"
+                              },
+                              "retired_at": {
+                                "type": "string"
+                              },
+                              "source_epoch": {
+                                "type": "integer"
+                              },
+                              "source_size": {
+                                "type": "integer"
+                              },
+                              "status": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        },
+                        "next_cursor": {
+                          "type": "string"
+                        },
+                        "source_epoch": {
+                          "type": "integer"
+                        },
+                        "version_id": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "request_id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/documents/{document_id}/versions/{version_id}/archive-copies/{object_id}/archive-metadata": {
+      "post": {
+        "summary": "ArchiveSourceMetadata | permission=knowledge:manage | auth=required",
+        "operationId": "archiveSourceMetadata",
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "version_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "object_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/archiveSourceMetadataBody"
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "object_id",
+                        "version_id",
+                        "archived_at"
+                      ],
+                      "properties": {
+                        "archived_at": {
+                          "type": "string"
+                        },
+                        "object_id": {
+                          "type": "string"
+                        },
+                        "version_id": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "request_id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/documents/{document_id}/versions/{version_id}/archive-copies/{object_id}/cleanup": {
       "post": {
         "summary": "CleanupArchiveCopy | permission=knowledge:manage | auth=required",
@@ -2926,26 +3141,7 @@
           }
         ],
         "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "expected_source_epoch",
-                  "confirm"
-                ],
-                "properties": {
-                  "confirm": {
-                    "type": "boolean"
-                  },
-                  "expected_source_epoch": {
-                    "type": "integer"
-                  }
-                }
-              }
-            }
-          },
-          "required": true
+          "$ref": "#/components/requestBodies/archiveSourceMetadataBody"
         },
         "responses": {
           "200": {
@@ -9000,6 +9196,28 @@
                 },
                 "status": {
                   "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "required": true
+      },
+      "archiveSourceMetadataBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "required": [
+                "expected_source_epoch",
+                "confirm"
+              ],
+              "properties": {
+                "confirm": {
+                  "type": "boolean"
+                },
+                "expected_source_epoch": {
+                  "type": "integer"
                 }
               }
             }

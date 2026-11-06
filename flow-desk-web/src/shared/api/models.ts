@@ -8,6 +8,12 @@ type JsonResponse<T> = T extends {
 type Data<T> =
   JsonResponse<T> extends { data?: infer Body } ? NonNullable<Body> : never;
 export type Models = {
+  SourceCopyHistoryPage: Data<
+    paths["/api/v1/documents/{document_id}/versions/{version_id}/archive-copies/history"]["get"]
+  >;
+  SourceMetadataArchiveData: Data<
+    paths["/api/v1/documents/{document_id}/versions/{version_id}/archive-copies/{object_id}/archive-metadata"]["post"]
+  >;
   TenantSourceInventoryPage: Data<paths["/api/v1/source-inventory"]["get"]>;
   SourceInventoryPage: Data<
     paths["/api/v1/documents/{document_id}/versions/{version_id}/source-inventory"]["get"]

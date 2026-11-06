@@ -84,7 +84,7 @@ SELECT status, count(*) FROM business.outbox_events WHERE topic='knowledge.archi
 
 ## 一致性备份与恢复
 
-启用 S3 后，PostgreSQL dump 仅含原件定位，已归档字节不在 dump 中。每套备份需保存数据库（包括 source_objects 和 outbox）、对象/对象版本及零字节标记、endpoint/region/bucket、存储凭据恢复渠道、源码/镜像 SHA 和备份时间。包含所有当前引用键与防重写标记；备份及凭据须加密存到独立受控位置。M7.8 人工清理会替换旧副本，必须用一致时间点的完整备份恢复，不能只恢复数据库或把旧 PDF 覆盖到 retired 标记上。
+启用 S3 后，PostgreSQL dump 仅含原件定位，已归档字节不在 dump 中。每套备份需保存数据库（包括 source_objects、source_object_archives 和 outbox）、对象/对象版本及零字节标记、endpoint/region/bucket、存储凭据恢复渠道、源码/镜像 SHA 和备份时间。包含所有当前引用键与防重写标记；备份及凭据须加密存到独立受控位置。M7.8 人工清理会替换旧副本，必须用一致时间点的完整备份恢复，不能只恢复数据库或把旧 PDF 覆盖到 retired 标记上。
 
 外部托管 S3：安排停写窗口，停止 Web/API/Agent，等容器完全停止后执行[数据库备份](server.md)及供应商原生桶快照/版本备份，再恢复同一发布配置。数据库与对象备份必须同属这个窗口，不能只备份新上传部分。恢复到新环境时先恢复完整对象及数据库，保持相同 endpoint/region/bucket（或先在原配置下恢复至数据库后迁移），核对原件 hash、审计/回执/检查点，再启动 worker；禁止让旧、新两个环境同时接收业务写入。
 
@@ -147,3 +147,8 @@ install -m 600 .env work/tenant-source-inventory.env
 CGO_ENABLED=0 go -C flow-desk-serv/flowdesk test -c -o "$PWD/work/source-store.test" ./internal/client
 python scripts/check-tenant-source-inventory.py --env-file work/tenant-source-inventory.env --output work/tenant-source-inventory.json
 ```
+
+
+## 完整副本历史与登记归档
+
+M7.14 的 source_object_archives 保存退休登记完整身份，和热表联合用于巡检、旧回执与登记防重。归档不调用存储、不清除防重写标记、不新增存储权限。完整副本历史可分页查看已归档登记；当前对象或清理投递未完成时禁止归档。迁移、确认操作、只读核对和旧 API 回退限制见[服务器手册 §24](server.md#24-完整副本历史与退休登记归档)。整库及对象备份必须保留新历史表和零字节标记；不能只恢复热表或把旧字节覆盖到标记上。

@@ -1,5 +1,7 @@
 # Go 业务服务详细设计
 
+M7.14 sourcehistory 用例通过 SourceObjectsModel 查询热/历史投影，SourceObjectArchivesModel 保留完整登记身份。归档、热行删除、审计和回执使用同一事务；不调用外部存储。生成器的基础 Insert 会省略 created_at，因此自定义 InsertTx 显式写入原始创建时间，保持分页位置；原生成文件不手改。所有登记写者在版本锁下检查两表，旧 cleanup/adoption 回执保持当前授权。详见[副本历史](../../../docs/m7-source-history.md)。
+
 M7.13 tenantsourceinventory 增加内置租户管理员的只读对象发现。ListTenantObjects 的固定前缀仅来自当前可信 tenant，复用原有有界 S3 列举协议。document_versions 使用不含原文的身份投影，source_objects 按租户/存储/当前页 keys 查询；已知文档继续锁定并检查库 ACL/团队。外部 I/O 前后验证当前身份，后置资源检查和页面审计同事务。无新数据库迁移、业务写入或 Python 接口，详见[租户巡检](../../../docs/m7-tenant-source-inventory.md)。
 
 M7.12 sourceadoption 用例复用现有登记模型和幂等事务。巡检为当前有资格的标准旧副本签发与分页游标不同作用域的 AES-GCM 选择凭证。首次幂等事务可直接返回已提交回执；新请求复核后以内部准备信号回滚，退出所有数据库锁再读取 S3；最终幂等事务重新复核并提交登记/审计/回执。事务内无外部 I/O，成功重放不再读 S3，仍校验当前知识库权限与登记身份。新登记要求 FILE_STORE_ADOPTION_ENABLED 和 FILE_STORE_INVENTORY_ENABLED，独立于清理；详情见[人工登记](../../../docs/m7-source-adoption.md)。

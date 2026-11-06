@@ -24,8 +24,18 @@ test("PDF text preview, physical page citations, rejection and withdrawal", asyn
     ),
     page.getByRole("button", { name: "新建知识库", exact: true }).click(),
   ]);
-  await page.getByLabel("选择知识库").click();
-  await page.getByText(base, { exact: true }).last().click();
+  const baseSelect = page.getByLabel("选择知识库");
+  await baseSelect.click();
+  // The select virtualizes long lists; keyboard navigation renders each option.
+  const baseOption = page.getByText(base, { exact: true }).last();
+  for (
+    let position = 0;
+    position < 51 && !(await baseOption.isVisible());
+    position++
+  ) {
+    await baseSelect.press("ArrowDown");
+  }
+  await baseOption.click();
   const title = "PDF专属保修政策" + Date.now();
   const fixtures = path.resolve("../flow-desk-agent/tests/fixtures");
   await page.getByLabel("文档标题").fill(title);
