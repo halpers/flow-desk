@@ -65,4 +65,10 @@
 flow-desk-agent/.venv/Scripts/python.exe scripts/check-investigation-history-batch.py --env-file work/disposable/.env --inventory-fixture work/disposable-archive-fixture.json --output work/disposable-batch.json --browser-fixture work/disposable-batch-fixture.json
 ```
 
+CI连续验收的登录共享既有限流额度，单项/批量归档验收对明确的429 RATE_LIMITED执行最多6次登录尝试，按Retry-After进行0.5–2秒有界等待；不重试其他状态或网络失败，不改服务端限流。已在Linux容器主动触发真实429后连续执行两项验收，均4/4；6项独立恢复/边界测试通过，可运行：
+
+```powershell
+flow-desk-agent/.venv/Scripts/python.exe -m unittest discover -s scripts/tests -v
+```
+
 这是模板；实际执行使用work/m720-local/.env。本阶段独立提交，main/PR检查、v* tag才发布GHCR及阿里云镜像；没有新增跨调查批次、定时任务或物理清理。
