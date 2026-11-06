@@ -817,6 +817,16 @@ type RunsPageReq struct {
 	Limit  int64  `form:"limit,default=20,range=[1:50]"`
 }
 
+type SaveSourceInvestigationReq struct {
+	ObjectRef        string `path:"object_ref"`
+	SelectionToken   string `json:"selection_token,optional"`
+	ExpectedRevision int64  `json:"expected_revision"`
+	Status           string `json:"status"`
+	Note             string `json:"note"`
+	Confirm          bool   `json:"confirm"`
+	IdempotencyKey   string `header:"Idempotency-Key"`
+}
+
 type ScopeVersion struct {
 	VersionId       string `json:"version_id"`
 	DocumentId      string `json:"document_id"`
@@ -930,6 +940,26 @@ type SourceInventoryResp struct {
 	Data      SourceInventoryPage `json:"data"`
 }
 
+type SourceInvestigationData struct {
+	ObjectRef       string   `json:"object_ref"`
+	Revision        int64    `json:"revision"`
+	Status          string   `json:"status"`
+	Note            string   `json:"note"`
+	UpdatedBy       string   `json:"updated_by"`
+	UpdatedAt       string   `json:"updated_at"`
+	AllowedStatuses []string `json:"allowed_statuses"`
+}
+
+type SourceInvestigationReq struct {
+	ObjectRef string `path:"object_ref"`
+}
+
+type SourceInvestigationResp struct {
+	Code      string                  `json:"code"`
+	RequestId string                  `json:"request_id"`
+	Data      SourceInvestigationData `json:"data"`
+}
+
 type SourceMetadataArchiveData struct {
 	ObjectId   string `json:"object_id"`
 	VersionId  string `json:"version_id"`
@@ -1002,17 +1032,18 @@ type TeamsResp struct {
 }
 
 type TenantSourceInventoryItem struct {
-	ObjectRef        string `json:"object_ref"`
-	KeyKind          string `json:"key_kind"`
-	SourceEpoch      int64  `json:"source_epoch"`
-	Size             int64  `json:"size"`
-	ModifiedAt       string `json:"modified_at"`
-	Association      string `json:"association"`
-	Reconciliation   string `json:"reconciliation"`
-	DocumentId       string `json:"document_id"`
-	VersionId        string `json:"version_id"`
-	RegisteredId     string `json:"registered_id"`
-	RegisteredStatus string `json:"registered_status"`
+	InvestigationToken string `json:"investigation_token"`
+	ObjectRef          string `json:"object_ref"`
+	KeyKind            string `json:"key_kind"`
+	SourceEpoch        int64  `json:"source_epoch"`
+	Size               int64  `json:"size"`
+	ModifiedAt         string `json:"modified_at"`
+	Association        string `json:"association"`
+	Reconciliation     string `json:"reconciliation"`
+	DocumentId         string `json:"document_id"`
+	VersionId          string `json:"version_id"`
+	RegisteredId       string `json:"registered_id"`
+	RegisteredStatus   string `json:"registered_status"`
 }
 
 type TenantSourceInventoryPage struct {

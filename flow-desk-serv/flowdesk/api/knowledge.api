@@ -411,7 +411,35 @@ type TenantSourceInventoryReq {
     Cursor string `form:"cursor,optional"`
     Limit int64 `form:"limit,optional"`
 }
+type SourceInvestigationReq {
+    ObjectRef string `path:"object_ref"`
+}
+type SaveSourceInvestigationReq {
+    ObjectRef string `path:"object_ref"`
+    SelectionToken string `json:"selection_token,optional"`
+    ExpectedRevision int64 `json:"expected_revision"`
+    Status string `json:"status"`
+    Note string `json:"note"`
+    Confirm bool `json:"confirm"`
+    IdempotencyKey string `header:"Idempotency-Key"`
+}
+type SourceInvestigationData {
+    ObjectRef string `json:"object_ref"`
+    Revision int64 `json:"revision"`
+    Status string `json:"status"`
+    Note string `json:"note"`
+    UpdatedBy string `json:"updated_by"`
+    UpdatedAt string `json:"updated_at"`
+    AllowedStatuses []string `json:"allowed_statuses"`
+}
+type SourceInvestigationResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data SourceInvestigationData `json:"data"`
+}
+
 type TenantSourceInventoryItem {
+    InvestigationToken string `json:"investigation_token"`
     ObjectRef string `json:"object_ref"`
     KeyKind string `json:"key_kind"`
     SourceEpoch int64 `json:"source_epoch"`
@@ -516,6 +544,12 @@ type ArchiveCopyResp {
 
 @server(prefix: /api/v1 middleware: SessionAuth)
 service flowdesk-api {
+    @doc "GetSourceInvestigation | permission=knowledge:manage | auth=required | role=admin"
+    @handler GetSourceInvestigation
+    get /source-investigations/:object_ref (SourceInvestigationReq) returns (SourceInvestigationResp)
+    @doc "SaveSourceInvestigation | permission=knowledge:manage | auth=required | role=admin"
+    @handler SaveSourceInvestigation
+    put /source-investigations/:object_ref (SaveSourceInvestigationReq) returns (SourceInvestigationResp)
     @doc "GetTenantSourceInventory | permission=knowledge:manage | auth=required | role=admin"
     @handler GetTenantSourceInventory
     get /source-inventory (TenantSourceInventoryReq) returns (TenantSourceInventoryResp)

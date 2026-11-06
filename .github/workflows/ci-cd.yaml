@@ -154,9 +154,11 @@ jobs:
       - name: Check confirmed historical copy verification and registration
         run: python scripts/check-source-adoption.py --env-file work/source-cleanup-ci.env --output work/source-adoption-ci.json
       - name: Check tenant object discovery and unknown-version reconciliation
-        run: python scripts/check-tenant-source-inventory.py --env-file work/source-cleanup-ci.env --output work/tenant-source-inventory-ci.json
+        run: python scripts/check-tenant-source-inventory.py --env-file work/source-cleanup-ci.env --output work/tenant-source-inventory-ci.json --browser-fixture work/tenant-source-inventory-ci-fixture.json
       - name: Check full archive-copy history and retired registration archival
         run: python scripts/check-source-history.py --env-file work/source-cleanup-ci.env --output work/source-history-ci.json
+      - name: Check manual source investigation revisions and authorized receipt recovery
+        run: python scripts/check-source-investigations.py --env-file work/source-cleanup-ci.env --inventory-fixture work/tenant-source-inventory-ci-fixture.json --output work/source-investigations-ci.json
       - name: Validate local monitoring and TLS configuration
         run: |
           python scripts/configure-monitoring.py

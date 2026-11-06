@@ -1,0 +1,23 @@
+{
+  "stage": "M7.15",
+  "environment": "disposable local mock with S3",
+  "created_at": "2026-11-06T04:28:05.869836+00:00",
+  "checks": [
+    {
+      "name": "unknown tenant object requires scoped inventory selection; confirmed create and lost-response replay have one revision",
+      "passed": true
+    },
+    {
+      "name": "immutable old receipt survives later revision; stale edits, changed-key body, missing/mismatched selection, unconfirmed write and operator access rejected",
+      "passed": true
+    },
+    {
+      "name": "known-version current ACL applies to reads, new revisions and original receipt replay; fixture ACL restored",
+      "passed": true
+    },
+    {
+      "name": "two records, three atomic audits and receipts; private locators/notes absent from audit, source registration and original PDF unchanged",
+      "passed": true
+    }
+  ]
+}

@@ -21,6 +21,7 @@ type ServiceContext struct {
 	VersionMetadataArchivesModel model.VersionMetadataArchivesModel
 	SourceObjectsModel           model.SourceObjectsModel
 	SourceObjectArchivesModel    model.SourceObjectArchivesModel
+	SourceInvestigationsModel    model.SourceInvestigationsModel
 	RolesModel                   model.RolesModel
 	UserRolesModel               model.UserRolesModel
 	SourceStore                  client.SourceStore
@@ -78,6 +79,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		VersionMetadataArchivesModel: model.NewVersionMetadataArchivesModel(conn),
 		SourceObjectsModel:           model.NewSourceObjectsModel(conn),
 		SourceObjectArchivesModel:    model.NewSourceObjectArchivesModel(conn),
+		SourceInvestigationsModel:    model.NewSourceInvestigationsModel(conn),
 		RolesModel:                   model.NewRolesModel(conn),
 		UserRolesModel:               model.NewUserRolesModel(conn),
 		SourceStore:                  sourceStore,

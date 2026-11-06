@@ -1,5 +1,7 @@
 # 接口与跨服务契约
 
+M7.15 增加 GET/PUT /api/v1/source-investigations/:object_ref，仅当前内置租户管理员且有 knowledge:manage 可用。GET 无记录返回 revision=0 的空草稿；已有记录返回当前 status/note/revision/updated_by/updated_at/allowed_statuses。首次 PUT 需巡检给出的 investigation_token（AES-GCM、用户/租户/存储独立作用域、15 分钟）、expected_revision=0、confirm=true、status、note 和 Idempotency-Key；后续按当前修订保存，不依赖存储在线或原选择凭证。status 为 open/investigating/closed，note 去首尾空白后 1–2000 字符。每次读写/重放按私有定位提示重新检查当前已知版本 ACL/团队；名称不是可信归属。记录、脱敏审计和回执同事务，旧修订 409 INVESTIGATION_CHANGED，同键变参 409 IDEMPOTENCY_CONFLICT，选择凭证过期 410 INVENTORY_CURSOR_EXPIRED；参数错误 400。存储 key/存储身份不返回，调查不核验内容、不授予登记或删除权。详见[调查记录设计](m7-source-investigations.md)。
+
 M7.14 增加 `GET /api/v1/documents/:document_id/versions/:version_id/archive-copies/history`，默认 20/最大 50，按 created_at/id 降序，覆盖热登记和独立归档表。每项返回 id/source_epoch/source_size/status/created_at/retired_at/metadata_archived/archived_at/can_archive/archive_block_reason，页面包含当前 source_epoch、items/has_more/next_cursor；不返回存储定位。`POST /api/v1/documents/:document_id/versions/:version_id/archive-copies/:object_id/archive-metadata` 要求 Idempotency-Key、confirm=true 和 expected_source_epoch。只归档已 retired、存在退休时间、早于当前代次、非当前对象且清理投递已 delivered 的记录；保留原始登记身份/定位/hash/时间到独立 source_object_archives，和热行移除、审计及回执同事务完成。200 返回 object_id/version_id/archived_at，409 SOURCE_METADATA_ARCHIVE_PROTECTED 或 SOURCE_CHANGED 表示保护/修订冲突，400 参数或游标错误。读取/重放均复核当前会话、knowledge:manage、库 ACL/团队。旧回执、登记查重和存储巡检通过兼容模型读取归档身份；存储标记保留，无外部对象写入。详见[副本历史归档](m7-source-history.md)。
 
 M7.13 新增 `GET /api/v1/source-inventory?limit=20&cursor=...`，仅当前内置租户管理员可读，前缀来自可信租户身份。data 含 observed_at/content_verified=false/scanned_count/items/has_more/next_cursor，items 含 object_ref/key_kind/source_epoch/size/modified_at/association/reconciliation/document_id/version_id/registered_id/registered_status。已知版本再检查知识库 ACL/团队；不可读项省略，页可能为空但仍有后页。未知版本及无法关联版本的非标准对象仅提供指纹等列表元数据，名称不能证明归属。默认 20、最大 50；加密游标绑定用户/租户/存储及 15 分钟期限；不接受任意桶、前缀或租户参数，不自动登记或修复。独立开关 FILE_STORE_TENANT_INVENTORY_ENABLED=false，且要求原巡检开关；未启用 409 TENANT_SOURCE_INVENTORY_DISABLED，游标错误 400/过期 410 INVENTORY_CURSOR_EXPIRED，存储失败 503 SOURCE_INVENTORY_UNAVAILABLE。每页成功写 knowledge.tenant_source_inventory 只读审计，响应 no-store；前后复核当前身份，不返回原始定位。详见[租户巡检](m7-tenant-source-inventory.md)。
@@ -366,3 +368,11 @@ POST 同一前缀的 `/archive` 返回 202，`/restore-source` 返回 200；均�
 ## M7.6 账号与角色管理
 
 机器源为 api/accounts.api。/admin/users 支持有界游标列表与创建；PUT /admin/users/:user_id 同时更新名称/启停/多角色，POST 其 reset-password 子路由重置密码；写需 Idempotency-Key，更新需 expected_revision。/admin/roles 返回内置/自定义角色和增量权限目录，POST 创建自定义角色，PUT /admin/roles/:role_id 修改/禁用自定义角色。内置角色只读，自定义权限从目录取并集，账号至少一个内置基础角色。管理读取与重放复核当前授权；版本冲突 409、内置/自身保护及最后管理员保护 409、重复账号名 409，不暴露另一租户的账号信息。账号响应不含凭据，密码 12–72 UTF-8 字节且至少一个字母和数字；HTTP 登录仍兼容历史密码。详见[设计](m7-accounts.md)。
+
+## M7.15 巡检调查 HTTP 契约
+
+GET /api/v1/source-investigations/:object_ref 与 PUT 同路径，当前内置 admin + knowledge:manage；已知版本复用当前知识库 ACL/团队策略（管理员按既有规则可访问全租户团队）。响应 no-store，数据为 object_ref/revision/status/note/updated_by/updated_at/allowed_statuses。无记录的 GET 返回 revision=0、空说明，不能据此创建任意指纹。
+
+PUT 必须有 Idempotency-Key，正文 expected_revision、status、note、confirm=true；首次额外提供租户巡检项 investigation_token 作为 selection_token。令牌15分钟、绑定当前用户/租户/存储/对象，与分页及登记凭证隔离；要求两个巡检开关。既有记录更新可省略令牌且不依赖 S3/巡检开关。note 去除首尾空白后1–2000个Unicode字符，允许换行/制表，不允许其他控制字符。状态为 open/investigating/closed，仅代表跟进进度。保存行、审计与不可变回执同事务，无下游副作用/outbox。
+
+修订不符为 INVESTIGATION_CHANGED（409），同键变参 IDEMPOTENCY_CONFLICT（409）；首次令牌到期 INVENTORY_CURSOR_EXPIRED（410），首次巡检未启用 TENANT_SOURCE_INVENTORY_DISABLED（409），无存储配置 SOURCE_UNAVAILABLE（503），无效说明/状态/凭证400。授权遵守既有401/403/404隐藏规则。已有原请求在30天幂等有效期内同键重放返回原修订，继续复核当前资源权限，后来恢复的版本身份同样受 ACL 约束。不得据调查状态授权登记或删除，详情见[设计与验收](m7-source-investigations.md)。

@@ -14,6 +14,62 @@ import (
 
 func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 	server.AddRoutes(
+		[]rest.Route{
+			{
+				// Liveness | permission=- | auth=public
+				Method:  http.MethodGet,
+				Path:    "/health/live",
+				Handler: LiveHandler(serverCtx),
+			},
+			{
+				// Readiness | permission=- | auth=public
+				Method:  http.MethodGet,
+				Path:    "/health/ready",
+				Handler: ReadyHandler(serverCtx),
+			},
+		},
+	)
+
+	server.AddRoutes(
+		[]rest.Route{
+			{
+				// Login | permission=- | auth=public
+				Method:  http.MethodPost,
+				Path:    "/login",
+				Handler: LoginHandler(serverCtx),
+			},
+			{
+				// Logout | permission=- | auth=refresh_cookie
+				Method:  http.MethodPost,
+				Path:    "/logout",
+				Handler: LogoutHandler(serverCtx),
+			},
+			{
+				// Refresh | permission=- | auth=refresh_cookie
+				Method:  http.MethodPost,
+				Path:    "/refresh",
+				Handler: RefreshHandler(serverCtx),
+			},
+		},
+		rest.WithPrefix("/api/v1/auth"),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.SessionAuth},
+			[]rest.Route{
+				{
+					// Current user | permission=- | auth=required
+					Method:  http.MethodGet,
+					Path:    "/me",
+					Handler: MeHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithPrefix("/api/v1/auth"),
+	)
+
+	server.AddRoutes(
 		rest.WithMiddlewares(
 			[]rest.Middleware{serverCtx.SessionAuth},
 			[]rest.Route{
@@ -313,6 +369,18 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 					Path:    "/source-inventory",
 					Handler: GetTenantSourceInventoryHandler(serverCtx),
 				},
+				{
+					// GetSourceInvestigation | permission=knowledge:manage | auth=required | role=admin
+					Method:  http.MethodGet,
+					Path:    "/source-investigations/:object_ref",
+					Handler: GetSourceInvestigationHandler(serverCtx),
+				},
+				{
+					// SaveSourceInvestigation | permission=knowledge:manage | auth=required | role=admin
+					Method:  http.MethodPut,
+					Path:    "/source-investigations/:object_ref",
+					Handler: SaveSourceInvestigationHandler(serverCtx),
+				},
 			}...,
 		),
 		rest.WithPrefix("/api/v1"),
@@ -559,61 +627,5 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 			}...,
 		),
 		rest.WithPrefix("/api/v1"),
-	)
-
-	server.AddRoutes(
-		[]rest.Route{
-			{
-				// Liveness | permission=- | auth=public
-				Method:  http.MethodGet,
-				Path:    "/health/live",
-				Handler: LiveHandler(serverCtx),
-			},
-			{
-				// Readiness | permission=- | auth=public
-				Method:  http.MethodGet,
-				Path:    "/health/ready",
-				Handler: ReadyHandler(serverCtx),
-			},
-		},
-	)
-
-	server.AddRoutes(
-		[]rest.Route{
-			{
-				// Login | permission=- | auth=public
-				Method:  http.MethodPost,
-				Path:    "/login",
-				Handler: LoginHandler(serverCtx),
-			},
-			{
-				// Logout | permission=- | auth=refresh_cookie
-				Method:  http.MethodPost,
-				Path:    "/logout",
-				Handler: LogoutHandler(serverCtx),
-			},
-			{
-				// Refresh | permission=- | auth=refresh_cookie
-				Method:  http.MethodPost,
-				Path:    "/refresh",
-				Handler: RefreshHandler(serverCtx),
-			},
-		},
-		rest.WithPrefix("/api/v1/auth"),
-	)
-
-	server.AddRoutes(
-		rest.WithMiddlewares(
-			[]rest.Middleware{serverCtx.SessionAuth},
-			[]rest.Route{
-				{
-					// Current user | permission=- | auth=required
-					Method:  http.MethodGet,
-					Path:    "/me",
-					Handler: MeHandler(serverCtx),
-				},
-			}...,
-		),
-		rest.WithPrefix("/api/v1/auth"),
 	)
 }

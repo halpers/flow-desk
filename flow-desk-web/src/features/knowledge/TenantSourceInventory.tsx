@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Alert, Button, Drawer, Empty, Space, Tag } from "antd";
+import { Alert, Button, Drawer, Empty, Input, Space, Tag } from "antd";
 import { api } from "../../shared/api/client";
 import type { Models } from "../../shared/api/models";
+import { SourceInvestigation } from "./SourceInvestigation";
 import { SourceInventory } from "./SourceInventory";
 
 const associations: Record<string, string> = {
@@ -25,6 +26,11 @@ const reconciliation: Record<string, string> = {
 
 export function TenantSourceInventory({ scope }: { scope: string[] }) {
   const [open, setOpen] = useState(false);
+  const [lookup, setLookup] = useState("");
+  const [investigation, setInvestigation] = useState<{
+    ref: string;
+    token: string;
+  } | null>(null);
   const [cursors, setCursors] = useState([""]);
   const cursor = cursors[cursors.length - 1];
   const query = useQuery({
@@ -58,6 +64,20 @@ export function TenantSourceInventory({ scope }: { scope: string[] }) {
         <p>
           逐页核对当前租户的存储对象。对象名不能证明归属，未知项需人工核对。这里只观察列表元数据，不核验内容，也不能据此判断原件丢失或执行删除。
         </p>
+        <Space.Compact style={{ width: "100%", marginBottom: 16 }}>
+          <Input
+            aria-label="调查对象指纹"
+            placeholder="输入对象指纹，查询已有调查记录"
+            value={lookup}
+            onChange={(event) => setLookup(event.target.value.trim())}
+          />
+          <Button
+            disabled={!/^[0-9a-f]{64}$/.test(lookup)}
+            onClick={() => setInvestigation({ ref: lookup, token: "" })}
+          >
+            查询调查记录
+          </Button>
+        </Space.Compact>
         <Space>
           <Button
             disabled={query.isFetching}
@@ -122,6 +142,17 @@ export function TenantSourceInventory({ scope }: { scope: string[] }) {
                 <p>
                   {item.size} 字节 · {item.modified_at}
                 </p>
+                <Button
+                  size="small"
+                  onClick={() =>
+                    setInvestigation({
+                      ref: item.object_ref,
+                      token: item.investigation_token,
+                    })
+                  }
+                >
+                  调查记录
+                </Button>
                 {item.document_id && item.version_id && (
                   <>
                     <p>版本编号：{item.version_id}</p>
@@ -146,6 +177,14 @@ export function TenantSourceInventory({ scope }: { scope: string[] }) {
           </>
         )}
       </Drawer>
+      {investigation && (
+        <SourceInvestigation
+          key={investigation.ref + investigation.token}
+          objectRef={investigation.ref}
+          selectionToken={investigation.token}
+          onClose={() => setInvestigation(null)}
+        />
+      )}
     </>
   );
 }

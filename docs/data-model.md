@@ -1,5 +1,7 @@
 # 数据模型与一致性设计
 
+M7.15 迁移 2026110602 增加 Go 自有 source_investigations。tenant_id/object_ref 唯一；私有 store_id/object_key 与创建身份固定，最新说明和状态通过期望修订更新，同租户创建/更新人外键。单对象事务锁、审计和幂等回执保证不覆盖、不重复提交；没有下游动作或 outbox。每次用可信定位的版本线索核对当前资源授权，身份线索不证明归属。调查、回执、审计和用户身份须纳入同一数据库备份；无自动删除或永久编辑历史，见[调查设计](m7-source-investigations.md)。
+
 M7.14 迁移 2026110601 增加 Go 自有 source_object_archives，保留退休登记的全部原字段并增加 archived_by/archived_at。归档事务先锁文档、授权、版本和对象，只移动非当前代次且清理投递已完成的 retired 行；插入历史表、删除热行、审计和回执原子提交。身份/定位查重、旧回执和存储巡检联合读两表，日常副本预览仅读热表。完整历史用不变 created_at/id 分页。两表和回执、审计须同一备份；不删除 S3 防重写标记，详见[完整副本历史](m7-source-history.md)。
 
 M7.12 无新迁移。手工登记复用 Go 自有 source_objects 与 api_idempotency/audit_events：按文档→ACL/团队→版本→对象登记锁序复核资格，原子插入旧副本登记、knowledge.source_adopt 审计和回执。读取 S3 前退出首个检查事务，完成有界大小/SHA256 核验后新事务重查，不保留跨请求锁或私有正文。副本 ID 沿用版本 namespace + 存储指纹/key 的确定性 UUID，唯一约束和当前版本锁防止重复效果；副本使用旧代次，数据库原件代次/内容/定位不变。回执在对象后来 retired 后仍保留，不能通过删除登记或回执撤销认领，见[登记设计](m7-source-adoption.md)。

@@ -1,5 +1,7 @@
 # Go 业务服务详细设计
 
+M7.15 SourceInvestigationsModel 通过隔离 schema/goctl 生成并在 ServiceContext 初始化；sourceinvestigations 用例统一复核内置管理员、会话和当前资源授权。首次使用租户巡检签发的独立加密选择凭证，后续按可信记录定位授权，可在暂停巡检后跟进。幂等键→身份/资源→对象事务锁后比较 expected_revision；说明、审计和回执同事务，无 S3 I/O 或 outbox。回执授权失败返回空数据，详见[巡检调查设计](../../../docs/m7-source-investigations.md)。
+
 M7.14 sourcehistory 用例通过 SourceObjectsModel 查询热/历史投影，SourceObjectArchivesModel 保留完整登记身份。归档、热行删除、审计和回执使用同一事务；不调用外部存储。生成器的基础 Insert 会省略 created_at，因此自定义 InsertTx 显式写入原始创建时间，保持分页位置；原生成文件不手改。所有登记写者在版本锁下检查两表，旧 cleanup/adoption 回执保持当前授权。详见[副本历史](../../../docs/m7-source-history.md)。
 
 M7.13 tenantsourceinventory 增加内置租户管理员的只读对象发现。ListTenantObjects 的固定前缀仅来自当前可信 tenant，复用原有有界 S3 列举协议。document_versions 使用不含原文的身份投影，source_objects 按租户/存储/当前页 keys 查询；已知文档继续锁定并检查库 ACL/团队。外部 I/O 前后验证当前身份，后置资源检查和页面审计同事务。无新数据库迁移、业务写入或 Python 接口，详见[租户巡检](../../../docs/m7-tenant-source-inventory.md)。

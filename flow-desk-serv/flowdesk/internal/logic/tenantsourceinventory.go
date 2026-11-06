@@ -187,6 +187,10 @@ func GetTenantSourceInventory(ctx context.Context, s *svc.ServiceContext, req *t
 					}
 				}
 			}
+			item.InvestigationToken, err = sealInventoryCursor(s.Config.JwtSecret, investigationScope(fresh, store), inventoryPosition{After: object.Key, Expires: time.Now().Add(sourceInventoryCursorLifetime).Unix()})
+			if err != nil {
+				return err
+			}
 			result.Items = append(result.Items, item)
 		}
 		result.ScannedCount = int64(len(observed.Items))
