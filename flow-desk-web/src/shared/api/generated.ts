@@ -876,6 +876,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/source-investigations/{object_ref}/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** ListInvestigationHistory | permission=knowledge:manage | auth=required | role=admin */
+        get: operations["listInvestigationHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/team-users": {
         parameters: {
             query?: never;
@@ -3980,6 +3997,49 @@ export interface operations {
                             status: string;
                             updated_at: string;
                             updated_by: string;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    listInvestigationHistory: {
+        parameters: {
+            query?: {
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                object_ref: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            current_revision: number;
+                            first_recorded_revision: number;
+                            has_more: boolean;
+                            items: {
+                                changed_at: string;
+                                changed_by: string;
+                                is_baseline: boolean;
+                                note: string;
+                                revision: number;
+                                status: string;
+                            }[];
+                            next_cursor: string;
+                            object_ref: string;
+                            snapshot_revision: number;
                         };
                         request_id?: string;
                     };

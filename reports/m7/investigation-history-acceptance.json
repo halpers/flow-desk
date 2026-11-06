@@ -1,0 +1,23 @@
+{
+  "stage": "M7.17",
+  "environment": "disposable local mock with S3",
+  "created_at": "2026-11-06T06:38:52.792320+00:00",
+  "checks": [
+    {
+      "name": "113 actual saves paginate by immutable revision; a later save preserves the original upper bound; each snapshot retains note/status/actor/time",
+      "passed": true
+    },
+    {
+      "name": "refresh exposes the new revision; replay returns the original receipt and adds no snapshot; all 114 saves have exactly one history row",
+      "passed": true
+    },
+    {
+      "name": "invalid inputs, cross-object cursors, foreign tenants and ordinary users denied; known-resource ACL revocation blocks history and is restored",
+      "passed": true
+    },
+    {
+      "name": "history reads preserve snapshots and source ledger; successful pages audited exactly once without notes/tokens/locators, rejected reads unaudited",
+      "passed": true
+    }
+  ]
+}

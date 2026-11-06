@@ -1,5 +1,7 @@
 # 前端详细设计
 
+M7.17 SourceInvestigation 的已保存记录增加“查看编辑历史”，InvestigationHistory使用本地状态和AbortController，每次进入/翻页直读Go，不使用共享说明缓存。纯文本展示快照及基线/缺失范围/新修订提示；加载/错误清空旧数据，关闭销毁，保存后再次进入重新授权。默认20条，按服务端固定上界前后翻页，见[历史设计](../../docs/m7-investigation-history.md)。
+
 M7.16 知识库增加独立“调查工作台”，不依赖租户巡检请求或存储在线。InvestigationWorklist 的查询键包含身份、状态及游标，支持筛选/前后页/回首页刷新，使用取消信号、禁用自动重试，加载/失败不展示旧列表。状态选项来自 allowed_statuses；元数据不含说明。继续跟进单独授权读取说明，复用 SourceInvestigation 确认编辑器，成功后重取列表；分页按不变创建位置而非更新时间，见[工作台设计](../../docs/m7-investigation-worklist.md)。
 
 M7.15 租户巡检每项增加“调查记录”，抽屉同时提供指纹查询入口。SourceInvestigation 每次进入直接向 Go 请求当前记录，不跨身份缓存说明；状态选项来自生成契约和 allowed_statuses。保存确认固定说明/状态/修订和请求键，未确认响应保留原快照重试；冲突后可放弃草稿并重新读取，撤权/重读清空旧说明。普通文本展示不解释 HTML，见[调查设计](../../docs/m7-source-investigations.md)。

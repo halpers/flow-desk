@@ -12,6 +12,7 @@ import {
 import { api, ApiError } from "../../shared/api/client";
 import type { Models } from "../../shared/api/models";
 import { newId } from "../../shared/id";
+import { InvestigationHistory } from "./InvestigationHistory";
 
 type RecordData = Models["SourceInvestigationData"];
 const labels: Record<string, string> = {
@@ -51,6 +52,7 @@ export function SourceInvestigation({
   const [reload, setReload] = useState(0);
   const [pending, setPending] = useState<Pending | null>(null);
   const [confirmed, setConfirmed] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const path = `/source-investigations/${objectRef}`;
   useEffect(() => {
     const controller = new AbortController();
@@ -70,6 +72,7 @@ export function SourceInvestigation({
     return () => controller.abort();
   }, [path, reload]);
   function refresh() {
+    setHistoryOpen(false);
     setPending(null);
     setConfirmed(false);
     setData(null);
@@ -96,6 +99,7 @@ export function SourceInvestigation({
       setStatus(receipt.status);
       setPending(null);
       setConfirmed(false);
+      setHistoryOpen(false);
       onSaved?.();
     } catch (reason) {
       setError((reason as Error).message);
@@ -131,6 +135,20 @@ export function SourceInvestigation({
       <Button disabled={busy || loading} onClick={refresh}>
         重新读取调查记录
       </Button>
+      {data && data.revision > 0 && !loading && (
+        <Button
+          disabled={busy || !!pending}
+          onClick={() => setHistoryOpen(true)}
+        >
+          查看编辑历史
+        </Button>
+      )}
+      {historyOpen && data && (
+        <InvestigationHistory
+          objectRef={objectRef}
+          onClose={() => setHistoryOpen(false)}
+        />
+      )}
       {error && <Alert type="error" title={error} />}
       {loading && <p>正在读取调查记录…</p>}
       {!loading && data && (

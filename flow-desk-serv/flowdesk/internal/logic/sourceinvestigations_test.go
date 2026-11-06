@@ -34,6 +34,7 @@ func investigationCounts(t *testing.T, s *svc.ServiceContext, records, audits in
 		want  int64
 	}{
 		{"select count(*) from business.source_investigations", records},
+		{"select count(*) from business.source_investigation_revisions", audits},
 		{"select count(*) from business.audit_events where operation='knowledge.source_investigate'", audits},
 		{"select count(*) from business.api_idempotency where operation='knowledge.source_investigate'", audits},
 	} {
@@ -189,7 +190,7 @@ func TestSourceInvestigationSelectionScopesAndInputLimits(t *testing.T) {
 
 func TestSourceInvestigationAtomicInsertAndUpdateRollback(t *testing.T) {
 	for _, operation := range []string{"insert", "update"} {
-		for _, fault := range []string{"audit", "receipt"} {
+		for _, fault := range []string{"snapshot", "audit", "receipt"} {
 			t.Run(operation+"_"+fault, func(t *testing.T) {
 				s, admin, _, row, store := tenantInventoryFixture(t)
 				req := investigationRequest(t, s, admin, HashToken(store.ID()+"\n"+sourceKey(row)))
@@ -203,7 +204,12 @@ func TestSourceInvestigationAtomicInsertAndUpdateRollback(t *testing.T) {
 					req.Note = "new note must roll back"
 					req.IdempotencyKey = uuid.NewString()
 				}
-				if fault == "audit" {
+				if fault == "snapshot" {
+					if _, err := s.Conn.Exec(`alter table business.source_investigation_revisions add constraint synthetic_history_fault check(note<>'new note must roll back')`); err != nil {
+						t.Fatal(err)
+					}
+					req.Note = "new note must roll back"
+				} else if fault == "audit" {
 					s.AuditEventsModel = failingAccountAudit{s.AuditEventsModel}
 				} else {
 					s.ApiIdempotencyModel = failingAdoptionReceipt{s.ApiIdempotencyModel}

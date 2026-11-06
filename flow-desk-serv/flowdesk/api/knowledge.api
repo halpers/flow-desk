@@ -435,6 +435,33 @@ type SourceInvestigationListResp {
     RequestId string `json:"request_id"`
     Data SourceInvestigationListPage `json:"data"`
 }
+type InvestigationHistoryReq {
+    ObjectRef string `path:"object_ref"`
+    Cursor string `form:"cursor,optional"`
+    Limit int64 `form:"limit,optional"`
+}
+type InvestigationRevisionItem {
+    Revision int64 `json:"revision"`
+    Status string `json:"status"`
+    Note string `json:"note"`
+    ChangedBy string `json:"changed_by"`
+    ChangedAt string `json:"changed_at"`
+    IsBaseline bool `json:"is_baseline"`
+}
+type InvestigationHistoryPage {
+    ObjectRef string `json:"object_ref"`
+    CurrentRevision int64 `json:"current_revision"`
+    SnapshotRevision int64 `json:"snapshot_revision"`
+    FirstRecordedRevision int64 `json:"first_recorded_revision"`
+    Items []InvestigationRevisionItem `json:"items"`
+    HasMore bool `json:"has_more"`
+    NextCursor string `json:"next_cursor"`
+}
+type InvestigationHistoryResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data InvestigationHistoryPage `json:"data"`
+}
 type SourceInvestigationReq {
     ObjectRef string `path:"object_ref"`
 }
@@ -571,6 +598,9 @@ service flowdesk-api {
     @doc "ListSourceInvestigations | permission=knowledge:manage | auth=required | role=admin"
     @handler ListSourceInvestigations
     get /source-investigations (SourceInvestigationListReq) returns (SourceInvestigationListResp)
+    @doc "ListInvestigationHistory | permission=knowledge:manage | auth=required | role=admin"
+    @handler ListInvestigationHistory
+    get /source-investigations/:object_ref/history (InvestigationHistoryReq) returns (InvestigationHistoryResp)
     @doc "GetSourceInvestigation | permission=knowledge:manage | auth=required | role=admin"
     @handler GetSourceInvestigation
     get /source-investigations/:object_ref (SourceInvestigationReq) returns (SourceInvestigationResp)

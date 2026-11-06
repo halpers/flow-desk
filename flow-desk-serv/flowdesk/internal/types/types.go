@@ -372,6 +372,37 @@ type IndexSourceResp struct {
 	Data      IndexSourceData `json:"data"`
 }
 
+type InvestigationHistoryPage struct {
+	ObjectRef             string                      `json:"object_ref"`
+	CurrentRevision       int64                       `json:"current_revision"`
+	SnapshotRevision      int64                       `json:"snapshot_revision"`
+	FirstRecordedRevision int64                       `json:"first_recorded_revision"`
+	Items                 []InvestigationRevisionItem `json:"items"`
+	HasMore               bool                        `json:"has_more"`
+	NextCursor            string                      `json:"next_cursor"`
+}
+
+type InvestigationHistoryReq struct {
+	ObjectRef string `path:"object_ref"`
+	Cursor    string `form:"cursor,optional"`
+	Limit     int64  `form:"limit,optional"`
+}
+
+type InvestigationHistoryResp struct {
+	Code      string                   `json:"code"`
+	RequestId string                   `json:"request_id"`
+	Data      InvestigationHistoryPage `json:"data"`
+}
+
+type InvestigationRevisionItem struct {
+	Revision   int64  `json:"revision"`
+	Status     string `json:"status"`
+	Note       string `json:"note"`
+	ChangedBy  string `json:"changed_by"`
+	ChangedAt  string `json:"changed_at"`
+	IsBaseline bool   `json:"is_baseline"`
+}
+
 type KnowledgeAclReq struct {
 	KnowledgeBaseId  string   `path:"knowledge_base_id"`
 	ReadRoles        []string `json:"read_roles"`

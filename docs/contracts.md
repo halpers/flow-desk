@@ -1,5 +1,7 @@
 # 接口与跨服务契约
 
+M7.17 增加 GET /api/v1/source-investigations/:object_ref/history，默认20/最大50，按revision降序读取不可变说明/状态快照及操作人、时间。当前内置管理员、knowledge:manage、租户/会话和当前资源ACL每页复核；无存储依赖，返回no-store并记录脱敏读取审计。游标独立绑定用户/租户/调查及首次读取的修订上界，15分钟原期限保留；新修订刷新后查看。迁移只回填旧记录最新修订并标记is_baseline=true，更早未记录的内容无法补回；升级后每次成功保存由数据库触发器在同一事务写入快照，幂等重放不重复追加。详细设计见[调查编辑历史](m7-investigation-history.md)。
+
 M7.16 新增 `GET /api/v1/source-investigations?status=&limit=20&cursor=`，仅当前内置租户管理员且有 knowledge:manage 可用。status 为空表示全部，否则为 open/investigating/closed；默认20、最大50。data 为 items/has_more/next_cursor/allowed_statuses；每项只有 object_ref/revision/status/created_at/updated_by/updated_at，不读或返回说明/凭证/私有定位。按不变 created_at/id 降序逐项复核当前资源授权，隐藏项仍推进游标，空页可以有后页。独立 AES-GCM 游标绑定用户/租户/状态筛选及原15分钟期限；无效参数/篡改/跨作用域400，过期410 INVESTIGATION_CURSOR_EXPIRED须刷新首页，身份权限失败沿用401/403等。响应no-store，同一事务完成授权/最终身份复核/脱敏只读审计，审计失败整页失败，无S3/Python依赖。非快照列表，状态/权限变化需刷新；首次创建和保存仍沿用M7.15。详见[调查工作台](m7-investigation-worklist.md)。
 
 M7.15 增加 GET/PUT /api/v1/source-investigations/:object_ref，仅当前内置租户管理员且有 knowledge:manage 可用。GET 无记录返回 revision=0 的空草稿；已有记录返回当前 status/note/revision/updated_by/updated_at/allowed_statuses。首次 PUT 需巡检给出的 investigation_token（AES-GCM、用户/租户/存储独立作用域、15 分钟）、expected_revision=0、confirm=true、status、note 和 Idempotency-Key；后续按当前修订保存，不依赖存储在线或原选择凭证。status 为 open/investigating/closed，note 去首尾空白后 1–2000 字符。每次读写/重放按私有定位提示重新检查当前已知版本 ACL/团队；名称不是可信归属。记录、脱敏审计和回执同事务，旧修订 409 INVESTIGATION_CHANGED，同键变参 409 IDEMPOTENCY_CONFLICT，选择凭证过期 410 INVENTORY_CURSOR_EXPIRED；参数错误 400。存储 key/存储身份不返回，调查不核验内容、不授予登记或删除权。详见[调查记录设计](m7-source-investigations.md)。

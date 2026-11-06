@@ -1,5 +1,7 @@
 # 数据模型与一致性设计
 
+M7.17 迁移2026110604增加 Go 自有 source_investigation_revisions，按租户/调查/修订唯一，同租户外键关联调查和操作人。旧最新行复制为基线，原操作人/时间保持；迁移写锁覆盖基线与触发器安装，之后每次INSERT/UPDATE在同事务自动捕获。快照不可覆盖/删除/截断，调查身份固定、修订逐次加一；原保存、审计和幂等回执失败时一起回滚。读取按锁定上界分页并复核当前授权，所有表/约束/触发器需一致备份，详见[历史设计](m7-investigation-history.md)。
+
 M7.16 迁移2026110603只新增 source_investigations 的 (tenant_id,created_at DESC,id DESC) 与 (tenant_id,status,created_at DESC,id DESC) 两个分页索引，不改表字段。custom model 仅投影授权所需私有 key 和列表元数据，不读说明。当前授权、分页与脱敏只读审计同事务；创建时间/ID保持不变，状态筛选不是快照，详见[调查工作台](m7-investigation-worklist.md)。
 
 M7.15 迁移 2026110602 增加 Go 自有 source_investigations。tenant_id/object_ref 唯一；私有 store_id/object_key 与创建身份固定，最新说明和状态通过期望修订更新，同租户创建/更新人外键。单对象事务锁、审计和幂等回执保证不覆盖、不重复提交；没有下游动作或 outbox。每次用可信定位的版本线索核对当前资源授权，身份线索不证明归属。调查、回执、审计和用户身份须纳入同一数据库备份；无自动删除或永久编辑历史，见[调查设计](m7-source-investigations.md)。

@@ -1,5 +1,7 @@
 # Go 业务服务详细设计
 
+M7.17 调查修订由迁移中的数据库触发器在现有Go保存事务内自动捕获，无重复的应用层追加。SourceInvestigationRevisionsModel由goctl生成/初始化，custom model持有首修订及有界列表查询；investigationhistory用例按当前身份/资源→调查FOR SHARE→查询→最终身份→读取审计执行。页游标固定首次修订上界且按最后已读修订推进，不返回私有定位；全部失败清空结果。迁移锁等待旧写者，旧最新值作为基线，详情见[编辑历史](../../../docs/m7-investigation-history.md)。
+
 M7.16 sourceinvestigationlist 用例与 SourceInvestigationsModel.ListPageTx 提供当前租户按状态的稳定分页。默认20/最大50，只查 limit+1 元数据；逐项复用调查资源授权，游标按已扫描行推进，绑定当前用户/租户/筛选与原15分钟期限。管理员、最终会话复核及只读审计使用同一事务，失败清空整页，无外部 I/O。迁移2026110603仅增加索引，详见[工作台设计](../../../docs/m7-investigation-worklist.md)。
 
 M7.15 SourceInvestigationsModel 通过隔离 schema/goctl 生成并在 ServiceContext 初始化；sourceinvestigations 用例统一复核内置管理员、会话和当前资源授权。首次使用租户巡检签发的独立加密选择凭证，后续按可信记录定位授权，可在暂停巡检后跟进。幂等键→身份/资源→对象事务锁后比较 expected_revision；说明、审计和回执同事务，无 S3 I/O 或 outbox。回执授权失败返回空数据，详见[巡检调查设计](../../../docs/m7-source-investigations.md)。

@@ -8,6 +8,9 @@ type JsonResponse<T> = T extends {
 type Data<T> =
   JsonResponse<T> extends { data?: infer Body } ? NonNullable<Body> : never;
 export type Models = {
+  InvestigationHistoryPage: Data<
+    paths["/api/v1/source-investigations/{object_ref}/history"]["get"]
+  >;
   SourceInvestigationListPage: Data<
     paths["/api/v1/source-investigations"]["get"]
   >;

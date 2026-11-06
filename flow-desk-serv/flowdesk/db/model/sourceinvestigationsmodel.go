@@ -11,6 +11,7 @@ import (
 type SourceInvestigationsModel interface {
 	sourceInvestigationsModel
 	withSession(sqlx.Session) SourceInvestigationsModel
+	FindOneForShareTx(context.Context, sqlx.Session, string, string) (*SourceInvestigations, error)
 	LockObjectTx(context.Context, sqlx.Session, string, string) error
 	FindOneByTenantIdObjectRefTx(context.Context, sqlx.Session, string, string) (*SourceInvestigations, error)
 	InsertTx(context.Context, sqlx.Session, *SourceInvestigations) error
@@ -70,4 +71,10 @@ func (m *customSourceInvestigationsModel) ListPageTx(ctx context.Context, tx sql
 	query += fmt.Sprintf(" order by created_at desc,id desc limit $%d", len(args))
 	err := tx.QueryRowsCtx(ctx, &rows, query, args...)
 	return rows, err
+}
+
+func (m *customSourceInvestigationsModel) FindOneForShareTx(ctx context.Context, tx sqlx.Session, tenant, ref string) (*SourceInvestigations, error) {
+	var row SourceInvestigations
+	err := tx.QueryRowCtx(ctx, &row, fmt.Sprintf("select %s from %s where tenant_id=$1 and object_ref=$2 for share", sourceInvestigationsRows, m.table), tenant, ref)
+	return &row, err
 }
