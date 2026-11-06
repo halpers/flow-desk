@@ -7132,6 +7132,15 @@
                               "is_baseline"
                             ],
                             "properties": {
+                              "archive_block_reason": {
+                                "type": "string"
+                              },
+                              "archived_at": {
+                                "type": "string"
+                              },
+                              "can_archive": {
+                                "type": "boolean"
+                              },
                               "changed_at": {
                                 "type": "string"
                               },
@@ -7139,6 +7148,9 @@
                                 "type": "string"
                               },
                               "is_baseline": {
+                                "type": "boolean"
+                              },
+                              "metadata_archived": {
                                 "type": "boolean"
                               },
                               "note": {
@@ -7160,6 +7172,79 @@
                           "type": "string"
                         },
                         "snapshot_revision": {
+                          "type": "integer"
+                        }
+                      }
+                    },
+                    "request_id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/source-investigations/{object_ref}/history/{revision}/archive-metadata": {
+      "post": {
+        "summary": "ArchiveInvestigationRevision | permission=knowledge:manage | auth=required | role=admin",
+        "operationId": "archiveInvestigationRevision",
+        "parameters": [
+          {
+            "name": "object_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "revision",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/archiveInvestigationRevisionBody"
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "object_ref",
+                        "revision",
+                        "archived_at"
+                      ],
+                      "properties": {
+                        "archived_at": {
+                          "type": "string"
+                        },
+                        "object_ref": {
+                          "type": "string"
+                        },
+                        "revision": {
                           "type": "integer"
                         }
                       }
@@ -7205,26 +7290,7 @@
           }
         ],
         "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "expected_revision",
-                  "confirm"
-                ],
-                "properties": {
-                  "confirm": {
-                    "type": "boolean"
-                  },
-                  "expected_revision": {
-                    "type": "integer"
-                  }
-                }
-              }
-            }
-          },
-          "required": true
+          "$ref": "#/components/requestBodies/archiveInvestigationRevisionBody"
         },
         "responses": {
           "200": {
@@ -9757,6 +9823,28 @@
                   "type": "boolean"
                 },
                 "expected_source_epoch": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        },
+        "required": true
+      },
+      "archiveInvestigationRevisionBody": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "required": [
+                "expected_revision",
+                "confirm"
+              ],
+              "properties": {
+                "confirm": {
+                  "type": "boolean"
+                },
+                "expected_revision": {
                   "type": "integer"
                 }
               }

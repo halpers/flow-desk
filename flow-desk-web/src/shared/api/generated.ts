@@ -893,6 +893,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/source-investigations/{object_ref}/history/{revision}/archive-metadata": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** ArchiveInvestigationRevision | permission=knowledge:manage | auth=required | role=admin */
+        post: operations["archiveInvestigationRevision"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/source-investigations/{object_ref}/history/{revision}/restore": {
         parameters: {
             query?: never;
@@ -1324,6 +1341,14 @@ export interface components {
                 "application/json": {
                     confirm: boolean;
                     expected_source_epoch: number;
+                };
+            };
+        };
+        archiveInvestigationRevisionBody: {
+            content: {
+                "application/json": {
+                    confirm: boolean;
+                    expected_revision: number;
                 };
             };
         };
@@ -4047,9 +4072,13 @@ export interface operations {
                             first_recorded_revision: number;
                             has_more: boolean;
                             items: {
+                                archive_block_reason?: string;
+                                archived_at?: string;
+                                can_archive?: boolean;
                                 changed_at: string;
                                 changed_by: string;
                                 is_baseline: boolean;
+                                metadata_archived?: boolean;
                                 note: string;
                                 revision: number;
                                 status: string;
@@ -4057,6 +4086,38 @@ export interface operations {
                             next_cursor: string;
                             object_ref: string;
                             snapshot_revision: number;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    archiveInvestigationRevision: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                object_ref: string;
+                revision: number;
+            };
+            cookie?: never;
+        };
+        requestBody: components["requestBodies"]["archiveInvestigationRevisionBody"];
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            archived_at: string;
+                            object_ref: string;
+                            revision: number;
                         };
                         request_id?: string;
                     };
@@ -4076,14 +4137,7 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": {
-                    confirm: boolean;
-                    expected_revision: number;
-                };
-            };
-        };
+        requestBody: components["requestBodies"]["archiveInvestigationRevisionBody"];
         responses: {
             200: {
                 headers: {

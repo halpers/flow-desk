@@ -18,25 +18,26 @@ const loginRequestsPerSecond = 2
 const loginBurst = 10
 
 type ServiceContext struct {
-	VersionMetadataArchivesModel      model.VersionMetadataArchivesModel
-	SourceObjectsModel                model.SourceObjectsModel
-	SourceObjectArchivesModel         model.SourceObjectArchivesModel
-	SourceInvestigationRevisionsModel model.SourceInvestigationRevisionsModel
-	SourceInvestigationsModel         model.SourceInvestigationsModel
-	RolesModel                        model.RolesModel
-	UserRolesModel                    model.UserRolesModel
-	SourceStore                       client.SourceStore
-	TeamsModel                        model.TeamsModel
-	TeamMembersModel                  model.TeamMembersModel
-	RunTicketResourcesModel           model.RunTicketResourcesModel
-	ActionsModel                      model.ActionsModel
-	ApprovalsModel                    model.ApprovalsModel
-	PendingInputsModel                model.PendingInputsModel
-	TicketsModel                      model.TicketsModel
-	TicketNotesModel                  model.TicketNotesModel
-	TicketEventsModel                 model.TicketEventsModel
-	ActionReceiptsModel               model.ActionReceiptsModel
-	AuditEventsModel                  model.AuditEventsModel
+	SourceInvestigationRevisionArchivesModel model.SourceInvestigationRevisionArchivesModel
+	VersionMetadataArchivesModel             model.VersionMetadataArchivesModel
+	SourceObjectsModel                       model.SourceObjectsModel
+	SourceObjectArchivesModel                model.SourceObjectArchivesModel
+	SourceInvestigationRevisionsModel        model.SourceInvestigationRevisionsModel
+	SourceInvestigationsModel                model.SourceInvestigationsModel
+	RolesModel                               model.RolesModel
+	UserRolesModel                           model.UserRolesModel
+	SourceStore                              client.SourceStore
+	TeamsModel                               model.TeamsModel
+	TeamMembersModel                         model.TeamMembersModel
+	RunTicketResourcesModel                  model.RunTicketResourcesModel
+	ActionsModel                             model.ActionsModel
+	ApprovalsModel                           model.ApprovalsModel
+	PendingInputsModel                       model.PendingInputsModel
+	TicketsModel                             model.TicketsModel
+	TicketNotesModel                         model.TicketNotesModel
+	TicketEventsModel                        model.TicketEventsModel
+	ActionReceiptsModel                      model.ActionReceiptsModel
+	AuditEventsModel                         model.AuditEventsModel
 
 	Config                config.Config
 	Conn                  sqlx.SqlConn
@@ -77,25 +78,26 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		panic("invalid file store provider")
 	}
 	return &ServiceContext{
-		VersionMetadataArchivesModel:      model.NewVersionMetadataArchivesModel(conn),
-		SourceObjectsModel:                model.NewSourceObjectsModel(conn),
-		SourceObjectArchivesModel:         model.NewSourceObjectArchivesModel(conn),
-		SourceInvestigationRevisionsModel: model.NewSourceInvestigationRevisionsModel(conn),
-		SourceInvestigationsModel:         model.NewSourceInvestigationsModel(conn),
-		RolesModel:                        model.NewRolesModel(conn),
-		UserRolesModel:                    model.NewUserRolesModel(conn),
-		SourceStore:                       sourceStore,
-		TeamsModel:                        model.NewTeamsModel(conn),
-		TeamMembersModel:                  model.NewTeamMembersModel(conn),
-		RunTicketResourcesModel:           model.NewRunTicketResourcesModel(conn),
-		ActionsModel:                      model.NewActionsModel(conn),
-		ApprovalsModel:                    model.NewApprovalsModel(conn),
-		PendingInputsModel:                model.NewPendingInputsModel(conn),
-		TicketsModel:                      model.NewTicketsModel(conn),
-		TicketNotesModel:                  model.NewTicketNotesModel(conn),
-		TicketEventsModel:                 model.NewTicketEventsModel(conn),
-		ActionReceiptsModel:               model.NewActionReceiptsModel(conn),
-		AuditEventsModel:                  model.NewAuditEventsModel(conn),
+		SourceInvestigationRevisionArchivesModel: model.NewSourceInvestigationRevisionArchivesModel(conn),
+		VersionMetadataArchivesModel:             model.NewVersionMetadataArchivesModel(conn),
+		SourceObjectsModel:                       model.NewSourceObjectsModel(conn),
+		SourceObjectArchivesModel:                model.NewSourceObjectArchivesModel(conn),
+		SourceInvestigationRevisionsModel:        model.NewSourceInvestigationRevisionsModel(conn),
+		SourceInvestigationsModel:                model.NewSourceInvestigationsModel(conn),
+		RolesModel:                               model.NewRolesModel(conn),
+		UserRolesModel:                           model.NewUserRolesModel(conn),
+		SourceStore:                              sourceStore,
+		TeamsModel:                               model.NewTeamsModel(conn),
+		TeamMembersModel:                         model.NewTeamMembersModel(conn),
+		RunTicketResourcesModel:                  model.NewRunTicketResourcesModel(conn),
+		ActionsModel:                             model.NewActionsModel(conn),
+		ApprovalsModel:                           model.NewApprovalsModel(conn),
+		PendingInputsModel:                       model.NewPendingInputsModel(conn),
+		TicketsModel:                             model.NewTicketsModel(conn),
+		TicketNotesModel:                         model.NewTicketNotesModel(conn),
+		TicketEventsModel:                        model.NewTicketEventsModel(conn),
+		ActionReceiptsModel:                      model.NewActionReceiptsModel(conn),
+		AuditEventsModel:                         model.NewAuditEventsModel(conn),
 
 		Config:                c,
 		Conn:                  conn,

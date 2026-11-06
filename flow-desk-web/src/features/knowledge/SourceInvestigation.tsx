@@ -52,7 +52,7 @@ export function SourceInvestigation({
   const [reload, setReload] = useState(0);
   const [pending, setPending] = useState<Pending | null>(null);
   const [confirmed, setConfirmed] = useState(false);
-  const [restored, setRestored] = useState("");
+  const [historyReceipt, setHistoryReceipt] = useState("");
   const [historyOpen, setHistoryOpen] = useState(false);
   const path = `/source-investigations/${objectRef}`;
   useEffect(() => {
@@ -73,7 +73,7 @@ export function SourceInvestigation({
     return () => controller.abort();
   }, [path, reload]);
   function refresh() {
-    setRestored("");
+    setHistoryReceipt("");
     setHistoryOpen(false);
     setPending(null);
     setConfirmed(false);
@@ -150,9 +150,16 @@ export function SourceInvestigation({
         <InvestigationHistory
           objectRef={objectRef}
           onClose={() => setHistoryOpen(false)}
+          onArchived={(receipt) => {
+            refresh();
+            setHistoryReceipt(
+              `已归档历史修订 ${receipt.revision}，完整内容仍可查阅与恢复。当前记录以重新读取结果为准。`,
+            );
+            onSaved?.();
+          }}
           onRestored={(receipt) => {
             refresh();
-            setRestored(
+            setHistoryReceipt(
               `已将历史修订 ${receipt.restored_from_revision} 保存为修订 ${receipt.investigation.revision}。当前记录以重新读取结果为准。`,
             );
             onSaved?.();
@@ -164,12 +171,12 @@ export function SourceInvestigation({
             setStatus("");
             setPending(null);
             setConfirmed(false);
-            setRestored("");
+            setHistoryReceipt("");
             setError(message);
           }}
         />
       )}
-      {restored && <Alert type="success" title={restored} />}
+      {historyReceipt && <Alert type="success" title={historyReceipt} />}
       {error && <Alert type="error" title={error} />}
       {loading && <p>正在读取调查记录…</p>}
       {!loading && data && (

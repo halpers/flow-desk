@@ -1,0 +1,23 @@
+{
+  "stage": "M7.19",
+  "environment": "disposable local mock with S3",
+  "created_at": "2026-11-06T08:45:34.291846+00:00",
+  "checks": [
+    {
+      "name": "complete snapshot moved atomically; current record unchanged; age/latest-three/confirmation/CAS and parameter-bound key protections enforced",
+      "passed": true
+    },
+    {
+      "name": "113 revisions remain pageable without duplication across tier moves; cold restore creates a new revision; old archive receipt cannot overwrite later edits",
+      "passed": true
+    },
+    {
+      "name": "tenant and built-in-admin boundaries plus current resource ACL protect new archives, old receipts, cold history and cold restores",
+      "passed": true
+    },
+    {
+      "name": "both tiers retain exact original identity/content/actor/time; one immutable audit/receipt per archive; storage and source ledgers unchanged",
+      "passed": true
+    }
+  ]
+}

@@ -1,9 +1,16 @@
 import { useEffect, useState } from "react";
 import { Alert, Button, Drawer, Empty, Space, Tag } from "antd";
 import { api } from "../../shared/api/client";
+import { InvestigationArchive } from "./InvestigationArchive";
 import { InvestigationRestore } from "./InvestigationRestore";
 import type { Models } from "../../shared/api/models";
 
+const archiveReasons: Record<string, string> = {
+  already_archived: "已归档，完整历史保留",
+  investigation_active: "调查尚未结束，继续保留",
+  keep_latest: "保留最近3个修订",
+  minimum_age: "未满30天，继续保留",
+};
 const labels: Record<string, string> = {
   open: "待跟进",
   investigating: "调查中",
@@ -13,15 +20,18 @@ const labels: Record<string, string> = {
 export function InvestigationHistory({
   objectRef,
   onClose,
+  onArchived,
   onRestored,
   onDenied,
 }: {
   objectRef: string;
   onClose: () => void;
+  onArchived: (receipt: Models["InvestigationArchiveData"]) => void;
   onRestored: (receipt: Models["InvestigationRestoreData"]) => void;
   onDenied: (message: string) => void;
 }) {
   const [pending, setPending] = useState<{
+    kind: "restore" | "archive";
     source: Models["InvestigationHistoryPage"]["items"][number];
     expected: number;
   } | null>(null);
@@ -123,10 +133,24 @@ export function InvestigationHistory({
                 <strong>修订 {item.revision}</strong>
                 <Tag>{labels[item.status] || item.status}</Tag>
                 {item.is_baseline && <Tag>升级基线</Tag>}
+                {item.metadata_archived && <Tag>已归档</Tag>}
+                <Button
+                  disabled={!!pending || !item.can_archive}
+                  onClick={() =>
+                    setPending({
+                      kind: "archive",
+                      source: item,
+                      expected: data.current_revision,
+                    })
+                  }
+                >
+                  归档此修订
+                </Button>
                 <Button
                   disabled={!!pending || item.revision >= data.current_revision}
                   onClick={() =>
                     setPending({
+                      kind: "restore",
                       source: item,
                       expected: data.current_revision,
                     })
@@ -138,6 +162,13 @@ export function InvestigationHistory({
               <p>
                 操作人：{item.changed_by} · 时间：{item.changed_at}
               </p>
+              {item.archived_at && <p>归档时间：{item.archived_at}</p>}
+              {!item.can_archive && item.archive_block_reason && (
+                <p>
+                  {archiveReasons[item.archive_block_reason] ||
+                    "此修订暂不可归档"}
+                </p>
+              )}
               {item.is_baseline && (
                 <p>升级时保留的最新内容，并非升级时发生的一次修改。</p>
               )}
@@ -152,7 +183,7 @@ export function InvestigationHistory({
           {!data.items.length && <Empty description="此页没有编辑历史" />}
         </>
       )}
-      {pending && (
+      {pending?.kind === "restore" && (
         <InvestigationRestore
           objectRef={objectRef}
           source={pending.source}
@@ -166,6 +197,20 @@ export function InvestigationHistory({
             }
           }}
           onRestored={onRestored}
+          onDenied={onDenied}
+        />
+      )}
+      {pending?.kind === "archive" && (
+        <InvestigationArchive
+          objectRef={objectRef}
+          source={pending.source}
+          expectedRevision={pending.expected}
+          onCancel={() => {
+            setPending(null);
+            navigate([""]);
+            setReload((value) => value + 1);
+          }}
+          onArchived={onArchived}
           onDenied={onDenied}
         />
       )}

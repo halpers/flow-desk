@@ -435,6 +435,23 @@ type SourceInvestigationListResp {
     RequestId string `json:"request_id"`
     Data SourceInvestigationListPage `json:"data"`
 }
+type ArchiveInvestigationRevisionReq {
+    ObjectRef string `path:"object_ref"`
+    Revision int64 `path:"revision"`
+    ExpectedRevision int64 `json:"expected_revision"`
+    Confirm bool `json:"confirm"`
+    IdempotencyKey string `header:"Idempotency-Key"`
+}
+type InvestigationArchiveData {
+    ObjectRef string `json:"object_ref"`
+    Revision int64 `json:"revision"`
+    ArchivedAt string `json:"archived_at"`
+}
+type InvestigationArchiveResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data InvestigationArchiveData `json:"data"`
+}
 type RestoreInvestigationRevisionReq {
     ObjectRef string `path:"object_ref"`
     Revision int64 `path:"revision"`
@@ -458,6 +475,10 @@ type InvestigationHistoryReq {
     Limit int64 `form:"limit,optional"`
 }
 type InvestigationRevisionItem {
+    MetadataArchived bool `json:"metadata_archived,optional"`
+    ArchivedAt string `json:"archived_at,optional"`
+    CanArchive bool `json:"can_archive,optional"`
+    ArchiveBlockReason string `json:"archive_block_reason,optional"`
     Revision int64 `json:"revision"`
     Status string `json:"status"`
     Note string `json:"note"`
@@ -615,6 +636,9 @@ service flowdesk-api {
     @doc "ListSourceInvestigations | permission=knowledge:manage | auth=required | role=admin"
     @handler ListSourceInvestigations
     get /source-investigations (SourceInvestigationListReq) returns (SourceInvestigationListResp)
+    @doc "ArchiveInvestigationRevision | permission=knowledge:manage | auth=required | role=admin"
+    @handler ArchiveInvestigationRevision
+    post /source-investigations/:object_ref/history/:revision/archive-metadata (ArchiveInvestigationRevisionReq) returns (InvestigationArchiveResp)
     @doc "RestoreInvestigationRevision | permission=knowledge:manage | auth=required | role=admin"
     @handler RestoreInvestigationRevision
     post /source-investigations/:object_ref/history/:revision/restore (RestoreInvestigationRevisionReq) returns (InvestigationRestoreResp)

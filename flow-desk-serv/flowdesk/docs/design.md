@@ -1,5 +1,7 @@
 # Go 业务服务详细设计
 
+M7.19增加受当前管理员/资源授权及expected_revision保护的单快照归档。对象锁+父FOR UPDATE下同事务复制完整原快照、移出热表、审计、最终复核及回执；延迟约束阻止只复制未移出的提交。历史FOR SHARE保证跨层分页和标记一致，恢复联合单行读取，当前调查不变，无外部IO。迁移与模型/测试见[分层归档](../../../docs/m7-investigation-history-archive.md)。
+
 M7.18 investigationrestore 用例在原幂等/当前授权/对象锁事务内读取本租户旧快照，使用现有UpdateNoteTx和捕获触发器保存新修订，恢复审计保留来源与新修订。普通保存共享锁序；新写与旧回执均当前授权，任何失败返回零结果。无新迁移或外部I/O，见[恢复设计](../../../docs/m7-investigation-restore.md)。
 
 M7.17 调查修订由迁移中的数据库触发器在现有Go保存事务内自动捕获，无重复的应用层追加。SourceInvestigationRevisionsModel由goctl生成/初始化，custom model持有首修订及有界列表查询；investigationhistory用例按当前身份/资源→调查FOR SHARE→查询→最终身份→读取审计执行。页游标固定首次修订上界且按最后已读修订推进，不返回私有定位；全部失败清空结果。迁移锁等待旧写者，旧最新值作为基线，详情见[编辑历史](../../../docs/m7-investigation-history.md)。

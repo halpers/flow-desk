@@ -97,6 +97,14 @@ type ArchiveCopyResp struct {
 	Data      ArchiveCopyItem `json:"data"`
 }
 
+type ArchiveInvestigationRevisionReq struct {
+	ObjectRef        string `path:"object_ref"`
+	Revision         int64  `path:"revision"`
+	ExpectedRevision int64  `json:"expected_revision"`
+	Confirm          bool   `json:"confirm"`
+	IdempotencyKey   string `header:"Idempotency-Key"`
+}
+
 type ArchiveMetadataReq struct {
 	DocumentId              string `path:"document_id"`
 	VersionId               string `path:"version_id"`
@@ -372,6 +380,18 @@ type IndexSourceResp struct {
 	Data      IndexSourceData `json:"data"`
 }
 
+type InvestigationArchiveData struct {
+	ObjectRef  string `json:"object_ref"`
+	Revision   int64  `json:"revision"`
+	ArchivedAt string `json:"archived_at"`
+}
+
+type InvestigationArchiveResp struct {
+	Code      string                   `json:"code"`
+	RequestId string                   `json:"request_id"`
+	Data      InvestigationArchiveData `json:"data"`
+}
+
 type InvestigationHistoryPage struct {
 	ObjectRef             string                      `json:"object_ref"`
 	CurrentRevision       int64                       `json:"current_revision"`
@@ -406,12 +426,16 @@ type InvestigationRestoreResp struct {
 }
 
 type InvestigationRevisionItem struct {
-	Revision   int64  `json:"revision"`
-	Status     string `json:"status"`
-	Note       string `json:"note"`
-	ChangedBy  string `json:"changed_by"`
-	ChangedAt  string `json:"changed_at"`
-	IsBaseline bool   `json:"is_baseline"`
+	MetadataArchived   bool   `json:"metadata_archived,optional"`
+	ArchivedAt         string `json:"archived_at,optional"`
+	CanArchive         bool   `json:"can_archive,optional"`
+	ArchiveBlockReason string `json:"archive_block_reason,optional"`
+	Revision           int64  `json:"revision"`
+	Status             string `json:"status"`
+	Note               string `json:"note"`
+	ChangedBy          string `json:"changed_by"`
+	ChangedAt          string `json:"changed_at"`
+	IsBaseline         bool   `json:"is_baseline"`
 }
 
 type KnowledgeAclReq struct {

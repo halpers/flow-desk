@@ -89,8 +89,23 @@ func ListInvestigationHistory(ctx context.Context, s *svc.ServiceContext, req *t
 		if result.HasMore {
 			rows = rows[:limit]
 		}
+		revisions := make([]int64, 0, len(rows))
 		for _, row := range rows {
-			result.Items = append(result.Items, types.InvestigationRevisionItem{Revision: row.Revision, Status: row.Status, Note: row.Note, ChangedBy: row.ChangedBy, ChangedAt: row.ChangedAt.UTC().Format(time.RFC3339Nano), IsBaseline: row.IsBaseline})
+			revisions = append(revisions, row.Revision)
+		}
+		archives, err := s.SourceInvestigationRevisionArchivesModel.ListRevisionsTx(ctx, tx, actor.TenantId, current.Id, revisions)
+		if err != nil {
+			return err
+		}
+		archiveTimes := make(map[int64]string, len(archives))
+		for _, archived := range archives {
+			archiveTimes[archived.Revision] = archived.ArchivedAt.UTC().Format(time.RFC3339Nano)
+		}
+		observed := time.Now()
+		for _, row := range rows {
+			archivedAt := archiveTimes[row.Revision]
+			reason := investigationArchiveBlock(current, &row, archivedAt != "", observed)
+			result.Items = append(result.Items, types.InvestigationRevisionItem{Revision: row.Revision, Status: row.Status, Note: row.Note, ChangedBy: row.ChangedBy, ChangedAt: row.ChangedAt.UTC().Format(time.RFC3339Nano), IsBaseline: row.IsBaseline, MetadataArchived: archivedAt != "", ArchivedAt: archivedAt, CanArchive: reason == "", ArchiveBlockReason: reason})
 		}
 		if result.HasMore {
 			position.After = fmt.Sprintf("%d|%d", upper, rows[len(rows)-1].Revision)

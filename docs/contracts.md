@@ -1,5 +1,7 @@
 # 接口与跨服务契约
 
+M7.19新增POST /api/v1/source-investigations/:object_ref/history/:revision/archive-metadata，当前内置管理员且有knowledge:manage，Idempotency-Key、expected_revision>0及confirm=true。仅当前调查closed、目标不属于最近3修订且changed_at至少30天的热快照可归档。完整原快照移入受保护归档表，当前调查不变，审计及回执同事务；200 data为object_ref/revision/archived_at，409 INVESTIGATION_HISTORY_ARCHIVE_PROTECTED、INVESTIGATION_CHANGED或INVESTIGATION_HISTORY_ALREADY_ARCHIVED分别表示保留保护、当前修订变化或已归档。历史项仅追加可选metadata_archived/archived_at/can_archive/archive_block_reason字段，分页及恢复联合读取两层并复核当前权限。无S3/Python调用，不物理删除内容；同键重放返回原回执。
+
 M7.18 新增 `POST /api/v1/source-investigations/:object_ref/history/:revision/restore`：当前内置管理员且有 knowledge:manage，提交 Idempotency-Key、expected_revision>0、confirm=true。服务端在当前资源授权和对象锁下读取本租户调查的历史修订，将说明和状态精确复制为当前修订+1；操作人和时间使用本次保存者。仅允许恢复早于当前的已记录修订（含升级基线），不改写历史，不接受客户端说明/状态作为恢复源。200 data 为 restored_from_revision 和 investigation（与当前调查数据同结构）的不可变回执。当前修订变化409 INVESTIGATION_CHANGED，目标非旧修订409 INVESTIGATION_RESTORE_NOT_OLDER，未记录的目标404，其他输入400。新修订、自动快照、脱敏恢复审计和回执同事务；重放复核当前权限且返回原回执，不再次恢复。响应no-store，无S3/Python调用。
 
 M7.17 增加 GET /api/v1/source-investigations/:object_ref/history，默认20/最大50，按revision降序读取不可变说明/状态快照及操作人、时间。当前内置管理员、knowledge:manage、租户/会话和当前资源ACL每页复核；无存储依赖，返回no-store并记录脱敏读取审计。游标独立绑定用户/租户/调查及首次读取的修订上界，15分钟原期限保留；新修订刷新后查看。迁移只回填旧记录最新修订并标记is_baseline=true，更早未记录的内容无法补回；升级后每次成功保存由数据库触发器在同一事务写入快照，幂等重放不重复追加。详细设计见[调查编辑历史](m7-investigation-history.md)。

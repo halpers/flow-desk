@@ -1,5 +1,7 @@
 # 前端详细设计
 
+M7.19 InvestigationArchive展示快照与保留条件，显式确认后固定路径/正文/键重试，当前调查成功后重新读取；历史标记归档并保留恢复入口，冲突重读和失权清空沿用既有父子锁定规则。详情见[调查历史分层归档](../../docs/m7-investigation-history-archive.md)。
+
 M7.18 InvestigationRestore 展示目标快照/状态及期望当前修订，显式勾选后以固定路径/正文/键请求Go。确认期间锁定历史及父编辑器；成功依据回执提示并重新读取当前内容，重放旧回执不覆盖较新显示。响应不确定原键重试，冲突重读，拒绝清空父子说明，见[历史恢复](../../docs/m7-investigation-restore.md)。
 
 M7.17 SourceInvestigation 的已保存记录增加“查看编辑历史”，InvestigationHistory使用本地状态和AbortController，每次进入/翻页直读Go，不使用共享说明缓存。纯文本展示快照及基线/缺失范围/新修订提示；加载/错误清空旧数据，关闭销毁，保存后再次进入重新授权。默认20条，按服务端固定上界前后翻页，见[历史设计](../../docs/m7-investigation-history.md)。

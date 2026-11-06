@@ -696,4 +696,49 @@ GROUP BY tenant_id;
 
 备份仍为当前调查、全部不可变历史、身份、审计及幂等回执的一致整库，包含全部触发器/约束；单独恢复最新行或手工UPDATE旧快照都不等同业务恢复。需要撤销一次恢复时应重新核对并确认另一旧修订，形成下一新修订。按第11节演练灾难恢复到新空库，不能用生产库执行带写入/ACL故障注入的验收脚本。
 
-回退先停写，确认在途请求及回执并备份；若其他章节约束允许，可回退M7.17配套镜像，保留最新说明、所有历史/触发器/审计/回执和迁移账本。旧版本只缺少恢复入口，不会自动撤销已完成恢复；不得删修订、执行Down或单独切旧Web宣称完成回退。复跑和本地证据见[恢复设计](../docs/m7-investigation-restore.md)；本次未上线真实服务器。
+回退先停写，确认在途请求及回执并备份；已有第29节归档快照时必须遵守该节兼容限制。若其他章节约束允许且没有冷快照，可回退M7.17配套镜像，保留最新说明、所有历史/触发器/审计/回执和迁移账本。旧版本只缺少恢复入口，不会自动撤销已完成恢复；不得删修订、执行Down或单独切旧Web宣称完成回退。复跑和本地证据见[恢复设计](../docs/m7-investigation-restore.md)；本次未上线真实服务器。
+
+## 29. 调查历史分层归档
+
+M7.19仅整理数据库历史，沿用原三服务、IP:port/域名入口和管理员权限，不需要新端口、环境变量或S3权限。完整内容保留在独立归档表，历史查询及恢复自动覆盖两层；不物理删除说明，也不承诺减少数据库总空间。
+
+升级步骤：
+
+1. 按第11节完成一致整库备份并保留当前镜像SHA。数据库备份需包含 source_investigations、source_investigation_revisions、source_investigation_revision_archives（升级后）、身份/权限、audit_events、api_idempotency、迁移账本及全部约束/触发器。早于M7.17的库先具备第27节历史迁移；已应用迁移不要修改或重置。
+2. 安排维护窗口，暂缓调查编辑/恢复/归档，等待在途请求。迁移2026110605_investigation_revision_archives.sql按当前调查→热历史顺序持有写锁，新增冷表和精确移表保护。沿第10节使用同一SHA的配套镜像执行一次性migrate，再启动服务；不要并发运行多个迁移或把等待锁的迁移手工标为成功。
+3. 核对迁移成功、API readiness及下面只读一致性查询，再放行访问。存在历史读长事务时迁移/归档可能等待；先排查在途维护或请求，不能禁用锁/触发器绕过。
+4. 使用当前租户内置管理员经现有IP:port登录，“知识库→调查工作台→继续跟进→查看编辑历史”。已结束调查的历史需原时间满30天并且不在最近3修订内，才显示可用“归档此修订”。没有符合条件的记录属于正常保护，不手改历史时间制造候选。
+5. 核对目标说明、状态、原操作者/时间与期望当前修订，勾选“我确认归档此修订并保留完整历史”，点击“确认归档”。成功标记“已归档”，当前说明/状态/修订号不变，完整内容仍可查看及通过“恢复此修订”生成新修订。归档不是删除，不操作S3或证明对象归属。
+6. 响应未确认时在原窗口点击“重试归档修订”，使用原路径、正文和键。放弃重试仅重新读取，不撤销已提交归档；较新编辑不会被旧归档回执覆盖。不要换键盲重发。
+
+| 现象 | 运维处理 |
+| --- | --- |
+| 409 INVESTIGATION_HISTORY_ARCHIVE_PROTECTED | 核对当前调查已结束、目标不是最近3修订、原时间满30天；保留保护无强制绕过入口 |
+| 409 INVESTIGATION_CHANGED | 当前调查已更新，重新读取后核对确认；不改数据库revision |
+| 409 INVESTIGATION_HISTORY_ALREADY_ARCHIVED | 新键目标已在冷层，刷新历史；若原请求响应丢失，使用原键恢复回执 |
+| 409 IDEMPOTENCY_CONFLICT / 410 IDEMPOTENCY_EXPIRED | 原键正文必须相同；过期先读取当前状态，不换键盲重发 |
+| 401/403/资源404 | 核对当前会话、内置管理员/knowledge:manage、租户和当前资源ACL；旧回执和冷历史同样检查 |
+| 500、延迟约束或审计/回执失败 | 整个归档回滚；检查迁移、触发器、权限、空间，保留原键，不能手工删热行或禁用约束 |
+
+获授权维护连接执行以下只读检查，不导出说明或定位。duplicate_identity_count与missing_latest_count应为0；异常时保留一致备份、暂停归档交研发核查，不手工搬移或补造历史：
+
+```sql
+SELECT (SELECT count(*) FROM business.source_investigation_revisions) AS hot_count,
+ (SELECT count(*) FROM business.source_investigation_revision_archives) AS archive_count;
+WITH history AS (
+ SELECT tenant_id,investigation_id,revision FROM business.source_investigation_revisions
+ UNION ALL
+ SELECT tenant_id,investigation_id,revision FROM business.source_investigation_revision_archives
+)
+SELECT count(*) AS duplicate_identity_count FROM (
+ SELECT tenant_id,investigation_id,revision FROM history
+ GROUP BY tenant_id,investigation_id,revision HAVING count(*)<>1
+) duplicates;
+SELECT count(*) AS missing_latest_count FROM business.source_investigations i
+WHERE NOT EXISTS (SELECT 1 FROM business.source_investigation_revisions h
+ WHERE h.tenant_id=i.tenant_id AND h.investigation_id=i.id AND h.revision=i.revision);
+```
+
+回退前停写、确认在途请求、备份整库和原镜像。已有冷快照时，M7.17/M7.18仅读热历史的旧镜像会遗漏历史和拒绝冷恢复，因此不兼容完整功能；第27/28节旧回退说明受本限制约束。只选择能联合读取两层且理解保护触发器的兼容镜像。若只能恢复升级前版本，需明确接受升级后数据损失，并按第11节将完整升级前备份恢复到新空库后切换，不能混用新旧单表。
+
+禁止执行Down、删除归档表、禁用保护或单独把最新行回灌，不能靠Web回退恢复历史内容。正常撤销内容改动应使用业务历史恢复生成新修订，归档快照自身继续保留。备份演练要核对两层完整性和恢复入口；本次未在服务器执行上述步骤。设计及实际本地报告见[分层归档](../docs/m7-investigation-history-archive.md)，带合成旧修订/ACL故障注入的验收脚本只能运行在一次性环境。
