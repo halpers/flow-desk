@@ -393,6 +393,12 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 					Path:    "/source-investigations/:object_ref/history",
 					Handler: ListInvestigationHistoryHandler(serverCtx),
 				},
+				{
+					// RestoreInvestigationRevision | permission=knowledge:manage | auth=required | role=admin
+					Method:  http.MethodPost,
+					Path:    "/source-investigations/:object_ref/history/:revision/restore",
+					Handler: RestoreInvestigationRevisionHandler(serverCtx),
+				},
 			}...,
 		),
 		rest.WithPrefix("/api/v1"),

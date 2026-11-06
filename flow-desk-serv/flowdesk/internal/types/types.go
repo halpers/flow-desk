@@ -394,6 +394,17 @@ type InvestigationHistoryResp struct {
 	Data      InvestigationHistoryPage `json:"data"`
 }
 
+type InvestigationRestoreData struct {
+	RestoredFromRevision int64                   `json:"restored_from_revision"`
+	Investigation        SourceInvestigationData `json:"investigation"`
+}
+
+type InvestigationRestoreResp struct {
+	Code      string                   `json:"code"`
+	RequestId string                   `json:"request_id"`
+	Data      InvestigationRestoreData `json:"data"`
+}
+
 type InvestigationRevisionItem struct {
 	Revision   int64  `json:"revision"`
 	Status     string `json:"status"`
@@ -715,6 +726,14 @@ type ResetManagedPasswordReq struct {
 	UserId           string `path:"user_id"`
 	Password         string `json:"password"`
 	ExpectedRevision int64  `json:"expected_revision"`
+	IdempotencyKey   string `header:"Idempotency-Key"`
+}
+
+type RestoreInvestigationRevisionReq struct {
+	ObjectRef        string `path:"object_ref"`
+	Revision         int64  `path:"revision"`
+	ExpectedRevision int64  `json:"expected_revision"`
+	Confirm          bool   `json:"confirm"`
 	IdempotencyKey   string `header:"Idempotency-Key"`
 }
 

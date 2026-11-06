@@ -1,6 +1,6 @@
 # M7.17 调查完整编辑历史
 
-调查记录增加按修订号分页查阅的不可变快照，保留每次成功保存的说明、状态、操作人和时间。用户可逐项核对相邻修订的完整内容；不提供自动合并、历史回滚或覆盖历史的操作。当前编辑与修订保护继续沿用 [M7.15](m7-source-investigations.md)，入口同时适用于[M7.16工作台](m7-investigation-worklist.md)。
+调查记录增加按修订号分页查阅的不可变快照，保留每次成功保存的说明、状态、操作人和时间。用户可逐项核对相邻修订的完整内容；M7.17只提供查阅；[M7.18](m7-investigation-restore.md)增加旧快照确认恢复为新修订，不覆盖已有历史，自动合并仍待后续。当前编辑与修订保护继续沿用 [M7.15](m7-source-investigations.md)，入口同时适用于[M7.16工作台](m7-investigation-worklist.md)。
 
 ## 记录起点与数据
 
@@ -39,7 +39,7 @@ AES-GCM游标使用独立 source-investigation-history-v1 作用域，绑定当�
 
 ## 页面与运维
 
-打开任意已保存调查，点击“查看编辑历史”，支持上一页/下一页和“刷新编辑历史”回首页。按修订展示完整纯文本说明、状态、操作人和UTC时间，单独标识升级基线及缺失范围。当前修订超过分页上界时提示刷新。历史只读，修改返回当前编辑器重新核对并显式确认；保存成功后再次进入历史重新读取。
+打开任意已保存调查，点击“查看编辑历史”，支持上一页/下一页和“刷新编辑历史”回首页。按修订展示完整纯文本说明、状态、操作人和UTC时间，单独标识升级基线及缺失范围。当前修订超过分页上界时提示刷新。旧快照不可改写；M7.18提供人工确认恢复为新修订，普通编辑仍返回当前编辑器核对并确认；保存成功后再次进入历史重新读取。
 
 说明不用跨请求共享缓存；每次进入/翻页均可取消请求，加载和失败隐藏旧历史、禁用下一页，关闭后销毁数据。HTML按普通文本显示，不执行脚本。部署、IP:port、维护窗口、备份及回退见[服务器手册§27](../deploy/server.md#27-调查完整编辑历史)。无新环境变量、端口或S3权限；未部署真实服务器或调用付费模型。
 
@@ -59,4 +59,4 @@ python scripts/check-investigation-history.py --env-file work/investigations.env
 FLOWDESK_E2E_ENV_FILE="$PWD/work/investigations.env" FLOWDESK_E2E_URL="http://localhost:3000" FLOWDESK_INVESTIGATION_HISTORY_FIXTURE="$PWD/work/investigation-history-fixture.json" pnpm --dir flow-desk-web test:e2e tests/e2e/investigation-history.spec.ts
 ```
 
-浏览器地址匹配隔离栈WEB_HOST_PORT；本次使用work/m717-local及33000入口。CI在工作台验收后运行同一历史公开脚本，保留main/PR检查、仅v* tag发布双仓库镜像。独立验收栈结束后清理，根.env与原运行栈保留。自动调查流转、历史内容恢复/合并、历史保留清理及其他增强仍属后续范围。
+浏览器地址匹配隔离栈WEB_HOST_PORT；本次使用work/m717-local及33000入口。CI在工作台验收后运行同一历史公开脚本，保留main/PR检查、仅v* tag发布双仓库镜像。独立验收栈结束后清理，根.env与原运行栈保留。M7.18已补充人工历史恢复；自动调查流转、内容合并、历史保留清理及其他增强仍属后续范围。

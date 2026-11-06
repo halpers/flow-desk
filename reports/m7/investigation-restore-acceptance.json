@@ -1,0 +1,23 @@
+{
+  "stage": "M7.18",
+  "environment": "disposable local mock with S3",
+  "created_at": "2026-11-06T07:32:04.107281+00:00",
+  "checks": [
+    {
+      "name": "restore copies exact server history into a new revision, preserving old snapshots and using current actor/time",
+      "passed": true
+    },
+    {
+      "name": "replaying a committed restore returns the original receipt after a later edit without another effect",
+      "passed": true
+    },
+    {
+      "name": "explicit confirmation, revision CAS, source bounds, parameter-bound keys, tenant and built-in-admin boundaries enforced",
+      "passed": true
+    },
+    {
+      "name": "current resource ACL blocks new restores and old receipts; restoring access recovers receipt; audits redacted and storage/source ledgers unchanged",
+      "passed": true
+    }
+  ]
+}

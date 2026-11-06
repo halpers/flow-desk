@@ -11,6 +11,7 @@ type SourceInvestigationRevisionsModel interface {
 	sourceInvestigationRevisionsModel
 	withSession(sqlx.Session) SourceInvestigationRevisionsModel
 	ListPageTx(context.Context, sqlx.Session, string, string, int64, int64, int64) ([]SourceInvestigationRevisions, error)
+	FindOneRevisionTx(context.Context, sqlx.Session, string, string, int64) (*SourceInvestigationRevisions, error)
 	FindFirstRevisionTx(context.Context, sqlx.Session, string, string) (int64, error)
 }
 type customSourceInvestigationRevisionsModel struct {
@@ -40,4 +41,10 @@ func (m *customSourceInvestigationRevisionsModel) FindFirstRevisionTx(ctx contex
 	var revision int64
 	err := tx.QueryRowCtx(ctx, &revision, fmt.Sprintf("select revision from %s where tenant_id=$1 and investigation_id=$2 order by revision asc limit 1", m.table), tenant, investigation)
 	return revision, err
+}
+
+func (m *customSourceInvestigationRevisionsModel) FindOneRevisionTx(ctx context.Context, tx sqlx.Session, tenant, investigation string, revision int64) (*SourceInvestigationRevisions, error) {
+	var row SourceInvestigationRevisions
+	err := tx.QueryRowCtx(ctx, &row, fmt.Sprintf("select %s from %s where tenant_id=$1 and investigation_id=$2 and revision=$3", sourceInvestigationRevisionsRows, m.table), tenant, investigation, revision)
+	return &row, err
 }

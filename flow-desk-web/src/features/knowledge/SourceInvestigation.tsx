@@ -52,6 +52,7 @@ export function SourceInvestigation({
   const [reload, setReload] = useState(0);
   const [pending, setPending] = useState<Pending | null>(null);
   const [confirmed, setConfirmed] = useState(false);
+  const [restored, setRestored] = useState("");
   const [historyOpen, setHistoryOpen] = useState(false);
   const path = `/source-investigations/${objectRef}`;
   useEffect(() => {
@@ -72,6 +73,7 @@ export function SourceInvestigation({
     return () => controller.abort();
   }, [path, reload]);
   function refresh() {
+    setRestored("");
     setHistoryOpen(false);
     setPending(null);
     setConfirmed(false);
@@ -123,8 +125,9 @@ export function SourceInvestigation({
     <Drawer
       title="巡检调查记录"
       open
+      closable={!historyOpen}
       onClose={() => {
-        if (!busy) onClose();
+        if (!busy && !historyOpen) onClose();
       }}
       size={660}
     >
@@ -132,12 +135,12 @@ export function SourceInvestigation({
         记录人工调查说明和跟进进度。结束跟进不代表归属已确认，也不会登记、修复或删除存储对象。
       </p>
       <p style={{ overflowWrap: "anywhere" }}>对象指纹：{objectRef}</p>
-      <Button disabled={busy || loading} onClick={refresh}>
+      <Button disabled={busy || loading || historyOpen} onClick={refresh}>
         重新读取调查记录
       </Button>
       {data && data.revision > 0 && !loading && (
         <Button
-          disabled={busy || !!pending}
+          disabled={busy || !!pending || historyOpen}
           onClick={() => setHistoryOpen(true)}
         >
           查看编辑历史
@@ -147,8 +150,26 @@ export function SourceInvestigation({
         <InvestigationHistory
           objectRef={objectRef}
           onClose={() => setHistoryOpen(false)}
+          onRestored={(receipt) => {
+            refresh();
+            setRestored(
+              `已将历史修订 ${receipt.restored_from_revision} 保存为修订 ${receipt.investigation.revision}。当前记录以重新读取结果为准。`,
+            );
+            onSaved?.();
+          }}
+          onDenied={(message) => {
+            setHistoryOpen(false);
+            setData(null);
+            setNote("");
+            setStatus("");
+            setPending(null);
+            setConfirmed(false);
+            setRestored("");
+            setError(message);
+          }}
         />
       )}
+      {restored && <Alert type="success" title={restored} />}
       {error && <Alert type="error" title={error} />}
       {loading && <p>正在读取调查记录…</p>}
       {!loading && data && (
@@ -167,7 +188,7 @@ export function SourceInvestigation({
             aria-label="跟进状态"
             style={{ width: "100%" }}
             value={status}
-            disabled={busy || !!pending}
+            disabled={busy || !!pending || historyOpen}
             onChange={setStatus}
             options={data.allowed_statuses.map((value) => ({
               value,
@@ -179,7 +200,7 @@ export function SourceInvestigation({
             id="investigation-note"
             value={note}
             rows={7}
-            disabled={busy || !!pending}
+            disabled={busy || !!pending || historyOpen}
             onChange={(event) => setNote(event.target.value)}
             placeholder="填写核对过程、结论依据及下一步（1–2000 字）"
           />
@@ -191,6 +212,7 @@ export function SourceInvestigation({
             type="primary"
             disabled={
               busy ||
+              historyOpen ||
               !!pending ||
               !note.trim() ||
               Array.from(note.trim()).length > 2000 ||

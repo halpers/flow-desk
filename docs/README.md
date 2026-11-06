@@ -4,6 +4,7 @@
 
 | 文档 | 内容 |
 | --- | --- |
+| [M7.18 调查历史内容恢复](m7-investigation-restore.md) | 已记录旧快照人工确认恢复为新修订、并发保护及原回执重放 |
 | [M7.17 调查完整编辑历史](m7-investigation-history.md) | 不可变修订快照、升级基线、当前授权及稳定分页 |
 | [M7.16 巡检调查工作台](m7-investigation-worklist.md) | 状态筛选、稳定分页、逐项授权、离线查询及继续跟进 |
 | [M7.15 巡检调查记录](m7-source-investigations.md) | 人工说明/跟进、修订保护、当前授权与回执恢复 |

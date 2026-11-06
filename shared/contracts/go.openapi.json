@@ -7175,6 +7175,129 @@
         }
       }
     },
+    "/api/v1/source-investigations/{object_ref}/history/{revision}/restore": {
+      "post": {
+        "summary": "RestoreInvestigationRevision | permission=knowledge:manage | auth=required | role=admin",
+        "operationId": "restoreInvestigationRevision",
+        "parameters": [
+          {
+            "name": "object_ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "revision",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "expected_revision",
+                  "confirm"
+                ],
+                "properties": {
+                  "confirm": {
+                    "type": "boolean"
+                  },
+                  "expected_revision": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "restored_from_revision",
+                        "investigation"
+                      ],
+                      "properties": {
+                        "investigation": {
+                          "type": "object",
+                          "required": [
+                            "object_ref",
+                            "revision",
+                            "status",
+                            "note",
+                            "updated_by",
+                            "updated_at",
+                            "allowed_statuses"
+                          ],
+                          "properties": {
+                            "allowed_statuses": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "note": {
+                              "type": "string"
+                            },
+                            "object_ref": {
+                              "type": "string"
+                            },
+                            "revision": {
+                              "type": "integer"
+                            },
+                            "status": {
+                              "type": "string"
+                            },
+                            "updated_at": {
+                              "type": "string"
+                            },
+                            "updated_by": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "restored_from_revision": {
+                          "type": "integer"
+                        }
+                      }
+                    },
+                    "request_id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/team-users": {
       "get": {
         "summary": "Tenant member directory | permission=team:manage | auth=required",

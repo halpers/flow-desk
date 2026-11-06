@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Alert, Button, Drawer, Empty, Space, Tag } from "antd";
 import { api } from "../../shared/api/client";
+import { InvestigationRestore } from "./InvestigationRestore";
 import type { Models } from "../../shared/api/models";
 
 const labels: Record<string, string> = {
@@ -12,10 +13,18 @@ const labels: Record<string, string> = {
 export function InvestigationHistory({
   objectRef,
   onClose,
+  onRestored,
+  onDenied,
 }: {
   objectRef: string;
   onClose: () => void;
+  onRestored: (receipt: Models["InvestigationRestoreData"]) => void;
+  onDenied: (message: string) => void;
 }) {
+  const [pending, setPending] = useState<{
+    source: Models["InvestigationHistoryPage"]["items"][number];
+    expected: number;
+  } | null>(null);
   const [cursors, setCursors] = useState([""]);
   const [reload, setReload] = useState(0);
   const [data, setData] = useState<Models["InvestigationHistoryPage"] | null>(
@@ -48,14 +57,22 @@ export function InvestigationHistory({
     setCursors(values);
   }
   return (
-    <Drawer title="调查编辑历史" open onClose={onClose} size={740}>
+    <Drawer
+      title="调查编辑历史"
+      open
+      closable={!pending}
+      onClose={() => {
+        if (!pending) onClose();
+      }}
+      size={740}
+    >
       <p>
-        按修订号从新到旧查看每次保存的说明、状态、操作人和时间。历史仅供查阅，修改请返回当前调查记录。
+        按修订号从新到旧查看每次保存的说明、状态、操作人和时间。选择旧修订可核对并确认恢复为新修订，已有历史继续保留。
       </p>
       <p style={{ overflowWrap: "anywhere" }}>对象指纹：{objectRef}</p>
       <Space wrap>
         <Button
-          disabled={loading}
+          disabled={loading || !!pending}
           onClick={() => {
             navigate([""]);
             setReload((value) => value + 1);
@@ -64,14 +81,14 @@ export function InvestigationHistory({
           刷新编辑历史
         </Button>
         <Button
-          disabled={loading || cursors.length === 1}
+          disabled={loading || !!pending || cursors.length === 1}
           onClick={() => navigate(cursors.slice(0, -1))}
         >
           上一页
         </Button>
         <span>第 {cursors.length} 页</span>
         <Button
-          disabled={loading || !!error || !data?.has_more}
+          disabled={loading || !!pending || !!error || !data?.has_more}
           onClick={() => {
             if (data?.next_cursor) navigate([...cursors, data.next_cursor]);
           }}
@@ -106,6 +123,17 @@ export function InvestigationHistory({
                 <strong>修订 {item.revision}</strong>
                 <Tag>{labels[item.status] || item.status}</Tag>
                 {item.is_baseline && <Tag>升级基线</Tag>}
+                <Button
+                  disabled={!!pending || item.revision >= data.current_revision}
+                  onClick={() =>
+                    setPending({
+                      source: item,
+                      expected: data.current_revision,
+                    })
+                  }
+                >
+                  恢复此修订
+                </Button>
               </Space>
               <p>
                 操作人：{item.changed_by} · 时间：{item.changed_at}
@@ -123,6 +151,23 @@ export function InvestigationHistory({
           ))}
           {!data.items.length && <Empty description="此页没有编辑历史" />}
         </>
+      )}
+      {pending && (
+        <InvestigationRestore
+          objectRef={objectRef}
+          source={pending.source}
+          expectedRevision={pending.expected}
+          onCancel={() => {
+            const wasPending = pending;
+            setPending(null);
+            if (wasPending) {
+              navigate([""]);
+              setReload((value) => value + 1);
+            }
+          }}
+          onRestored={onRestored}
+          onDenied={onDenied}
+        />
       )}
     </Drawer>
   );

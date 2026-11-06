@@ -435,6 +435,23 @@ type SourceInvestigationListResp {
     RequestId string `json:"request_id"`
     Data SourceInvestigationListPage `json:"data"`
 }
+type RestoreInvestigationRevisionReq {
+    ObjectRef string `path:"object_ref"`
+    Revision int64 `path:"revision"`
+    ExpectedRevision int64 `json:"expected_revision"`
+    Confirm bool `json:"confirm"`
+    IdempotencyKey string `header:"Idempotency-Key"`
+}
+type InvestigationRestoreData {
+    RestoredFromRevision int64 `json:"restored_from_revision"`
+    Investigation SourceInvestigationData `json:"investigation"`
+}
+type InvestigationRestoreResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data InvestigationRestoreData `json:"data"`
+}
+
 type InvestigationHistoryReq {
     ObjectRef string `path:"object_ref"`
     Cursor string `form:"cursor,optional"`
@@ -598,6 +615,9 @@ service flowdesk-api {
     @doc "ListSourceInvestigations | permission=knowledge:manage | auth=required | role=admin"
     @handler ListSourceInvestigations
     get /source-investigations (SourceInvestigationListReq) returns (SourceInvestigationListResp)
+    @doc "RestoreInvestigationRevision | permission=knowledge:manage | auth=required | role=admin"
+    @handler RestoreInvestigationRevision
+    post /source-investigations/:object_ref/history/:revision/restore (RestoreInvestigationRevisionReq) returns (InvestigationRestoreResp)
     @doc "ListInvestigationHistory | permission=knowledge:manage | auth=required | role=admin"
     @handler ListInvestigationHistory
     get /source-investigations/:object_ref/history (InvestigationHistoryReq) returns (InvestigationHistoryResp)
