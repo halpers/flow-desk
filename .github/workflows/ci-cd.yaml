@@ -166,7 +166,9 @@ jobs:
       - name: Check confirmed investigation history restoration and receipt replay
         run: python scripts/check-investigation-restore.py --env-file work/source-cleanup-ci.env --inventory-fixture work/tenant-source-inventory-ci-fixture.json --output work/investigation-restore-ci.json
       - name: Check lossless investigation history tier archival and cold restoration
-        run: python scripts/check-investigation-history-archive.py --env-file work/source-cleanup-ci.env --inventory-fixture work/tenant-source-inventory-ci-fixture.json --output work/investigation-history-archive-ci.json
+        run: python scripts/check-investigation-history-archive.py --env-file work/source-cleanup-ci.env --inventory-fixture work/tenant-source-inventory-ci-fixture.json --output work/investigation-history-archive-ci.json --browser-fixture work/investigation-history-archive-ci-fixture.json
+      - name: Check previewed atomic investigation history batches and authorized receipt replay
+        run: python scripts/check-investigation-history-batch.py --env-file work/source-cleanup-ci.env --inventory-fixture work/investigation-history-archive-ci-fixture.json --output work/investigation-history-batch-ci.json
       - name: Validate local monitoring and TLS configuration
         run: |
           python scripts/configure-monitoring.py

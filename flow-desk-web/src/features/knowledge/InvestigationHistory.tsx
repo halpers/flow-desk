@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { Alert, Button, Drawer, Empty, Space, Tag } from "antd";
+import { Alert, Button, Checkbox, Drawer, Empty, Space, Tag } from "antd";
 import { api } from "../../shared/api/client";
+import { InvestigationArchiveBatch } from "./InvestigationArchiveBatch";
 import { InvestigationArchive } from "./InvestigationArchive";
 import { InvestigationRestore } from "./InvestigationRestore";
 import type { Models } from "../../shared/api/models";
@@ -21,20 +22,25 @@ export function InvestigationHistory({
   objectRef,
   onClose,
   onArchived,
+  onBatchArchived,
   onRestored,
   onDenied,
 }: {
   objectRef: string;
   onClose: () => void;
+  onBatchArchived: (receipt: Models["InvestigationArchiveBatchData"]) => void;
   onArchived: (receipt: Models["InvestigationArchiveData"]) => void;
   onRestored: (receipt: Models["InvestigationRestoreData"]) => void;
   onDenied: (message: string) => void;
 }) {
+  const [selection, setSelection] = useState<number[]>([]);
+  const [batchOpen, setBatchOpen] = useState(false);
   const [pending, setPending] = useState<{
     kind: "restore" | "archive";
     source: Models["InvestigationHistoryPage"]["items"][number];
     expected: number;
   } | null>(null);
+  const confirmationOpen = !!pending || batchOpen;
   const [cursors, setCursors] = useState([""]);
   const [reload, setReload] = useState(0);
   const [data, setData] = useState<Models["InvestigationHistoryPage"] | null>(
@@ -61,6 +67,7 @@ export function InvestigationHistory({
     return () => controller.abort();
   }, [objectRef, cursor, reload]);
   function navigate(values: string[]) {
+    setSelection([]);
     setData(null);
     setError("");
     setLoading(true);
@@ -70,9 +77,9 @@ export function InvestigationHistory({
     <Drawer
       title="调查编辑历史"
       open
-      closable={!pending}
+      closable={!confirmationOpen}
       onClose={() => {
-        if (!pending) onClose();
+        if (!confirmationOpen) onClose();
       }}
       size={740}
     >
@@ -82,7 +89,7 @@ export function InvestigationHistory({
       <p style={{ overflowWrap: "anywhere" }}>对象指纹：{objectRef}</p>
       <Space wrap>
         <Button
-          disabled={loading || !!pending}
+          disabled={loading || confirmationOpen}
           onClick={() => {
             navigate([""]);
             setReload((value) => value + 1);
@@ -91,14 +98,14 @@ export function InvestigationHistory({
           刷新编辑历史
         </Button>
         <Button
-          disabled={loading || !!pending || cursors.length === 1}
+          disabled={loading || confirmationOpen || cursors.length === 1}
           onClick={() => navigate(cursors.slice(0, -1))}
         >
           上一页
         </Button>
         <span>第 {cursors.length} 页</span>
         <Button
-          disabled={loading || !!pending || !!error || !data?.has_more}
+          disabled={loading || confirmationOpen || !!error || !data?.has_more}
           onClick={() => {
             if (data?.next_cursor) navigate([...cursors, data.next_cursor]);
           }}
@@ -106,6 +113,15 @@ export function InvestigationHistory({
           下一页
         </Button>
       </Space>
+      <Button
+        disabled={
+          loading || !!error || confirmationOpen || selection.length === 0
+        }
+        onClick={() => setBatchOpen(true)}
+      >
+        批量归档选中修订（{selection.length}）
+      </Button>
+      <p>批量选择仅限当前页；翻页或刷新会清空选择，提交前逐项预览。</p>
       {loading && <p>正在读取编辑历史…</p>}
       {error && <Alert type="error" title={error} />}
       {!loading && !error && data && (
@@ -130,12 +146,26 @@ export function InvestigationHistory({
               style={{ marginTop: 20 }}
             >
               <Space wrap>
+                <Checkbox
+                  aria-label={`选择归档修订 ${item.revision}`}
+                  checked={selection.includes(item.revision)}
+                  disabled={confirmationOpen || !item.can_archive}
+                  onChange={(event) =>
+                    setSelection((values) =>
+                      event.target.checked
+                        ? [...values, item.revision].sort(
+                            (left, right) => left - right,
+                          )
+                        : values.filter((value) => value !== item.revision),
+                    )
+                  }
+                />
                 <strong>修订 {item.revision}</strong>
                 <Tag>{labels[item.status] || item.status}</Tag>
                 {item.is_baseline && <Tag>升级基线</Tag>}
                 {item.metadata_archived && <Tag>已归档</Tag>}
                 <Button
-                  disabled={!!pending || !item.can_archive}
+                  disabled={confirmationOpen || !item.can_archive}
                   onClick={() =>
                     setPending({
                       kind: "archive",
@@ -147,7 +177,9 @@ export function InvestigationHistory({
                   归档此修订
                 </Button>
                 <Button
-                  disabled={!!pending || item.revision >= data.current_revision}
+                  disabled={
+                    confirmationOpen || item.revision >= data.current_revision
+                  }
                   onClick={() =>
                     setPending({
                       kind: "restore",
@@ -211,6 +243,20 @@ export function InvestigationHistory({
             setReload((value) => value + 1);
           }}
           onArchived={onArchived}
+          onDenied={onDenied}
+        />
+      )}
+      {batchOpen && data && (
+        <InvestigationArchiveBatch
+          objectRef={objectRef}
+          revisions={selection}
+          expectedRevision={data.current_revision}
+          onCancel={() => {
+            setBatchOpen(false);
+            navigate([""]);
+            setReload((value) => value + 1);
+          }}
+          onArchived={onBatchArchived}
           onDenied={onDenied}
         />
       )}

@@ -7212,6 +7212,239 @@
         }
       }
     },
+    "/api/v1/source-investigations/{object_ref}/history/archive-batch": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "ArchiveInvestigationBatch | permission=knowledge:manage | auth=required | role=admin",
+        "operationId": "archiveInvestigationBatch",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "object_ref",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "Idempotency-Key",
+            "in": "header"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": [
+                "expected_revision",
+                "revisions",
+                "confirm"
+              ],
+              "properties": {
+                "confirm": {
+                  "type": "boolean"
+                },
+                "expected_revision": {
+                  "type": "integer"
+                },
+                "revisions": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "object_ref",
+                    "items"
+                  ],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "object_ref",
+                          "revision",
+                          "archived_at"
+                        ],
+                        "properties": {
+                          "archived_at": {
+                            "type": "string"
+                          },
+                          "object_ref": {
+                            "type": "string"
+                          },
+                          "revision": {
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    },
+                    "object_ref": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/source-investigations/{object_ref}/history/archive-preview": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "PreviewInvestigationArchive | permission=knowledge:manage | auth=required | role=admin",
+        "operationId": "previewInvestigationArchive",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "object_ref",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": [
+                "expected_revision",
+                "revisions"
+              ],
+              "properties": {
+                "expected_revision": {
+                  "type": "integer"
+                },
+                "revisions": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "object_ref",
+                    "current_revision",
+                    "maximum_items",
+                    "items"
+                  ],
+                  "properties": {
+                    "current_revision": {
+                      "type": "integer"
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "revision",
+                          "status",
+                          "note",
+                          "changed_by",
+                          "changed_at",
+                          "is_baseline"
+                        ],
+                        "properties": {
+                          "archive_block_reason": {
+                            "type": "string"
+                          },
+                          "archived_at": {
+                            "type": "string"
+                          },
+                          "can_archive": {
+                            "type": "boolean"
+                          },
+                          "changed_at": {
+                            "type": "string"
+                          },
+                          "changed_by": {
+                            "type": "string"
+                          },
+                          "is_baseline": {
+                            "type": "boolean"
+                          },
+                          "metadata_archived": {
+                            "type": "boolean"
+                          },
+                          "note": {
+                            "type": "string"
+                          },
+                          "revision": {
+                            "type": "integer"
+                          },
+                          "status": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "maximum_items": {
+                      "type": "integer"
+                    },
+                    "object_ref": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/source-investigations/{object_ref}/history/{revision}/archive-metadata": {
       "post": {
         "consumes": [

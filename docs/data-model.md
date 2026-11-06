@@ -1,5 +1,7 @@
 # 数据模型与一致性设计
 
+M7.20无新迁移，批量归档复用两层历史/完整原件及延迟提交约束。原模型增加可信租户/调查及1–50修订的有界选择读取，父行FOR SHARE预览、FOR UPDATE整批移表与历史读取互斥，批量审计/唯一回执同事务，当前调查不变，详见[批量归档](m7-investigation-history-batch.md)。
+
 M7.19迁移2026110605引入Go自有source_investigation_revision_archives，完整原快照移表并保留UUID/修订/内容/原操作者时间，追加归档操作者时间。数据库验证精确原件和同事务热行移出；热UPDATE/任意删除及两层TRUNCATE继续受保护，冷快照不可变。M7.17的热历史不可删除规则仅增加精确移表例外；历史/恢复联合读取、父行锁隔离、整库备份和旧读者回退限制见[分层归档](m7-investigation-history-archive.md)。
 
 M7.18 无新迁移。恢复从source_investigation_revisions按可信租户/调查/源修订单行读取，source_investigations在普通对象锁下比较expected_revision并保存revision+1，由已有触发器追加快照。来源与新修订由knowledge.source_investigation_restore审计记录，回执operation独立于普通编辑；同事务及同键授权恢复不重复效果。所有旧快照保留，见[历史恢复](m7-investigation-restore.md)。

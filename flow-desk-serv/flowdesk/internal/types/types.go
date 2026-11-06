@@ -97,6 +97,14 @@ type ArchiveCopyResp struct {
 	Data      ArchiveCopyItem `json:"data"`
 }
 
+type ArchiveInvestigationBatchReq struct {
+	ObjectRef        string  `path:"object_ref"`
+	ExpectedRevision int64   `json:"expected_revision"`
+	Revisions        []int64 `json:"revisions"`
+	Confirm          bool    `json:"confirm"`
+	IdempotencyKey   string  `header:"Idempotency-Key"`
+}
+
 type ArchiveInvestigationRevisionReq struct {
 	ObjectRef        string `path:"object_ref"`
 	Revision         int64  `path:"revision"`
@@ -380,10 +388,34 @@ type IndexSourceResp struct {
 	Data      IndexSourceData `json:"data"`
 }
 
+type InvestigationArchiveBatchData struct {
+	ObjectRef string                     `json:"object_ref"`
+	Items     []InvestigationArchiveData `json:"items"`
+}
+
+type InvestigationArchiveBatchResp struct {
+	Code      string                        `json:"code"`
+	RequestId string                        `json:"request_id"`
+	Data      InvestigationArchiveBatchData `json:"data"`
+}
+
 type InvestigationArchiveData struct {
 	ObjectRef  string `json:"object_ref"`
 	Revision   int64  `json:"revision"`
 	ArchivedAt string `json:"archived_at"`
+}
+
+type InvestigationArchivePreviewData struct {
+	ObjectRef       string                      `json:"object_ref"`
+	CurrentRevision int64                       `json:"current_revision"`
+	MaximumItems    int64                       `json:"maximum_items"`
+	Items           []InvestigationRevisionItem `json:"items"`
+}
+
+type InvestigationArchivePreviewResp struct {
+	Code      string                          `json:"code"`
+	RequestId string                          `json:"request_id"`
+	Data      InvestigationArchivePreviewData `json:"data"`
 }
 
 type InvestigationArchiveResp struct {
@@ -729,6 +761,12 @@ type PrepareActionReq struct {
 	ToolName    string                 `json:"tool_name"`
 	Arguments   map[string]interface{} `json:"arguments"`
 	EvidenceIds []string               `json:"evidence_ids"`
+}
+
+type PreviewInvestigationArchiveReq struct {
+	ObjectRef        string  `path:"object_ref"`
+	ExpectedRevision int64   `json:"expected_revision"`
+	Revisions        []int64 `json:"revisions"`
 }
 
 type ReceiptData struct {

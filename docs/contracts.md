@@ -1,5 +1,7 @@
 # 接口与跨服务契约
 
+M7.20增加同调查批量归档预览POST /api/v1/source-investigations/:object_ref/history/archive-preview（expected_revision、严格递增且不重复的1–50个revisions），返回当前修订、最大批量和完整选中快照；只读授权、逐项资格检查及脱敏读取审计。POST同路径/history/archive-batch另外要求confirm=true及Idempotency-Key，逐项重新校验M7.19保留条件，同一事务完整移表、批量审计和唯一批量回执；data为object_ref/items，每项与单项归档回执同形。任一项不存在、已归档、受保护或当前修订变化时整批无效果。两接口no-store，当前身份/资源权限逐次复核；预览不持久化授权凭证，不替代提交时验证，旧回执仍当前授权。当前调查不变，无新迁移/S3/Python调用。
+
 M7.19新增POST /api/v1/source-investigations/:object_ref/history/:revision/archive-metadata，当前内置管理员且有knowledge:manage，Idempotency-Key、expected_revision>0及confirm=true。仅当前调查closed、目标不属于最近3修订且changed_at至少30天的热快照可归档。完整原快照移入受保护归档表，当前调查不变，审计及回执同事务；200 data为object_ref/revision/archived_at，409 INVESTIGATION_HISTORY_ARCHIVE_PROTECTED、INVESTIGATION_CHANGED或INVESTIGATION_HISTORY_ALREADY_ARCHIVED分别表示保留保护、当前修订变化或已归档。历史项仅追加可选metadata_archived/archived_at/can_archive/archive_block_reason字段，分页及恢复联合读取两层并复核当前权限。无S3/Python调用，不物理删除内容；同键重放返回原回执。
 
 M7.18 新增 `POST /api/v1/source-investigations/:object_ref/history/:revision/restore`：当前内置管理员且有 knowledge:manage，提交 Idempotency-Key、expected_revision>0、confirm=true。服务端在当前资源授权和对象锁下读取本租户调查的历史修订，将说明和状态精确复制为当前修订+1；操作人和时间使用本次保存者。仅允许恢复早于当前的已记录修订（含升级基线），不改写历史，不接受客户端说明/状态作为恢复源。200 data 为 restored_from_revision 和 investigation（与当前调查数据同结构）的不可变回执。当前修订变化409 INVESTIGATION_CHANGED，目标非旧修订409 INVESTIGATION_RESTORE_NOT_OLDER，未记录的目标404，其他输入400。新修订、自动快照、脱敏恢复审计和回执同事务；重放复核当前权限且返回原回执，不再次恢复。响应no-store，无S3/Python调用。

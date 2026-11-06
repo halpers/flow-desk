@@ -435,6 +435,38 @@ type SourceInvestigationListResp {
     RequestId string `json:"request_id"`
     Data SourceInvestigationListPage `json:"data"`
 }
+type PreviewInvestigationArchiveReq {
+    ObjectRef string `path:"object_ref"`
+    ExpectedRevision int64 `json:"expected_revision"`
+    Revisions []int64 `json:"revisions"`
+}
+type InvestigationArchivePreviewData {
+    ObjectRef string `json:"object_ref"`
+    CurrentRevision int64 `json:"current_revision"`
+    MaximumItems int64 `json:"maximum_items"`
+    Items []InvestigationRevisionItem `json:"items"`
+}
+type InvestigationArchivePreviewResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data InvestigationArchivePreviewData `json:"data"`
+}
+type ArchiveInvestigationBatchReq {
+    ObjectRef string `path:"object_ref"`
+    ExpectedRevision int64 `json:"expected_revision"`
+    Revisions []int64 `json:"revisions"`
+    Confirm bool `json:"confirm"`
+    IdempotencyKey string `header:"Idempotency-Key"`
+}
+type InvestigationArchiveBatchData {
+    ObjectRef string `json:"object_ref"`
+    Items []InvestigationArchiveData `json:"items"`
+}
+type InvestigationArchiveBatchResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data InvestigationArchiveBatchData `json:"data"`
+}
 type ArchiveInvestigationRevisionReq {
     ObjectRef string `path:"object_ref"`
     Revision int64 `path:"revision"`
@@ -636,6 +668,12 @@ service flowdesk-api {
     @doc "ListSourceInvestigations | permission=knowledge:manage | auth=required | role=admin"
     @handler ListSourceInvestigations
     get /source-investigations (SourceInvestigationListReq) returns (SourceInvestigationListResp)
+    @doc "PreviewInvestigationArchive | permission=knowledge:manage | auth=required | role=admin"
+    @handler PreviewInvestigationArchive
+    post /source-investigations/:object_ref/history/archive-preview (PreviewInvestigationArchiveReq) returns (InvestigationArchivePreviewResp)
+    @doc "ArchiveInvestigationBatch | permission=knowledge:manage | auth=required | role=admin"
+    @handler ArchiveInvestigationBatch
+    post /source-investigations/:object_ref/history/archive-batch (ArchiveInvestigationBatchReq) returns (InvestigationArchiveBatchResp)
     @doc "ArchiveInvestigationRevision | permission=knowledge:manage | auth=required | role=admin"
     @handler ArchiveInvestigationRevision
     post /source-investigations/:object_ref/history/:revision/archive-metadata (ArchiveInvestigationRevisionReq) returns (InvestigationArchiveResp)

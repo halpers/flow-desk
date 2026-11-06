@@ -150,6 +150,13 @@ export function SourceInvestigation({
         <InvestigationHistory
           objectRef={objectRef}
           onClose={() => setHistoryOpen(false)}
+          onBatchArchived={(receipt) => {
+            refresh();
+            setHistoryReceipt(
+              `已批量归档 ${receipt.items.length} 个历史修订，完整内容仍可查阅与恢复。当前记录以重新读取结果为准。`,
+            );
+            onSaved?.();
+          }}
           onArchived={(receipt) => {
             refresh();
             setHistoryReceipt(

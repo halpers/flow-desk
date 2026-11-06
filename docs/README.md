@@ -56,3 +56,5 @@
 - [M7.12 未登记副本人工核验与登记](m7-source-adoption.md)：恢复原件、显式确认、大小/hash 核验和同键回执。
 
 M7.19 [调查历史分层归档](m7-investigation-history-archive.md)保留完整快照和恢复能力，无S3操作；升级后备份必须包含两层历史，已有冷快照时不能回退到仅读热表的旧镜像。操作及IP:port部署见[服务器手册§29](../deploy/server.md#29-调查历史分层归档)。
+
+M7.20 [调查历史批量归档](m7-investigation-history-batch.md)支持同调查多选预览、原子确认及原键重试；复用两层历史备份，无S3操作。部署及回退见[服务器手册§30](../deploy/server.md#30-调查历史批量归档)。

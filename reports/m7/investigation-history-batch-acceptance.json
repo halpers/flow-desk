@@ -1,0 +1,23 @@
+{
+  "stage": "M7.20",
+  "environment": "disposable local mock with S3",
+  "created_at": "2026-11-06T09:16:53.537852+00:00",
+  "checks": [
+    {
+      "name": "preview returns exact immutable selection without archival; one atomic batch preserves all original snapshots/current state; original receipt survives later edit",
+      "passed": true
+    },
+    {
+      "name": "bounds, strict selection order, duplicates, confirmation, stale revision and mixed protected/missing/archived selections reject entire batch; tenant/admin boundaries enforced",
+      "passed": true
+    },
+    {
+      "name": "history remains complete after batches; current resource ACL protects preview/new batch/old receipt/cold restore; restored access recovers original receipt",
+      "passed": true
+    },
+    {
+      "name": "one safe immutable audit/receipt per committed batch; all original identities/content/actor/time and storage/source ledgers unchanged",
+      "passed": true
+    }
+  ]
+}

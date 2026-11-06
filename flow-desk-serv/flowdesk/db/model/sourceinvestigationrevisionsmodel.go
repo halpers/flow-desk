@@ -3,6 +3,7 @@ package model
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
@@ -10,6 +11,7 @@ import (
 type SourceInvestigationRevisionsModel interface {
 	sourceInvestigationRevisionsModel
 	withSession(sqlx.Session) SourceInvestigationRevisionsModel
+	ListSelectedTx(context.Context, sqlx.Session, string, string, []int64) ([]SourceInvestigationRevisions, error)
 	ListPageTx(context.Context, sqlx.Session, string, string, int64, int64, int64) ([]SourceInvestigationRevisions, error)
 	FindOneRevisionTx(context.Context, sqlx.Session, string, string, int64) (*SourceInvestigationRevisions, error)
 	DeleteArchivedTx(context.Context, sqlx.Session, string, string, int64) error
@@ -55,4 +57,19 @@ func (m *customSourceInvestigationRevisionsModel) historyQuery() string {
 }
 func (m *customSourceInvestigationRevisionsModel) DeleteArchivedTx(ctx context.Context, tx sqlx.Session, tenant, id string, revision int64) error {
 	return requireOne(tx.ExecCtx(ctx, fmt.Sprintf("delete from %s where tenant_id=$1 and id=$2 and revision=$3", m.table), tenant, id, revision))
+}
+
+func (m *customSourceInvestigationRevisionsModel) ListSelectedTx(ctx context.Context, tx sqlx.Session, tenant, investigation string, revisions []int64) ([]SourceInvestigationRevisions, error) {
+	rows := []SourceInvestigationRevisions{}
+	if len(revisions) == 0 {
+		return rows, nil
+	}
+	args := []any{tenant, investigation}
+	parameters := make([]string, 0, len(revisions))
+	for _, revision := range revisions {
+		args = append(args, revision)
+		parameters = append(parameters, fmt.Sprintf("$%d", len(args)))
+	}
+	err := tx.QueryRowsCtx(ctx, &rows, "select * from ("+m.historyQuery()+") history where revision in ("+strings.Join(parameters, ",")+") order by revision asc", args...)
+	return rows, err
 }
