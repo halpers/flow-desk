@@ -1,0 +1,23 @@
+{
+  "stage": "M7.13",
+  "environment": "disposable local mock with S3",
+  "created_at": "2026-11-06T01:57:46.842951+00:00",
+  "checks": [
+    {
+      "name": "25 real tenant objects paginated; unknown versions and nonstandard/hash-mismatched objects classified; foreign prefix excluded; no locator disclosure or registration",
+      "passed": true
+    },
+    {
+      "name": "invalid page/cursor, cross-tenant cursor and ordinary operator rejected",
+      "passed": true
+    },
+    {
+      "name": "ACL-restricted known versions hidden while empty pages advance; original SHA256 retained",
+      "passed": true
+    },
+    {
+      "name": "only 27 successful pages audited; failed requests create no success audit",
+      "passed": true
+    }
+  ]
+}

@@ -22,6 +22,7 @@ import { ArchiveCopies } from "./ArchiveCopies";
 import { RetentionPolicy } from "./RetentionPolicy";
 import { VersionHistory } from "./VersionHistory";
 import { SourceInventory } from "./SourceInventory";
+import { TenantSourceInventory } from "./TenantSourceInventory";
 
 type Document = Models["DocumentPage"]["items"][number];
 const roleOptions = [
@@ -617,6 +618,9 @@ export function Knowledge({ user }: { user: User }) {
         <p className="muted">
           答复只引用当前授权的已发布版本。撤回文档后，引用访问将立即受限。
         </p>
+        {admin && user.role === "admin" && (
+          <TenantSourceInventory scope={scope} />
+        )}
         {bases.isError && <Alert type="error" title="知识库加载失败" />}
         <Select
           aria-label="选择知识库"

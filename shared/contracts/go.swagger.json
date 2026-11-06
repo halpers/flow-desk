@@ -6445,6 +6445,130 @@
         }
       }
     },
+    "/api/v1/source-inventory": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "GetTenantSourceInventory | permission=knowledge:manage | auth=required | role=admin",
+        "operationId": "getTenantSourceInventory",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "cursor",
+            "in": "query",
+            "allowEmptyValue": true
+          },
+          {
+            "type": "integer",
+            "name": "limit",
+            "in": "query",
+            "allowEmptyValue": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "observed_at",
+                    "content_verified",
+                    "scanned_count",
+                    "items",
+                    "has_more",
+                    "next_cursor"
+                  ],
+                  "properties": {
+                    "content_verified": {
+                      "type": "boolean"
+                    },
+                    "has_more": {
+                      "type": "boolean"
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "object_ref",
+                          "key_kind",
+                          "source_epoch",
+                          "size",
+                          "modified_at",
+                          "association",
+                          "reconciliation",
+                          "document_id",
+                          "version_id",
+                          "registered_id",
+                          "registered_status"
+                        ],
+                        "properties": {
+                          "association": {
+                            "type": "string"
+                          },
+                          "document_id": {
+                            "type": "string"
+                          },
+                          "key_kind": {
+                            "type": "string"
+                          },
+                          "modified_at": {
+                            "type": "string"
+                          },
+                          "object_ref": {
+                            "type": "string"
+                          },
+                          "reconciliation": {
+                            "type": "string"
+                          },
+                          "registered_id": {
+                            "type": "string"
+                          },
+                          "registered_status": {
+                            "type": "string"
+                          },
+                          "size": {
+                            "type": "integer"
+                          },
+                          "source_epoch": {
+                            "type": "integer"
+                          },
+                          "version_id": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "next_cursor": {
+                      "type": "string"
+                    },
+                    "observed_at": {
+                      "type": "string"
+                    },
+                    "scanned_count": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/team-users": {
       "get": {
         "produces": [

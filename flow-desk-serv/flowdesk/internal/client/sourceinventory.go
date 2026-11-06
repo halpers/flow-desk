@@ -33,6 +33,11 @@ type SourceInventory interface {
 	ListVersionObjects(context.Context, string, string, string, int32) (SourceObjectPage, error)
 }
 
+// Tenant inventory never accepts a caller-supplied bucket or prefix.
+type SourceTenantInventory interface {
+	ListTenantObjects(context.Context, string, string, int32) (SourceObjectPage, error)
+}
+
 type inventoryHTTPClient struct{ base aws.HTTPClient }
 type inventoryResponseBody struct {
 	io.Reader
@@ -55,7 +60,19 @@ func (s *s3SourceStore) ListVersionObjects(ctx context.Context, tenant, version,
 			return page, ErrSourceUnavailable
 		}
 	}
-	prefix := "knowledge/" + tenant + "/" + version + "/"
+	return s.listSourceObjects(ctx, "knowledge/"+tenant+"/"+version+"/", after, limit)
+}
+
+func (s *s3SourceStore) ListTenantObjects(ctx context.Context, tenant, after string, limit int32) (SourceObjectPage, error) {
+	parsed, err := uuid.Parse(tenant)
+	if err != nil || parsed.String() != tenant {
+		return SourceObjectPage{}, ErrSourceUnavailable
+	}
+	return s.listSourceObjects(ctx, "knowledge/"+tenant+"/", after, limit)
+}
+
+func (s *s3SourceStore) listSourceObjects(ctx context.Context, prefix, after string, limit int32) (SourceObjectPage, error) {
+	page := SourceObjectPage{Items: []SourceObjectMetadata{}}
 	if limit < 1 || limit > maximumInventoryPage || (after != "" && (!strings.HasPrefix(after, prefix) || len(after) > maximumInventoryKeyBytes || !utf8.ValidString(after))) {
 		return page, ErrSourceUnavailable
 	}

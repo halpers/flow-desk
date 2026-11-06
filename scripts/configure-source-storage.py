@@ -21,19 +21,33 @@ parser.add_argument(
     action="store_true",
     help="Enable confirmed copy registration in an explicit mock sandbox",
 )
+parser.add_argument(
+    "--enable-tenant-inventory",
+    action="store_true",
+    help="Enable tenant-admin metadata discovery only in an explicit mock sandbox",
+)
 args = parser.parse_args()
 lines = args.env_file.read_text(encoding="utf-8").splitlines()
 settings = dict(
     line.split("=", 1) for line in lines if "=" in line and not line.startswith("#")
 )
-if args.enable_cleanup or args.enable_inventory or args.enable_adoption:
+if (
+    args.enable_cleanup
+    or args.enable_inventory
+    or args.enable_adoption
+    or args.enable_tenant_inventory
+):
     if settings.get("MODEL_PROVIDER") != "mock":
         parser.error(
             "Optional storage checks require an isolated MODEL_PROVIDER=mock sandbox"
         )
     for enabled, name in (
         (args.enable_cleanup, "FILE_STORE_CLEANUP_ENABLED"),
-        (args.enable_inventory, "FILE_STORE_INVENTORY_ENABLED"),
+        (
+            args.enable_inventory or args.enable_tenant_inventory,
+            "FILE_STORE_INVENTORY_ENABLED",
+        ),
+        (args.enable_tenant_inventory, "FILE_STORE_TENANT_INVENTORY_ENABLED"),
         (args.enable_adoption, "FILE_STORE_ADOPTION_ENABLED"),
     ):
         if enabled:

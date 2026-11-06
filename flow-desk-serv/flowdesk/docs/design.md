@@ -1,5 +1,7 @@
 # Go 业务服务详细设计
 
+M7.13 tenantsourceinventory 增加内置租户管理员的只读对象发现。ListTenantObjects 的固定前缀仅来自当前可信 tenant，复用原有有界 S3 列举协议。document_versions 使用不含原文的身份投影，source_objects 按租户/存储/当前页 keys 查询；已知文档继续锁定并检查库 ACL/团队。外部 I/O 前后验证当前身份，后置资源检查和页面审计同事务。无新数据库迁移、业务写入或 Python 接口，详见[租户巡检](../../../docs/m7-tenant-source-inventory.md)。
+
 M7.12 sourceadoption 用例复用现有登记模型和幂等事务。巡检为当前有资格的标准旧副本签发与分页游标不同作用域的 AES-GCM 选择凭证。首次幂等事务可直接返回已提交回执；新请求复核后以内部准备信号回滚，退出所有数据库锁再读取 S3；最终幂等事务重新复核并提交登记/审计/回执。事务内无外部 I/O，成功重放不再读 S3，仍校验当前知识库权限与登记身份。新登记要求 FILE_STORE_ADOPTION_ENABLED 和 FILE_STORE_INVENTORY_ENABLED，独立于清理；详情见[人工登记](../../../docs/m7-source-adoption.md)。
 
 M7.11 新增可选 SourceInventory 适配器与 sourceinventory 用例。S3 ListObjectsV2 固定可信版本前缀，单次 limit+1、最多 51 对象及 256KiB 响应，继承 5 秒超时、不跟随重定向、不重试；严格检查范围、编码、顺序、重复及元数据。游标 AES-GCM 加密认证并绑定作用域，源代次改变失效。source_objects 模型仅查询当前页登记；逻辑在 I/O 后事务复核权限与原件，审计成功才返回。无对象写入、自动认领或修复；配置、协议边界见[巡检设计](../../../docs/m7-source-inventory.md)。

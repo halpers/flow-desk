@@ -132,3 +132,18 @@ mkdir -p work
 install -m 600 .env work/source-adoption.env
 python scripts/check-source-adoption.py --env-file work/source-adoption.env --output work/source-adoption.json
 ```
+
+## 租户范围对象巡检
+
+M7.13 的 FILE_STORE_TENANT_INVENTORY_ENABLED 默认 false，并要求 FILE_STORE_INVENTORY_ENABLED。仅内置租户管理员可以读取当前可信租户前缀；已知版本继续检查库 ACL/团队，无权限项隐藏。未知/非标准对象只能人工核对，名称不构成归属证据。沿用第 21 节限定 knowledge/ 前缀的 ListBucket 权限，无额外 GetObject、写入或删除权限；部署、排障和停用见[服务器手册 §23](server.md#23-租户对象巡检与归属核对)。
+
+以下命令只用于已有独立 mock/S3 开发验收栈，要求安装项目固定 Go/Python 依赖。脚本创建新合成租户，并通过专用 Go 测试构造 25 个租户对象及一个外租户对象；不能在业务库/生产桶运行。测试二进制是临时文件，不进入镜像发布产物。实际本地结果见[验收报告](../reports/m7/tenant-source-inventory-acceptance.json)。
+
+```bash
+python scripts/configure-source-storage.py --enable-tenant-inventory
+docker compose --file docker-compose.yaml --file deploy/compose.storage.yaml up --detach --wait --wait-timeout 180
+mkdir -p work
+install -m 600 .env work/tenant-source-inventory.env
+CGO_ENABLED=0 go -C flow-desk-serv/flowdesk test -c -o "$PWD/work/source-store.test" ./internal/client
+python scripts/check-tenant-source-inventory.py --env-file work/tenant-source-inventory.env --output work/tenant-source-inventory.json
+```

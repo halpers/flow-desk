@@ -1,5 +1,7 @@
 # 跨服务契约归档
 
+M7.13 在 Go api/knowledge.api 新增租户管理员的 GET /source-inventory。OpenAPI、浏览器路径类型及 Agent 的 Go 契约副本由统一脚本重建；无 Python HTTP、事件或工具枚举变动。当前授权与可信租户前缀不能由游标或对象名替代，详见[租户巡检](../../docs/m7-tenant-source-inventory.md)。
+
 M7.10 在 Go api/knowledge.api 增加完整版本历史分页和已清理版本元数据归档，生成 Go 类型、OpenAPI、浏览器类型及 Agent 内的 Go 契约副本；无新 Python HTTP 或 SSE schema。历史游标不能代替当前授权，归档命令绑定文档修订和幂等键，详见[历史归档契约](../../docs/m7-history-archive.md)。
 
 当前行为基线是 [接口契约](../../docs/contracts.md)。M1 起按以下来源生成机器可读契约，避免三端各维护一份类型：

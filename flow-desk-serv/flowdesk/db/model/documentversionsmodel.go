@@ -14,6 +14,7 @@ type (
 	// DocumentVersionsModel is an interface to be customized, add more methods here,
 	// and implement the added methods in customDocumentVersionsModel.
 	DocumentVersionsModel interface {
+		FindInventoryIdentityTx(context.Context, sqlx.Session, string, string) (*SourceInventoryVersion, error)
 		ListHistoryTx(context.Context, sqlx.Session, string, string, time.Time, string, int64) ([]VersionHistoryRow, error)
 		FindHistoryVersionTx(context.Context, sqlx.Session, string, string, string) (*VersionHistoryRow, error)
 		UpdateMetadataArchivedTx(context.Context, sqlx.Session, string, string) error
@@ -265,4 +266,24 @@ func (m *customDocumentVersionsModel) FindHistoryVersionTx(ctx context.Context, 
 func (m *customDocumentVersionsModel) UpdateMetadataArchivedTx(ctx context.Context, tx sqlx.Session, tenant, id string) error {
 	return requireOne(tx.ExecCtx(ctx, fmt.Sprintf(`update %s set metadata_archived=true,filename='',parser_version='',error_code='',chunk_count=0,ocr_mode='off',pdf_layout='plain'
  where tenant_id=$1 and id=$2 and cleanup_state='purged' and not metadata_archived`, m.table), tenant, id))
+}
+
+// SourceInventoryVersion deliberately excludes original bytes, text and parser metadata.
+type SourceInventoryVersion struct {
+	Id            string `db:"id"`
+	TenantId      string `db:"tenant_id"`
+	DocumentId    string `db:"document_id"`
+	ContentHash   string `db:"content_hash"`
+	SourceFormat  string `db:"source_format"`
+	SourceSize    int64  `db:"source_size"`
+	SourceEpoch   int64  `db:"source_epoch"`
+	SourceStorage string `db:"source_storage"`
+	SourceStoreId string `db:"source_store_id"`
+	SourceKey     string `db:"source_key"`
+}
+
+func (m *customDocumentVersionsModel) FindInventoryIdentityTx(ctx context.Context, tx sqlx.Session, tenant, version string) (*SourceInventoryVersion, error) {
+	var row SourceInventoryVersion
+	err := tx.QueryRowCtx(ctx, &row, fmt.Sprintf("select id,tenant_id,document_id,content_hash,source_format,source_size,source_epoch,source_storage,source_store_id,source_key from %s where tenant_id=$1 and id=$2", m.table), tenant, version)
+	return &row, err
 }

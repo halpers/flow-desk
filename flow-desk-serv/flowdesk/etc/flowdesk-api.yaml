@@ -23,6 +23,7 @@ AllowedOrigins: ${ALLOWED_ORIGINS}
 CookieSecure: ${COOKIE_SECURE}
 FileStoreProvider: ${FILE_STORE_PROVIDER}
 FileStoreCleanupEnabled: ${FILE_STORE_CLEANUP_ENABLED}
+FileStoreTenantInventoryEnabled: ${FILE_STORE_TENANT_INVENTORY_ENABLED}
 FileStoreInventoryEnabled: ${FILE_STORE_INVENTORY_ENABLED}
 FileStoreAdoptionEnabled: ${FILE_STORE_ADOPTION_ENABLED}
 FileStoreEndpoint: ${FILE_STORE_ENDPOINT}

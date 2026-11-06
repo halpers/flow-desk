@@ -790,6 +790,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/source-inventory": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** GetTenantSourceInventory | permission=knowledge:manage | auth=required | role=admin */
+        get: operations["getTenantSourceInventory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/team-users": {
         parameters: {
             query?: never;
@@ -3651,6 +3668,51 @@ export interface operations {
                                 updated_at: string;
                                 version: number;
                             };
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    getTenantSourceInventory: {
+        parameters: {
+            query?: {
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            content_verified: boolean;
+                            has_more: boolean;
+                            items: {
+                                association: string;
+                                document_id: string;
+                                key_kind: string;
+                                modified_at: string;
+                                object_ref: string;
+                                reconciliation: string;
+                                registered_id: string;
+                                registered_status: string;
+                                size: number;
+                                source_epoch: number;
+                                version_id: string;
+                            }[];
+                            next_cursor: string;
+                            observed_at: string;
+                            scanned_count: number;
                         };
                         request_id?: string;
                     };

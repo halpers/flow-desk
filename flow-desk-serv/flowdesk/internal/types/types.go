@@ -946,6 +946,40 @@ type TeamsResp struct {
 	Data      TeamPage `json:"data"`
 }
 
+type TenantSourceInventoryItem struct {
+	ObjectRef        string `json:"object_ref"`
+	KeyKind          string `json:"key_kind"`
+	SourceEpoch      int64  `json:"source_epoch"`
+	Size             int64  `json:"size"`
+	ModifiedAt       string `json:"modified_at"`
+	Association      string `json:"association"`
+	Reconciliation   string `json:"reconciliation"`
+	DocumentId       string `json:"document_id"`
+	VersionId        string `json:"version_id"`
+	RegisteredId     string `json:"registered_id"`
+	RegisteredStatus string `json:"registered_status"`
+}
+
+type TenantSourceInventoryPage struct {
+	ObservedAt      string                      `json:"observed_at"`
+	ContentVerified bool                        `json:"content_verified"`
+	ScannedCount    int64                       `json:"scanned_count"`
+	Items           []TenantSourceInventoryItem `json:"items"`
+	HasMore         bool                        `json:"has_more"`
+	NextCursor      string                      `json:"next_cursor"`
+}
+
+type TenantSourceInventoryReq struct {
+	Cursor string `form:"cursor,optional"`
+	Limit  int64  `form:"limit,optional"`
+}
+
+type TenantSourceInventoryResp struct {
+	Code      string                    `json:"code"`
+	RequestId string                    `json:"request_id"`
+	Data      TenantSourceInventoryPage `json:"data"`
+}
+
 type TicketChangeReq struct {
 	TicketId        string `path:"ticket_id"`
 	IdempotencyKey  string `header:"Idempotency-Key"`

@@ -14,6 +14,7 @@ type (
 	// SourceObjectsModel is an interface to be customized, add more methods here,
 	// and implement the added methods in customSourceObjectsModel.
 	SourceObjectsModel interface {
+		ListTenantInventoryRegistrationsTx(context.Context, sqlx.Session, string, string, []string) ([]SourceObjects, error)
 		ListInventoryRegistrationsTx(context.Context, sqlx.Session, string, string, string, []string) ([]SourceObjects, error)
 		InsertIfAbsentTx(context.Context, sqlx.Session, *SourceObjects) error
 		FindOneForUpdateTx(context.Context, sqlx.Session, string, string) (*SourceObjects, error)
@@ -77,4 +78,13 @@ func (m *customSourceObjectsModel) UpdateStatusTx(ctx context.Context, tx sqlx.S
 
 func (m *customSourceObjectsModel) withSession(session sqlx.Session) SourceObjectsModel {
 	return NewSourceObjectsModel(sqlx.NewSqlConnFromSession(session))
+}
+
+func (m *customSourceObjectsModel) ListTenantInventoryRegistrationsTx(ctx context.Context, tx sqlx.Session, tenant, store string, keys []string) ([]SourceObjects, error) {
+	rows := []SourceObjects{}
+	if len(keys) == 0 {
+		return rows, nil
+	}
+	err := tx.QueryRowsCtx(ctx, &rows, fmt.Sprintf("select %s from %s where tenant_id=$1 and store_id=$2 and object_key=any($3::text[])", sourceObjectsRows, m.table), tenant, store, pq.Array(keys))
+	return rows, err
 }
