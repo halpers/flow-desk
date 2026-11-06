@@ -411,6 +411,30 @@ type TenantSourceInventoryReq {
     Cursor string `form:"cursor,optional"`
     Limit int64 `form:"limit,optional"`
 }
+type SourceInvestigationListReq {
+    Status string `form:"status,optional"`
+    Cursor string `form:"cursor,optional"`
+    Limit int64 `form:"limit,optional"`
+}
+type SourceInvestigationListItem {
+    ObjectRef string `json:"object_ref"`
+    Revision int64 `json:"revision"`
+    Status string `json:"status"`
+    CreatedAt string `json:"created_at"`
+    UpdatedBy string `json:"updated_by"`
+    UpdatedAt string `json:"updated_at"`
+}
+type SourceInvestigationListPage {
+    Items []SourceInvestigationListItem `json:"items"`
+    HasMore bool `json:"has_more"`
+    NextCursor string `json:"next_cursor"`
+    AllowedStatuses []string `json:"allowed_statuses"`
+}
+type SourceInvestigationListResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data SourceInvestigationListPage `json:"data"`
+}
 type SourceInvestigationReq {
     ObjectRef string `path:"object_ref"`
 }
@@ -544,6 +568,9 @@ type ArchiveCopyResp {
 
 @server(prefix: /api/v1 middleware: SessionAuth)
 service flowdesk-api {
+    @doc "ListSourceInvestigations | permission=knowledge:manage | auth=required | role=admin"
+    @handler ListSourceInvestigations
+    get /source-investigations (SourceInvestigationListReq) returns (SourceInvestigationListResp)
     @doc "GetSourceInvestigation | permission=knowledge:manage | auth=required | role=admin"
     @handler GetSourceInvestigation
     get /source-investigations/:object_ref (SourceInvestigationReq) returns (SourceInvestigationResp)

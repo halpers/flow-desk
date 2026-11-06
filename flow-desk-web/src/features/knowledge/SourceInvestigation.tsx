@@ -35,10 +35,12 @@ export function SourceInvestigation({
   objectRef,
   selectionToken,
   onClose,
+  onSaved,
 }: {
   objectRef: string;
   selectionToken: string;
   onClose: () => void;
+  onSaved?: () => void;
 }) {
   const [data, setData] = useState<RecordData | null>(null);
   const [note, setNote] = useState("");
@@ -94,6 +96,7 @@ export function SourceInvestigation({
       setStatus(receipt.status);
       setPending(null);
       setConfirmed(false);
+      onSaved?.();
     } catch (reason) {
       setError((reason as Error).message);
       if (

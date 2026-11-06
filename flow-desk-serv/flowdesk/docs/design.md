@@ -1,5 +1,7 @@
 # Go 业务服务详细设计
 
+M7.16 sourceinvestigationlist 用例与 SourceInvestigationsModel.ListPageTx 提供当前租户按状态的稳定分页。默认20/最大50，只查 limit+1 元数据；逐项复用调查资源授权，游标按已扫描行推进，绑定当前用户/租户/筛选与原15分钟期限。管理员、最终会话复核及只读审计使用同一事务，失败清空整页，无外部 I/O。迁移2026110603仅增加索引，详见[工作台设计](../../../docs/m7-investigation-worklist.md)。
+
 M7.15 SourceInvestigationsModel 通过隔离 schema/goctl 生成并在 ServiceContext 初始化；sourceinvestigations 用例统一复核内置管理员、会话和当前资源授权。首次使用租户巡检签发的独立加密选择凭证，后续按可信记录定位授权，可在暂停巡检后跟进。幂等键→身份/资源→对象事务锁后比较 expected_revision；说明、审计和回执同事务，无 S3 I/O 或 outbox。回执授权失败返回空数据，详见[巡检调查设计](../../../docs/m7-source-investigations.md)。
 
 M7.14 sourcehistory 用例通过 SourceObjectsModel 查询热/历史投影，SourceObjectArchivesModel 保留完整登记身份。归档、热行删除、审计和回执使用同一事务；不调用外部存储。生成器的基础 Insert 会省略 created_at，因此自定义 InsertTx 显式写入原始创建时间，保持分页位置；原生成文件不手改。所有登记写者在版本锁下检查两表，旧 cleanup/adoption 回执保持当前授权。详见[副本历史](../../../docs/m7-source-history.md)。

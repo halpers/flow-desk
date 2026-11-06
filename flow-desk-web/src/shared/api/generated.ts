@@ -841,6 +841,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/source-investigations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** ListSourceInvestigations | permission=knowledge:manage | auth=required | role=admin */
+        get: operations["listSourceInvestigations"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/source-investigations/{object_ref}": {
         parameters: {
             query?: never;
@@ -3846,6 +3863,45 @@ export interface operations {
                             next_cursor: string;
                             observed_at: string;
                             scanned_count: number;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    listSourceInvestigations: {
+        parameters: {
+            query?: {
+                status?: string;
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            allowed_statuses: string[];
+                            has_more: boolean;
+                            items: {
+                                created_at: string;
+                                object_ref: string;
+                                revision: number;
+                                status: string;
+                                updated_at: string;
+                                updated_by: string;
+                            }[];
+                            next_cursor: string;
                         };
                         request_id?: string;
                     };

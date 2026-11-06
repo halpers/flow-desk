@@ -104,4 +104,7 @@ test("ordinary operator cannot see tenant inventory entry", async ({
   await expect(
     page.getByRole("button", { name: "租户对象巡检", exact: true }),
   ).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "调查工作台", exact: true }),
+  ).toHaveCount(0);
 });

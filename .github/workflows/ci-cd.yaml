@@ -159,6 +159,8 @@ jobs:
         run: python scripts/check-source-history.py --env-file work/source-cleanup-ci.env --output work/source-history-ci.json
       - name: Check manual source investigation revisions and authorized receipt recovery
         run: python scripts/check-source-investigations.py --env-file work/source-cleanup-ci.env --inventory-fixture work/tenant-source-inventory-ci-fixture.json --output work/source-investigations-ci.json
+      - name: Check tenant investigation worklist filters and permission-safe pagination
+        run: python scripts/check-investigation-worklist.py --env-file work/source-cleanup-ci.env --inventory-fixture work/tenant-source-inventory-ci-fixture.json --output work/investigation-worklist-ci.json
       - name: Validate local monitoring and TLS configuration
         run: |
           python scripts/configure-monitoring.py

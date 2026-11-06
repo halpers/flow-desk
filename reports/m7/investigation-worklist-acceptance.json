@@ -1,0 +1,23 @@
+{
+  "stage": "M7.16",
+  "environment": "disposable local mock with S3",
+  "created_at": "2026-11-06T05:55:23.155753+00:00",
+  "checks": [
+    {
+      "name": "113 investigations paginate beyond legacy limits with equal timestamps and UUID tie breaker; list returns metadata only",
+      "passed": true
+    },
+    {
+      "name": "all status filters match tenant SQL counts; invalid status/limit/cursor, cross-actor cursor and operator access rejected; other tenant sees no target rows",
+      "passed": true
+    },
+    {
+      "name": "known-resource ACL revocation hides its metadata, including an empty middle page; encrypted cursor continues without omission; fixture ACL restored",
+      "passed": true
+    },
+    {
+      "name": "successful target-tenant pages audited exactly once; failed requests unaudited; latest notes/revisions/timestamps and source ledger remain unchanged",
+      "passed": true
+    }
+  ]
+}

@@ -950,6 +950,34 @@ type SourceInvestigationData struct {
 	AllowedStatuses []string `json:"allowed_statuses"`
 }
 
+type SourceInvestigationListItem struct {
+	ObjectRef string `json:"object_ref"`
+	Revision  int64  `json:"revision"`
+	Status    string `json:"status"`
+	CreatedAt string `json:"created_at"`
+	UpdatedBy string `json:"updated_by"`
+	UpdatedAt string `json:"updated_at"`
+}
+
+type SourceInvestigationListPage struct {
+	Items           []SourceInvestigationListItem `json:"items"`
+	HasMore         bool                          `json:"has_more"`
+	NextCursor      string                        `json:"next_cursor"`
+	AllowedStatuses []string                      `json:"allowed_statuses"`
+}
+
+type SourceInvestigationListReq struct {
+	Status string `form:"status,optional"`
+	Cursor string `form:"cursor,optional"`
+	Limit  int64  `form:"limit,optional"`
+}
+
+type SourceInvestigationListResp struct {
+	Code      string                      `json:"code"`
+	RequestId string                      `json:"request_id"`
+	Data      SourceInvestigationListPage `json:"data"`
+}
+
 type SourceInvestigationReq struct {
 	ObjectRef string `path:"object_ref"`
 }

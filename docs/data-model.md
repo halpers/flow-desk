@@ -1,5 +1,7 @@
 # 数据模型与一致性设计
 
+M7.16 迁移2026110603只新增 source_investigations 的 (tenant_id,created_at DESC,id DESC) 与 (tenant_id,status,created_at DESC,id DESC) 两个分页索引，不改表字段。custom model 仅投影授权所需私有 key 和列表元数据，不读说明。当前授权、分页与脱敏只读审计同事务；创建时间/ID保持不变，状态筛选不是快照，详见[调查工作台](m7-investigation-worklist.md)。
+
 M7.15 迁移 2026110602 增加 Go 自有 source_investigations。tenant_id/object_ref 唯一；私有 store_id/object_key 与创建身份固定，最新说明和状态通过期望修订更新，同租户创建/更新人外键。单对象事务锁、审计和幂等回执保证不覆盖、不重复提交；没有下游动作或 outbox。每次用可信定位的版本线索核对当前资源授权，身份线索不证明归属。调查、回执、审计和用户身份须纳入同一数据库备份；无自动删除或永久编辑历史，见[调查设计](m7-source-investigations.md)。
 
 M7.14 迁移 2026110601 增加 Go 自有 source_object_archives，保留退休登记的全部原字段并增加 archived_by/archived_at。归档事务先锁文档、授权、版本和对象，只移动非当前代次且清理投递已完成的 retired 行；插入历史表、删除热行、审计和回执原子提交。身份/定位查重、旧回执和存储巡检联合读两表，日常副本预览仅读热表。完整历史用不变 created_at/id 分页。两表和回执、审计须同一备份；不删除 S3 防重写标记，详见[完整副本历史](m7-source-history.md)。
