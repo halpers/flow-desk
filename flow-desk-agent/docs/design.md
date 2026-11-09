@@ -159,3 +159,7 @@ M1 创建 pyproject、锁文件、格式/静态检查和 Pytest 配置；M2 使�
 后续 M7.7 清理命令通过服务认证并绑定版本、租户、job/hash。永久墓碑与索引删除同事务提交；接受任务、解析提交及独立语义重建共享按版本事务锁并检查墓碑。解析和 embedding 在事务外，最终提交前再次隔离。Go 的保留准入不能由 Python 或模型决定，见[版本清理](../../docs/m7-retention.md)。
 
 内部 source 的 pdf_layout 缺省 plain；columns/table 只接受 off OCR。使用固定 pypdf 的 layout 输出，table 保留物理行和水平空白，columns 对唯一稳定双栏间隔先左后右读取。旋转/歧义/超宽明确失败；沿用无凭据、时间/内存/文件资源受限的单文件子进程。每个模式使用独立 parser 标识，结果和固定错误先持久化，回调恢复不重复解析；旧文本/OCR manifest 继续可读。范围、限制与验收见[M7.5](../../docs/m7-pdf-layout.md)。
+
+## M7.22 可选HNSW候选路径
+
+[语义规模优化](../../docs/m7-retrieval-scale.md)将语义向量候选交给SemanticSearch，默认exact；显式hnsw仅使用当前租户/profile/维度登记且目录一致的索引。版本过滤在LIMIT内，不足20项、不可用索引或扫描超时回退精确。两条查询各有5秒上限，精确排序距离加零阻止近似扫描；事务局部参数不污染连接池。全文/RRF、embedding预算及Go引用复核沿用现有流程。迁移10只增加Agent索引登记表，CLI显式维护且可中断恢复；不自动为租户批量建索引。合成测试和自然EXPLAIN报告不等于真实模型质量或生产吞吐保证。

@@ -163,6 +163,20 @@ MIGRATIONS = [
         content_hash TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
     """,
+    """
+    CREATE TABLE semantic_ann_indexes (
+        tenant_id UUID NOT NULL,
+        profile TEXT NOT NULL CHECK(profile ~ '^semantic-v1-[0-9a-f]{24}$'),
+        dimension INTEGER NOT NULL CHECK(dimension BETWEEN 1 AND 2000),
+        index_name TEXT NOT NULL UNIQUE CHECK(index_name ~ '^semantic_hnsw_[0-9a-f]{24}$'),
+        state TEXT NOT NULL CHECK(state IN ('building','ready')),
+        definition_hash TEXT NOT NULL DEFAULT ''
+            CHECK(definition_hash='' OR definition_hash ~ '^[0-9a-f]{64}$'),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        PRIMARY KEY(tenant_id,profile,dimension),
+        CHECK(state<>'ready' OR definition_hash<>'')
+    );
+    """,
 ]
 
 

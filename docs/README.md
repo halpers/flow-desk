@@ -60,3 +60,5 @@ M7.19 [调查历史分层归档](m7-investigation-history-archive.md)保留完�
 M7.20 [调查历史批量归档](m7-investigation-history-batch.md)支持同调查多选预览、原子确认及原键重试；复用两层历史备份，无S3操作。部署及回退见[服务器手册§30](../deploy/server.md#30-调查历史批量归档)。
 
 M7.21 [任务生命周期盘点](m7-run-lifecycle.md)按当前授权展示消息、运行及checkpoint数量和保护原因；只读、不删除，操作见[服务器手册§31](../deploy/server.md#31-任务生命周期盘点)。
+
+M7.22 [语义检索规模优化](m7-retrieval-scale.md)提供按租户/profile/维度维护的可选HNSW索引、默认精确及有界回退；实际基准见报告，部署与回退见[服务器手册§32](../deploy/server.md#32-可选语义检索索引)。

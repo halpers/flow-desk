@@ -9,7 +9,8 @@ import os
 import re
 from uuid import UUID, uuid4, uuid5
 
-from flowdesk_agent.embeddings import configured_embedder, vector_literal
+from flowdesk_agent.ann_index import SemanticSearch
+from flowdesk_agent.embeddings import configured_embedder
 from flowdesk_agent.knowledge_cleanup import lock_version, tombstone
 from flowdesk_agent.pdf import PDFError, PDFManifest, extract_pdf
 from flowdesk_agent.semantic_index import SemanticIndex
@@ -285,7 +286,9 @@ class KnowledgeIndex:
 
 
 class Retriever:
-    def __init__(self, pool, tools, *, embedder=None, profile=None, reranker=None):
+    def __init__(
+        self, pool, tools, *, embedder=None, profile=None, reranker=None, search_settings=None
+    ):
         self.pool, self.tools = pool, tools
         self.profile = (
             profile if profile is not None else os.environ.get("RETRIEVAL_PROFILE", "baseline")
@@ -298,6 +301,7 @@ class Retriever:
             if self.embedder is None:
                 raise ToolError("EMBEDDING_NOT_CONFIGURED")
         self.reranker = reranker
+        self.semantic_search = SemanticSearch(pool, search_settings)
 
     async def search(self, query, top_k=3):
         if not 1 <= top_k <= 5 or len(query) > 500:
@@ -442,21 +446,10 @@ class Retriever:
             )[0]
             if dimensions != {len(values)}:
                 raise ToolError("EMBEDDING_DIMENSION_CHANGED")
-            literal = vector_literal(values)
-            async with self.pool.connection() as conn:
-                semantic = await (
-                    await conn.execute(
-                        "SELECT c.*,1-(s.embedding OPERATOR(knowledge.<=>) "
-                        "%s::knowledge.vector) AS rank "
-                        "FROM semantic_vectors s JOIN knowledge_chunks c "
-                        "ON c.chunk_id=s.chunk_id AND c.version_id=s.version_id "
-                        "AND c.tenant_id=s.tenant_id "
-                        "WHERE s.tenant_id=%s AND s.profile=%s AND s.version_id=ANY(%s) "
-                        "ORDER BY s.embedding OPERATOR(knowledge.<=>) %s::knowledge.vector,"
-                        "c.chunk_id LIMIT 20",
-                        (literal, tenant_id, self.embedder.profile, versions, literal),
-                    )
-                ).fetchall()
+            result = await self.semantic_search.candidates(
+                tenant_id, self.embedder.profile, versions, values
+            )
+            semantic = result.rows
         candidates, scores = {}, {}
         vector_candidates = (
             semantic

@@ -790,3 +790,54 @@ M7.21新增只读预览，不增加表、环境变量、公开端口或存储权
 | 计数与稍后读取不同 | 两服务独立采样，后台恢复或新回调可能继续发生；预览不锁定未来资格 |
 
 可直接回退配套旧应用以移除入口，不需要数据回灌或逆向迁移；仍遵守此前历史归档版本的回退限制。合成验收脚本只能使用一次性mock环境，禁止在服务器业务库执行。[设计及本地证据](../docs/m7-run-lifecycle.md)不代表远程服务器已部署。
+
+## 32. 可选语义检索索引
+
+M7.22默认继续精确查询；升级会由Agent执行有序迁移10，增加semantic_ann_indexes，不自动建向量索引，也没有新端口、模型调用或Go迁移。按第10节备份并发布配套镜像，等Agent readiness通过。IP:port及域名入口一致。若只使用baseline，无需开启本功能。
+
+1. 先按现有语义重建流程配置独立embedding服务，并完成目标租户当前profile的语义manifest；保持RETRIEVAL_PROFILE=semantic和SEMANTIC_SEARCH_MODE=exact。未完成索引时不要为消除错误直接改业务激活状态。
+2. 在获授权的Agent维护连接执行以下只读聚合，核对租户、profile和实际维度，仅输出ID/数量，不输出正文或密钥。选择已核对的一行；维度1–2000才能用本阶段HNSW，高维继续exact。每个租户/profile/维度单独维护，索引数量与容量需纳入评估。
+
+```bash
+docker compose exec -T agent python - <<'PY'
+import os
+import psycopg
+with psycopg.connect(os.environ["AGENT_DATABASE_URL"]) as connection:
+    rows = connection.execute("SELECT tenant_id,profile,dimension,count(*) FROM semantic_manifests GROUP BY tenant_id,profile,dimension ORDER BY tenant_id,profile,dimension").fetchall()
+    for row in rows:
+        print(*row, sep=" | ")
+PY
+```
+
+3. 在维护窗口设置以下三个已核对的值，先status再create。CLI只接受固定UUID/profile/维度，数据库连接从容器环境读取，不在命令行传密码；需要pgvector 0.8+。构建会增加资源负载并等待事务，语句上限300秒、锁等待5秒，并发同目标维护拒绝。运行中断后重新执行同一create，状态未就绪时查询使用精确路径。
+
+```bash
+TENANT_UUID="REPLACE_WITH_VERIFIED_TENANT_UUID"
+SEMANTIC_PROFILE="REPLACE_WITH_VERIFIED_SEMANTIC_PROFILE"
+VECTOR_DIMENSION=1536
+docker compose exec -T agent python -m flowdesk_agent.ann_index status --tenant-id "$TENANT_UUID" --profile "$SEMANTIC_PROFILE" --dimension "$VECTOR_DIMENSION"
+docker compose exec -T agent python -m flowdesk_agent.ann_index create --tenant-id "$TENANT_UUID" --profile "$SEMANTIC_PROFILE" --dimension "$VECTOR_DIMENSION" --confirm-maintenance
+```
+
+4. 只有status输出ready且目标环境容量/召回验证通过后，才在服务器.env配置SEMANTIC_SEARCH_MODE=hnsw、SEMANTIC_HNSW_EF_SEARCH=100、SEMANTIC_HNSW_MAX_SCAN_TUPLES=20000。按第6/10节以相同发布SHA、仓库和--server/--tls/--monitoring选项重新发布，不能用裸compose up替换固定镜像。默认值分别为exact、100、20000；ef_search范围40–1000，max_scan_tuples范围1000–100000。
+5. 使用已有授权知识问答检查引用及撤回行为，并观察数据库负载与检索延迟。ready只代表索引资格，真实是否选用取决于规划器；在目标环境另做EXPLAIN/召回对照，不以本地64维合成报告代替生产验收。即使候选满20项，ANN仍可能漏掉精确近邻；严格精确的场景保留exact。
+
+| 现象 | 处理 |
+| --- | --- |
+| unavailable、building或候选不足 | 查询回退exact；核对迁移、profile、维度、索引目录及完成状态，再显式维护 |
+| SEMANTIC_INDEX_SOURCE_NOT_READY | 所选profile没有manifest或维度不一致，先完成原语义重建流程 |
+| SEMANTIC_INDEX_DEFINITION_MISMATCH / NOT_MANAGED | 同名索引或登记不匹配，停止维护并交研发检查，不手工删除未知索引 |
+| SEMANTIC_INDEX_MAINTENANCE_BUSY | 同目标已有维护会话，确认其状态；不绕过advisory lock |
+| SEMANTIC_INDEX_MAINTENANCE_FAILED | 核对空间、权限、pgvector版本及超时；原登记和向量保留，重跑原create恢复 |
+| SEMANTIC_SEARCH_CONFIG_INVALID | 检查枚举/数值范围，不通过增大到无界数值规避扫描限制 |
+| 查询超时 | ANN超时仅尝试一次精确回退；精确也超时则任务明确失败，检查负载/锁等待，不能视为空知识 |
+
+快速回退：将SEMANTIC_SEARCH_MODE=exact，并按原固定SHA发布方式重建容器，向量及索引均可保留。若决定释放该索引空间，再在维护窗口执行：
+
+```bash
+docker compose exec -T agent python -m flowdesk_agent.ann_index drop --tenant-id "$TENANT_UUID" --profile "$SEMANTIC_PROFILE" --dimension "$VECTOR_DIMENSION" --confirm-maintenance
+```
+
+drop只处理登记且定义匹配的索引，先撤销ready，原向量/manifest/知识及引用保持。备份应包含Agent登记表和索引；恢复到新库后status复核；若恢复后schema名称改变，原指纹会安全失效并回退exact，核对来源后重新执行同一create校验目录并更新登记指纹，不手工修改ready/hash。回退旧应用时保留迁移10及登记表，不执行Down；需保留精确语义时先用本版CLI明确drop后再退旧版，旧查询不能保证避开仍存在的ANN索引。原有图版本和调查历史回退限制仍适用。
+
+本地已运行80项Linux隔离测试及一万条向量合成基准，未在真实服务器部署上述步骤。详细限制、维护恢复和[基准报告](../reports/m7/retrieval-scale-acceptance.json)见[专项设计](../docs/m7-retrieval-scale.md)；基准脚本需临时schema创建权限，仅供一次性验收库，不在服务器业务库运行。

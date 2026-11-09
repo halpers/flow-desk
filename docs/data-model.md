@@ -281,3 +281,7 @@ Go 迁移 `2026110502_pdf_layout.sql` 为 document_versions 增加 pdf_layout，
 迁移 2026110503_accounts_roles.sql 新增 roles/user_roles，使用租户复合外键、角色名大小写不敏感唯一索引和内置角色部分唯一索引。用户新增 revision/auth_version/extra_permissions；users.role 保留有效基础角色投影，extra_permissions 为启用自定义角色的权限并集。旧账号回填关联，新租户及新账号 INSERT 由触发器初始化基础角色。
 
 管理写在租户授权排他锁下更新用户/绑定/投影，递增版本并撤销全部 sessions，同时记录审计和幂等结果。角色修改会逐个刷新关联用户；保护最后一个启用的基础 admin，并拒绝自身账号/关联角色修改。密码只有 bcrypt hash，幂等摘要采用服务端 HMAC。Down 保留身份历史；禁止手工写投影绕过 API。并发顺序和范围见[账号设计](m7-accounts.md)。
+
+## M7.22 语义近似索引登记
+
+Agent有序迁移10增加semantic_ann_indexes，以tenant_id/profile/dimension为主键，固定索引名唯一，保存building/ready及定义SHA256。ready必须有非空指纹，支持维度1–2000；向量原表仍支持1–8192。无Go表或公开HTTP变更。显式维护CLI在独立连接使用CREATE/DROP INDEX CONCURRENTLY及同范围advisory lock，查询校验目录与登记一致后才允许近似路径；默认和回退保持精确排序。登记表与部分表达式索引随Agent schema备份，恢复后重新status核对；不删除向量、manifest、知识原件或幂等身份。见[检索规模优化](m7-retrieval-scale.md)。

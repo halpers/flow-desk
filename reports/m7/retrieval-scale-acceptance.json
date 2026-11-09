@@ -1,0 +1,414 @@
+{
+  "synthetic": true,
+  "isolated_schema": true,
+  "model_calls": 0,
+  "seed": 722,
+  "rows": 10000,
+  "dimension": 64,
+  "queries": 40,
+  "filter": "tenant/profile/dimension partial index; two authorized versions; foreign and forbidden distractors",
+  "configuration": {
+    "ef_search": 100,
+    "max_scan_tuples": 20000,
+    "candidate_limit": 20
+  },
+  "versions": {
+    "postgres": "18.6 (Debian 18.6-1.pgdg12+2)",
+    "pgvector": "0.8.7"
+  },
+  "index_build_ms": 1417.99,
+  "index_bytes": 4292608,
+  "mean_recall_at_20": 0.975,
+  "minimum_recall_at_20": 0.85,
+  "actual_modes": {
+    "hnsw:eligible": 40
+  },
+  "cases": [
+    {
+      "query": 0,
+      "recall_at_20": 1.0
+    },
+    {
+      "query": 1,
+      "recall_at_20": 1.0
+    },
+    {
+      "query": 2,
+      "recall_at_20": 0.95
+    },
+    {
+      "query": 3,
+      "recall_at_20": 1.0
+    },
+    {
+      "query": 4,
+      "recall_at_20": 1.0
+    },
+    {
+      "query": 5,
+      "recall_at_20": 1.0
+    },
+    {
+      "query": 6,
+      "recall_at_20": 1.0
+    },
+    {
+      "query": 7,
+      "recall_at_20": 0.9
+    },
+    {
+      "query": 8,
+      "recall_at_20": 1.0
+    },
+    {
+      "query": 9,
+      "recall_at_20": 0.95
+    },
+    {
+      "query": 10,
+      "recall_at_20": 1.0
+    },
+    {
+      "query": 11,
+      "recall_at_20": 0.95
+    },
+    {
+      "query": 12,
+      "recall_at_20": 0.95
+    },
+    {
+      "query": 13,
+      "recall_at_20": 1.0
+    },
+    {
+      "query": 14,
+      "recall_at_20": 1.0
+    },
+    {
+      "query": 15,
+      "recall_at_20": 0.85
+    },
+    {
+      "query": 16,
+      "recall_at_20": 0.95
+    },
+    {
+      "query": 17,
+      "recall_at_20": 1.0
+    },
+    {
+      "query": 18,
+      "recall_at_20": 1.0
+    },
+    {
+      "query": 19,
+      "recall_at_20": 0.95
+    },
+    {
+      "query": 20,
+      "recall_at_20": 1.0
+    },
+    {
+      "query": 21,
+      "recall_at_20": 1.0
+    },
+    {
+      "query": 22,
+      "recall_at_20": 1.0
+    },
+    {
+      "query": 23,
+      "recall_at_20": 0.9
+    },
+    {
+      "query": 24,
+      "recall_at_20": 0.95
+    },
+    {
+      "query": 25,
+      "recall_at_20": 1.0
+    },
+    {
+      "query": 26,
+      "recall_at_20": 1.0
+    },
+    {
+      "query": 27,
+      "recall_at_20": 1.0
+    },
+    {
+      "query": 28,
+      "recall_at_20": 1.0
+    },
+    {
+      "query": 29,
+      "recall_at_20": 0.95
+    },
+    {
+      "query": 30,
+      "recall_at_20": 1.0
+    },
+    {
+      "query": 31,
+      "recall_at_20": 0.95
+    },
+    {
+      "query": 32,
+      "recall_at_20": 1.0
+    },
+    {
+      "query": 33,
+      "recall_at_20": 1.0
+    },
+    {
+      "query": 34,
+      "recall_at_20": 1.0
+    },
+    {
+      "query": 35,
+      "recall_at_20": 0.95
+    },
+    {
+      "query": 36,
+      "recall_at_20": 1.0
+    },
+    {
+      "query": 37,
+      "recall_at_20": 0.95
+    },
+    {
+      "query": 38,
+      "recall_at_20": 0.95
+    },
+    {
+      "query": 39,
+      "recall_at_20": 0.95
+    }
+  ],
+  "latency_ms": {
+    "exact": {
+      "p50": 9.664,
+      "p95": 12.06
+    },
+    "hnsw": {
+      "p50": 4.813,
+      "p95": 5.822
+    }
+  },
+  "plan": [
+    {
+      "Plan": {
+        "Node Type": "Incremental Sort",
+        "Parallel Aware": false,
+        "Async Capable": false,
+        "Startup Cost": 369.96,
+        "Total Cost": 473.07,
+        "Plan Rows": 3,
+        "Plan Width": 1135,
+        "Actual Startup Time": 1.673,
+        "Actual Total Time": 1.675,
+        "Actual Rows": 20.0,
+        "Actual Loops": 1,
+        "Disabled": false,
+        "Sort Key": [
+          "a.distance",
+          "c.chunk_id"
+        ],
+        "Presorted Key": [
+          "a.distance"
+        ],
+        "Full-sort Groups": {
+          "Group Count": 1,
+          "Sort Methods Used": [
+            "quicksort"
+          ],
+          "Sort Space Memory": {
+            "Average Sort Space Used": 47,
+            "Peak Sort Space Used": 47
+          }
+        },
+        "Shared Hit Blocks": 2524,
+        "Shared Read Blocks": 0,
+        "Shared Dirtied Blocks": 0,
+        "Shared Written Blocks": 0,
+        "Local Hit Blocks": 0,
+        "Local Read Blocks": 0,
+        "Local Dirtied Blocks": 0,
+        "Local Written Blocks": 0,
+        "Temp Read Blocks": 0,
+        "Temp Written Blocks": 0,
+        "Plans": [
+          {
+            "Node Type": "Limit",
+            "Parent Relationship": "InitPlan",
+            "Subplan Name": "CTE ann_candidates",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Startup Cost": 303.75,
+            "Total Cost": 318.17,
+            "Plan Rows": 20,
+            "Plan Width": 64,
+            "Actual Startup Time": 1.517,
+            "Actual Total Time": 1.549,
+            "Actual Rows": 20.0,
+            "Actual Loops": 1,
+            "Disabled": false,
+            "Shared Hit Blocks": 2461,
+            "Shared Read Blocks": 0,
+            "Shared Dirtied Blocks": 0,
+            "Shared Written Blocks": 0,
+            "Local Hit Blocks": 0,
+            "Local Read Blocks": 0,
+            "Local Dirtied Blocks": 0,
+            "Local Written Blocks": 0,
+            "Temp Read Blocks": 0,
+            "Temp Written Blocks": 0,
+            "Plans": [
+              {
+                "Node Type": "Index Scan",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Scan Direction": "Forward",
+                "Index Name": "semantic_hnsw_651bd094721e8992352db0bd",
+                "Relation Name": "semantic_vectors",
+                "Alias": "s",
+                "Startup Cost": 303.75,
+                "Total Cost": 4359.62,
+                "Plan Rows": 5625,
+                "Plan Width": 64,
+                "Actual Startup Time": 1.516,
+                "Actual Total Time": 1.547,
+                "Actual Rows": 20.0,
+                "Actual Loops": 1,
+                "Disabled": false,
+                "Order By": "((embedding)::knowledge.vector(64) OPERATOR(knowledge.<=>) '[-0.059942514,-0.04984187,-0.056435112,0.15790777,-0.019415421,0.10686367,-0.004411966,-0.18847412,0.10445188,-0.0048765047,0.06657928,-0.048473693,0.0313917,-0.18944326,0.19983359,0.10878911,0.056098904,0.10960939,-0.14761798,0.10577517,-0.30913273,0.16005304,-0.074057676,-0.061497446,0.18768659,0.06997372,-0.074636474,-0.15246232,-0.013521357,0.022670982,0.14093713,-0.2222876,-0.26533172,-0.02279681,-0.16326927,0.06306014,0.13737349,-0.015436132,-0.1048599,0.1535599,-0.120086625,0.16574417,0.09186746,-0.02440395,0.09824723,0.094330154,-0.03216183,0.113088034,0.08628883,0.12137273,0.11077923,0.03746998,0.21053801,-0.23059021,-0.0033955358,-0.026322667,0.14146462,-0.10365028,0.010251133,0.070625305,-0.022119524,0.29255322,-0.006752146,-0.006343224]'::knowledge.vector(64))",
+                "Filter": "(version_id = ANY ('{00000000-0000-0000-0000-0000000003e8,00000000-0000-0000-0000-0000000003e9,00000000-0000-0000-0000-0000000003eb}'::uuid[]))",
+                "Rows Removed by Filter": 11,
+                "Index Searches": 1,
+                "Shared Hit Blocks": 2461,
+                "Shared Read Blocks": 0,
+                "Shared Dirtied Blocks": 0,
+                "Shared Written Blocks": 0,
+                "Local Hit Blocks": 0,
+                "Local Read Blocks": 0,
+                "Local Dirtied Blocks": 0,
+                "Local Written Blocks": 0,
+                "Temp Read Blocks": 0,
+                "Temp Written Blocks": 0
+              }
+            ]
+          },
+          {
+            "Node Type": "Nested Loop",
+            "Parent Relationship": "Outer",
+            "Parallel Aware": false,
+            "Async Capable": false,
+            "Join Type": "Inner",
+            "Startup Cost": 0.29,
+            "Total Cost": 154.76,
+            "Plan Rows": 3,
+            "Plan Width": 1135,
+            "Actual Startup Time": 1.54,
+            "Actual Total Time": 1.636,
+            "Actual Rows": 20.0,
+            "Actual Loops": 1,
+            "Disabled": false,
+            "Inner Unique": true,
+            "Shared Hit Blocks": 2521,
+            "Shared Read Blocks": 0,
+            "Shared Dirtied Blocks": 0,
+            "Shared Written Blocks": 0,
+            "Local Hit Blocks": 0,
+            "Local Read Blocks": 0,
+            "Local Dirtied Blocks": 0,
+            "Local Written Blocks": 0,
+            "Temp Read Blocks": 0,
+            "Temp Written Blocks": 0,
+            "Plans": [
+              {
+                "Node Type": "CTE Scan",
+                "Parent Relationship": "Outer",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "CTE Name": "ann_candidates",
+                "Alias": "a",
+                "Startup Cost": 0.0,
+                "Total Cost": 0.4,
+                "Plan Rows": 20,
+                "Plan Width": 56,
+                "Actual Startup Time": 1.52,
+                "Actual Total Time": 1.557,
+                "Actual Rows": 20.0,
+                "Actual Loops": 1,
+                "Disabled": false,
+                "Storage": "Memory",
+                "Maximum Storage": 18,
+                "Shared Hit Blocks": 2461,
+                "Shared Read Blocks": 0,
+                "Shared Dirtied Blocks": 0,
+                "Shared Written Blocks": 0,
+                "Local Hit Blocks": 0,
+                "Local Read Blocks": 0,
+                "Local Dirtied Blocks": 0,
+                "Local Written Blocks": 0,
+                "Temp Read Blocks": 0,
+                "Temp Written Blocks": 0
+              },
+              {
+                "Node Type": "Index Scan",
+                "Parent Relationship": "Inner",
+                "Parallel Aware": false,
+                "Async Capable": false,
+                "Scan Direction": "Forward",
+                "Index Name": "knowledge_chunks_pkey",
+                "Relation Name": "knowledge_chunks",
+                "Alias": "c",
+                "Startup Cost": 0.29,
+                "Total Cost": 7.71,
+                "Plan Rows": 1,
+                "Plan Width": 1119,
+                "Actual Startup Time": 0.004,
+                "Actual Total Time": 0.004,
+                "Actual Rows": 1.0,
+                "Actual Loops": 20,
+                "Disabled": false,
+                "Index Cond": "(chunk_id = a.chunk_id)",
+                "Rows Removed by Index Recheck": 0,
+                "Filter": "((version_id = a.version_id) AND (tenant_id = a.tenant_id))",
+                "Rows Removed by Filter": 0,
+                "Index Searches": 20,
+                "Shared Hit Blocks": 60,
+                "Shared Read Blocks": 0,
+                "Shared Dirtied Blocks": 0,
+                "Shared Written Blocks": 0,
+                "Local Hit Blocks": 0,
+                "Local Read Blocks": 0,
+                "Local Dirtied Blocks": 0,
+                "Local Written Blocks": 0,
+                "Temp Read Blocks": 0,
+                "Temp Written Blocks": 0
+              }
+            ]
+          }
+        ]
+      },
+      "Planning": {
+        "Shared Hit Blocks": 15,
+        "Shared Read Blocks": 0,
+        "Shared Dirtied Blocks": 0,
+        "Shared Written Blocks": 0,
+        "Local Hit Blocks": 0,
+        "Local Read Blocks": 0,
+        "Local Dirtied Blocks": 0,
+        "Local Written Blocks": 0,
+        "Temp Read Blocks": 0,
+        "Temp Written Blocks": 0
+      },
+      "Planning Time": 0.253,
+      "Triggers": [],
+      "Execution Time": 1.747
+    }
+  ],
+  "limitations": "Synthetic warm queries include registry/catalog checks; not embedding/model latency, semantic quality, production throughput or a recall guarantee."
+}

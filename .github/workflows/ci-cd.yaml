@@ -98,6 +98,10 @@ jobs:
       - name: Run Agent isolated-schema tests
         working-directory: flow-desk-agent
         run: python -m pytest -q --tb=short
+      - name: Check isolated synthetic semantic retrieval scale
+        run: |
+          python -m ruff check scripts/benchmark-retrieval-scale.py scripts/check-run-lifecycle.py
+          python scripts/benchmark-retrieval-scale.py --rows 10000 --dimension 64 --queries 40 --output work/retrieval-scale-ci.json
       - name: Test and build Web
         working-directory: flow-desk-web
         run: |
