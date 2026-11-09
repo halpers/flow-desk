@@ -1,6 +1,181 @@
 {
   "components": {
     "schemas": {
+      "AgentLifecycleData": {
+        "additionalProperties": false,
+        "description": "One read-only observation, never a permit to archive or remove runtime data.",
+        "properties": {
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "callback_count": {
+            "maximum": 9007199254740991.0,
+            "minimum": 0.0,
+            "title": "Callback Count",
+            "type": "integer"
+          },
+          "checkpoint_blob_count": {
+            "maximum": 9007199254740991.0,
+            "minimum": 0.0,
+            "title": "Checkpoint Blob Count",
+            "type": "integer"
+          },
+          "checkpoint_count": {
+            "maximum": 9007199254740991.0,
+            "minimum": 0.0,
+            "title": "Checkpoint Count",
+            "type": "integer"
+          },
+          "checkpoint_write_count": {
+            "maximum": 9007199254740991.0,
+            "minimum": 0.0,
+            "title": "Checkpoint Write Count",
+            "type": "integer"
+          },
+          "command_count": {
+            "maximum": 9007199254740991.0,
+            "minimum": 0.0,
+            "title": "Command Count",
+            "type": "integer"
+          },
+          "embedding_call_count": {
+            "maximum": 9007199254740991.0,
+            "minimum": 0.0,
+            "title": "Embedding Call Count",
+            "type": "integer"
+          },
+          "execution_span_count": {
+            "maximum": 9007199254740991.0,
+            "minimum": 0.0,
+            "title": "Execution Span Count",
+            "type": "integer"
+          },
+          "live_callback_lease_count": {
+            "maximum": 9007199254740991.0,
+            "minimum": 0.0,
+            "title": "Live Callback Lease Count",
+            "type": "integer"
+          },
+          "live_command_lease_count": {
+            "maximum": 9007199254740991.0,
+            "minimum": 0.0,
+            "title": "Live Command Lease Count",
+            "type": "integer"
+          },
+          "model_call_count": {
+            "maximum": 9007199254740991.0,
+            "minimum": 0.0,
+            "title": "Model Call Count",
+            "type": "integer"
+          },
+          "observation_only": {
+            "const": true,
+            "title": "Observation Only",
+            "type": "boolean"
+          },
+          "observed_at": {
+            "maxLength": 40,
+            "minLength": 20,
+            "title": "Observed At",
+            "type": "string"
+          },
+          "protection_reasons": {
+            "items": {
+              "enum": [
+                "COMMAND_QUEUED",
+                "COMMAND_RUNNING",
+                "COMMAND_WAITING",
+                "COMMAND_LEASE_ACTIVE",
+                "CALLBACK_UNACKNOWLEDGED",
+                "CALLBACK_LEASE_ACTIVE",
+                "MODEL_RESERVED",
+                "MODEL_STATE_UNKNOWN",
+                "EMBEDDING_RESERVED",
+                "AGENT_SCOPE_UNAVAILABLE"
+              ],
+              "type": "string"
+            },
+            "maxItems": 10,
+            "title": "Protection Reasons",
+            "type": "array"
+          },
+          "queued_command_count": {
+            "maximum": 9007199254740991.0,
+            "minimum": 0.0,
+            "title": "Queued Command Count",
+            "type": "integer"
+          },
+          "reserved_embedding_call_count": {
+            "maximum": 9007199254740991.0,
+            "minimum": 0.0,
+            "title": "Reserved Embedding Call Count",
+            "type": "integer"
+          },
+          "reserved_model_call_count": {
+            "maximum": 9007199254740991.0,
+            "minimum": 0.0,
+            "title": "Reserved Model Call Count",
+            "type": "integer"
+          },
+          "retrieval_attempt_count": {
+            "maximum": 9007199254740991.0,
+            "minimum": 0.0,
+            "title": "Retrieval Attempt Count",
+            "type": "integer"
+          },
+          "running_command_count": {
+            "maximum": 9007199254740991.0,
+            "minimum": 0.0,
+            "title": "Running Command Count",
+            "type": "integer"
+          },
+          "tool_result_count": {
+            "maximum": 9007199254740991.0,
+            "minimum": 0.0,
+            "title": "Tool Result Count",
+            "type": "integer"
+          },
+          "unacknowledged_callback_count": {
+            "maximum": 9007199254740991.0,
+            "minimum": 0.0,
+            "title": "Unacknowledged Callback Count",
+            "type": "integer"
+          },
+          "waiting_command_count": {
+            "maximum": 9007199254740991.0,
+            "minimum": 0.0,
+            "title": "Waiting Command Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "available",
+          "observed_at",
+          "observation_only",
+          "command_count",
+          "queued_command_count",
+          "running_command_count",
+          "waiting_command_count",
+          "live_command_lease_count",
+          "callback_count",
+          "unacknowledged_callback_count",
+          "live_callback_lease_count",
+          "model_call_count",
+          "reserved_model_call_count",
+          "checkpoint_count",
+          "checkpoint_blob_count",
+          "checkpoint_write_count",
+          "tool_result_count",
+          "execution_span_count",
+          "retrieval_attempt_count",
+          "embedding_call_count",
+          "reserved_embedding_call_count",
+          "protection_reasons"
+        ],
+        "title": "AgentLifecycleData",
+        "type": "object"
+      },
       "AgentTraceData": {
         "additionalProperties": false,
         "properties": {
@@ -739,6 +914,66 @@
           }
         },
         "summary": "Accept Index"
+      }
+    },
+    "/internal/v1/runs/{run_id}/lifecycle": {
+      "get": {
+        "operationId": "run_lifecycle_internal_v1_runs__run_id__lifecycle_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "tenant_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Tenant Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Authorization",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentLifecycleData"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Run Lifecycle"
       }
     },
     "/internal/v1/runs/{run_id}/trace": {

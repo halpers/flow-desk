@@ -18,272 +18,6 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 			[]rest.Middleware{serverCtx.SessionAuth},
 			[]rest.Route{
 				{
-					// Decide immutable action | permission=conversation:use | auth=required
-					Method:  http.MethodPost,
-					Path:    "/approvals/:approval_id/decision",
-					Handler: DecideApprovalHandler(serverCtx),
-				},
-				{
-					// Tenant audit | permission=audit:read | auth=required
-					Method:  http.MethodGet,
-					Path:    "/audit-events",
-					Handler: ListAuditEventsHandler(serverCtx),
-				},
-				{
-					// List own run approvals | permission=conversation:use | auth=required
-					Method:  http.MethodGet,
-					Path:    "/runs/:run_id/approvals",
-					Handler: ListApprovalsHandler(serverCtx),
-				},
-				{
-					// Cancel own run | permission=conversation:use | auth=required
-					Method:  http.MethodPost,
-					Path:    "/runs/:run_id/cancel",
-					Handler: CancelRunHandler(serverCtx),
-				},
-				{
-					// Supply requested input | permission=conversation:use | auth=required
-					Method:  http.MethodPost,
-					Path:    "/runs/:run_id/inputs",
-					Handler: SubmitInputHandler(serverCtx),
-				},
-				{
-					// List tenant tickets | permission=ticket:read | auth=required
-					Method:  http.MethodGet,
-					Path:    "/tickets",
-					Handler: ListTicketsHandler(serverCtx),
-				},
-				{
-					// Create manual ticket | permission=ticket:create | auth=required
-					Method:  http.MethodPost,
-					Path:    "/tickets",
-					Handler: CreateTicketHandler(serverCtx),
-				},
-				{
-					// Get tenant ticket | permission=ticket:read | auth=required
-					Method:  http.MethodGet,
-					Path:    "/tickets/:ticket_id",
-					Handler: GetTicketHandler(serverCtx),
-				},
-				{
-					// Assign ticket | permission=ticket:manage | auth=required
-					Method:  http.MethodPatch,
-					Path:    "/tickets/:ticket_id/assignment",
-					Handler: AssignTicketHandler(serverCtx),
-				},
-				{
-					// Ticket timeline | permission=ticket:read | auth=required
-					Method:  http.MethodGet,
-					Path:    "/tickets/:ticket_id/events",
-					Handler: ListTicketEventsHandler(serverCtx),
-				},
-				{
-					// Add internal note | permission=ticket:note | auth=required
-					Method:  http.MethodPost,
-					Path:    "/tickets/:ticket_id/notes",
-					Handler: AddTicketNoteHandler(serverCtx),
-				},
-				{
-					// Change ticket status | permission=ticket:manage | auth=required
-					Method:  http.MethodPatch,
-					Path:    "/tickets/:ticket_id/status",
-					Handler: ChangeTicketStatusHandler(serverCtx),
-				},
-			}...,
-		),
-		rest.WithPrefix("/api/v1"),
-	)
-
-	server.AddRoutes(
-		rest.WithMiddlewares(
-			[]rest.Middleware{serverCtx.ServiceAuth},
-			[]rest.Route{
-				{
-					// Prepare immutable action | permission=- | auth=run_capability
-					Method:  http.MethodPost,
-					Path:    "/runs/:run_id/actions",
-					Handler: PrepareActionHandler(serverCtx),
-				},
-				{
-					// Execute approved action | permission=- | auth=run_capability
-					Method:  http.MethodPost,
-					Path:    "/runs/:run_id/actions/:action_id/execute",
-					Handler: ExecuteActionHandler(serverCtx),
-				},
-				{
-					// Read action receipt | permission=- | auth=run_capability
-					Method:  http.MethodGet,
-					Path:    "/runs/:run_id/actions/:action_id/receipt",
-					Handler: GetActionReceiptHandler(serverCtx),
-				},
-			}...,
-		),
-		rest.WithPrefix("/internal/v1"),
-	)
-
-	server.AddRoutes(
-		rest.WithMiddlewares(
-			[]rest.Middleware{serverCtx.SessionAuth},
-			[]rest.Route{
-				{
-					// Set knowledge resource scope | permission=team:manage | auth=required
-					Method:  http.MethodPatch,
-					Path:    "/knowledge-bases/:knowledge_base_id/team",
-					Handler: SetKnowledgeTeamHandler(serverCtx),
-				},
-				{
-					// Tenant member directory | permission=team:manage | auth=required
-					Method:  http.MethodGet,
-					Path:    "/team-users",
-					Handler: ListTeamUsersHandler(serverCtx),
-				},
-				{
-					// List accessible teams | permission=authenticated | auth=required
-					Method:  http.MethodGet,
-					Path:    "/teams",
-					Handler: ListTeamsHandler(serverCtx),
-				},
-				{
-					// Create team | permission=team:manage | auth=required
-					Method:  http.MethodPost,
-					Path:    "/teams",
-					Handler: CreateTeamHandler(serverCtx),
-				},
-				{
-					// Team members | permission=team:manage | auth=required
-					Method:  http.MethodGet,
-					Path:    "/teams/:team_id/members",
-					Handler: ListTeamMembersHandler(serverCtx),
-				},
-				{
-					// Update membership | permission=team:manage | auth=required
-					Method:  http.MethodPut,
-					Path:    "/teams/:team_id/members/:user_id",
-					Handler: UpdateTeamMembershipHandler(serverCtx),
-				},
-				{
-					// Set ticket resource scope | permission=team:manage | auth=required
-					Method:  http.MethodPatch,
-					Path:    "/tickets/:ticket_id/team",
-					Handler: SetTicketTeamHandler(serverCtx),
-				},
-			}...,
-		),
-		rest.WithPrefix("/api/v1"),
-	)
-
-	server.AddRoutes(
-		rest.WithMiddlewares(
-			[]rest.Middleware{serverCtx.SessionAuth},
-			[]rest.Route{
-				{
-					// Tenant roles and permission catalog | permission=account:manage or role:manage | auth=required
-					Method:  http.MethodGet,
-					Path:    "/admin/roles",
-					Handler: ListManagedRolesHandler(serverCtx),
-				},
-				{
-					// Create additive role | permission=role:manage | auth=required
-					Method:  http.MethodPost,
-					Path:    "/admin/roles",
-					Handler: CreateManagedRoleHandler(serverCtx),
-				},
-				{
-					// Update additive role | permission=role:manage | auth=required
-					Method:  http.MethodPut,
-					Path:    "/admin/roles/:role_id",
-					Handler: UpdateManagedRoleHandler(serverCtx),
-				},
-				{
-					// Tenant account directory | permission=account:manage | auth=required
-					Method:  http.MethodGet,
-					Path:    "/admin/users",
-					Handler: ListManagedUsersHandler(serverCtx),
-				},
-				{
-					// Create tenant account | permission=account:manage | auth=required
-					Method:  http.MethodPost,
-					Path:    "/admin/users",
-					Handler: CreateManagedUserHandler(serverCtx),
-				},
-				{
-					// Update account and roles | permission=account:manage | auth=required
-					Method:  http.MethodPut,
-					Path:    "/admin/users/:user_id",
-					Handler: UpdateManagedUserHandler(serverCtx),
-				},
-				{
-					// Reset account password | permission=account:manage | auth=required
-					Method:  http.MethodPost,
-					Path:    "/admin/users/:user_id/reset-password",
-					Handler: ResetManagedPasswordHandler(serverCtx),
-				},
-			}...,
-		),
-		rest.WithPrefix("/api/v1"),
-	)
-
-	server.AddRoutes(
-		[]rest.Route{
-			{
-				// Liveness | permission=- | auth=public
-				Method:  http.MethodGet,
-				Path:    "/health/live",
-				Handler: LiveHandler(serverCtx),
-			},
-			{
-				// Readiness | permission=- | auth=public
-				Method:  http.MethodGet,
-				Path:    "/health/ready",
-				Handler: ReadyHandler(serverCtx),
-			},
-		},
-	)
-
-	server.AddRoutes(
-		[]rest.Route{
-			{
-				// Login | permission=- | auth=public
-				Method:  http.MethodPost,
-				Path:    "/login",
-				Handler: LoginHandler(serverCtx),
-			},
-			{
-				// Logout | permission=- | auth=refresh_cookie
-				Method:  http.MethodPost,
-				Path:    "/logout",
-				Handler: LogoutHandler(serverCtx),
-			},
-			{
-				// Refresh | permission=- | auth=refresh_cookie
-				Method:  http.MethodPost,
-				Path:    "/refresh",
-				Handler: RefreshHandler(serverCtx),
-			},
-		},
-		rest.WithPrefix("/api/v1/auth"),
-	)
-
-	server.AddRoutes(
-		rest.WithMiddlewares(
-			[]rest.Middleware{serverCtx.SessionAuth},
-			[]rest.Route{
-				{
-					// Current user | permission=- | auth=required
-					Method:  http.MethodGet,
-					Path:    "/me",
-					Handler: MeHandler(serverCtx),
-				},
-			}...,
-		),
-		rest.WithPrefix("/api/v1/auth"),
-	)
-
-	server.AddRoutes(
-		rest.WithMiddlewares(
-			[]rest.Middleware{serverCtx.SessionAuth},
-			[]rest.Route{
-				{
 					// Create conversation | permission=conversation:use | auth=required
 					Method:  http.MethodPost,
 					Path:    "/conversations",
@@ -395,6 +129,12 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 					Method:  http.MethodGet,
 					Path:    "/runs",
 					Handler: ListRunsHandler(serverCtx),
+				},
+				{
+					// Preview authorized run lifecycle metadata only | permission=conversation:use/run:observe | auth=required
+					Method:  http.MethodGet,
+					Path:    "/runs/:run_id/lifecycle",
+					Handler: GetRunLifecycleHandler(serverCtx),
 				},
 				{
 					// Retry own failed run without prepared actions | permission=conversation:use | auth=required
@@ -663,5 +403,271 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 			}...,
 		),
 		rest.WithPrefix("/internal/v1"),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.SessionAuth},
+			[]rest.Route{
+				{
+					// Decide immutable action | permission=conversation:use | auth=required
+					Method:  http.MethodPost,
+					Path:    "/approvals/:approval_id/decision",
+					Handler: DecideApprovalHandler(serverCtx),
+				},
+				{
+					// Tenant audit | permission=audit:read | auth=required
+					Method:  http.MethodGet,
+					Path:    "/audit-events",
+					Handler: ListAuditEventsHandler(serverCtx),
+				},
+				{
+					// List own run approvals | permission=conversation:use | auth=required
+					Method:  http.MethodGet,
+					Path:    "/runs/:run_id/approvals",
+					Handler: ListApprovalsHandler(serverCtx),
+				},
+				{
+					// Cancel own run | permission=conversation:use | auth=required
+					Method:  http.MethodPost,
+					Path:    "/runs/:run_id/cancel",
+					Handler: CancelRunHandler(serverCtx),
+				},
+				{
+					// Supply requested input | permission=conversation:use | auth=required
+					Method:  http.MethodPost,
+					Path:    "/runs/:run_id/inputs",
+					Handler: SubmitInputHandler(serverCtx),
+				},
+				{
+					// List tenant tickets | permission=ticket:read | auth=required
+					Method:  http.MethodGet,
+					Path:    "/tickets",
+					Handler: ListTicketsHandler(serverCtx),
+				},
+				{
+					// Create manual ticket | permission=ticket:create | auth=required
+					Method:  http.MethodPost,
+					Path:    "/tickets",
+					Handler: CreateTicketHandler(serverCtx),
+				},
+				{
+					// Get tenant ticket | permission=ticket:read | auth=required
+					Method:  http.MethodGet,
+					Path:    "/tickets/:ticket_id",
+					Handler: GetTicketHandler(serverCtx),
+				},
+				{
+					// Assign ticket | permission=ticket:manage | auth=required
+					Method:  http.MethodPatch,
+					Path:    "/tickets/:ticket_id/assignment",
+					Handler: AssignTicketHandler(serverCtx),
+				},
+				{
+					// Ticket timeline | permission=ticket:read | auth=required
+					Method:  http.MethodGet,
+					Path:    "/tickets/:ticket_id/events",
+					Handler: ListTicketEventsHandler(serverCtx),
+				},
+				{
+					// Add internal note | permission=ticket:note | auth=required
+					Method:  http.MethodPost,
+					Path:    "/tickets/:ticket_id/notes",
+					Handler: AddTicketNoteHandler(serverCtx),
+				},
+				{
+					// Change ticket status | permission=ticket:manage | auth=required
+					Method:  http.MethodPatch,
+					Path:    "/tickets/:ticket_id/status",
+					Handler: ChangeTicketStatusHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithPrefix("/api/v1"),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.ServiceAuth},
+			[]rest.Route{
+				{
+					// Prepare immutable action | permission=- | auth=run_capability
+					Method:  http.MethodPost,
+					Path:    "/runs/:run_id/actions",
+					Handler: PrepareActionHandler(serverCtx),
+				},
+				{
+					// Execute approved action | permission=- | auth=run_capability
+					Method:  http.MethodPost,
+					Path:    "/runs/:run_id/actions/:action_id/execute",
+					Handler: ExecuteActionHandler(serverCtx),
+				},
+				{
+					// Read action receipt | permission=- | auth=run_capability
+					Method:  http.MethodGet,
+					Path:    "/runs/:run_id/actions/:action_id/receipt",
+					Handler: GetActionReceiptHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithPrefix("/internal/v1"),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.SessionAuth},
+			[]rest.Route{
+				{
+					// Set knowledge resource scope | permission=team:manage | auth=required
+					Method:  http.MethodPatch,
+					Path:    "/knowledge-bases/:knowledge_base_id/team",
+					Handler: SetKnowledgeTeamHandler(serverCtx),
+				},
+				{
+					// Tenant member directory | permission=team:manage | auth=required
+					Method:  http.MethodGet,
+					Path:    "/team-users",
+					Handler: ListTeamUsersHandler(serverCtx),
+				},
+				{
+					// List accessible teams | permission=authenticated | auth=required
+					Method:  http.MethodGet,
+					Path:    "/teams",
+					Handler: ListTeamsHandler(serverCtx),
+				},
+				{
+					// Create team | permission=team:manage | auth=required
+					Method:  http.MethodPost,
+					Path:    "/teams",
+					Handler: CreateTeamHandler(serverCtx),
+				},
+				{
+					// Team members | permission=team:manage | auth=required
+					Method:  http.MethodGet,
+					Path:    "/teams/:team_id/members",
+					Handler: ListTeamMembersHandler(serverCtx),
+				},
+				{
+					// Update membership | permission=team:manage | auth=required
+					Method:  http.MethodPut,
+					Path:    "/teams/:team_id/members/:user_id",
+					Handler: UpdateTeamMembershipHandler(serverCtx),
+				},
+				{
+					// Set ticket resource scope | permission=team:manage | auth=required
+					Method:  http.MethodPatch,
+					Path:    "/tickets/:ticket_id/team",
+					Handler: SetTicketTeamHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithPrefix("/api/v1"),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.SessionAuth},
+			[]rest.Route{
+				{
+					// Tenant roles and permission catalog | permission=account:manage or role:manage | auth=required
+					Method:  http.MethodGet,
+					Path:    "/admin/roles",
+					Handler: ListManagedRolesHandler(serverCtx),
+				},
+				{
+					// Create additive role | permission=role:manage | auth=required
+					Method:  http.MethodPost,
+					Path:    "/admin/roles",
+					Handler: CreateManagedRoleHandler(serverCtx),
+				},
+				{
+					// Update additive role | permission=role:manage | auth=required
+					Method:  http.MethodPut,
+					Path:    "/admin/roles/:role_id",
+					Handler: UpdateManagedRoleHandler(serverCtx),
+				},
+				{
+					// Tenant account directory | permission=account:manage | auth=required
+					Method:  http.MethodGet,
+					Path:    "/admin/users",
+					Handler: ListManagedUsersHandler(serverCtx),
+				},
+				{
+					// Create tenant account | permission=account:manage | auth=required
+					Method:  http.MethodPost,
+					Path:    "/admin/users",
+					Handler: CreateManagedUserHandler(serverCtx),
+				},
+				{
+					// Update account and roles | permission=account:manage | auth=required
+					Method:  http.MethodPut,
+					Path:    "/admin/users/:user_id",
+					Handler: UpdateManagedUserHandler(serverCtx),
+				},
+				{
+					// Reset account password | permission=account:manage | auth=required
+					Method:  http.MethodPost,
+					Path:    "/admin/users/:user_id/reset-password",
+					Handler: ResetManagedPasswordHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithPrefix("/api/v1"),
+	)
+
+	server.AddRoutes(
+		[]rest.Route{
+			{
+				// Liveness | permission=- | auth=public
+				Method:  http.MethodGet,
+				Path:    "/health/live",
+				Handler: LiveHandler(serverCtx),
+			},
+			{
+				// Readiness | permission=- | auth=public
+				Method:  http.MethodGet,
+				Path:    "/health/ready",
+				Handler: ReadyHandler(serverCtx),
+			},
+		},
+	)
+
+	server.AddRoutes(
+		[]rest.Route{
+			{
+				// Login | permission=- | auth=public
+				Method:  http.MethodPost,
+				Path:    "/login",
+				Handler: LoginHandler(serverCtx),
+			},
+			{
+				// Logout | permission=- | auth=refresh_cookie
+				Method:  http.MethodPost,
+				Path:    "/logout",
+				Handler: LogoutHandler(serverCtx),
+			},
+			{
+				// Refresh | permission=- | auth=refresh_cookie
+				Method:  http.MethodPost,
+				Path:    "/refresh",
+				Handler: RefreshHandler(serverCtx),
+			},
+		},
+		rest.WithPrefix("/api/v1/auth"),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.SessionAuth},
+			[]rest.Route{
+				{
+					// Current user | permission=- | auth=required
+					Method:  http.MethodGet,
+					Path:    "/me",
+					Handler: MeHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithPrefix("/api/v1/auth"),
 	)
 }

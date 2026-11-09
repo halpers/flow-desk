@@ -9,6 +9,7 @@ import (
 )
 
 type RunsModel interface {
+	FindLifecycleInventoryTx(context.Context, sqlx.Session, string, string) (RunLifecycleInventory, error)
 	FindOneForShareTx(context.Context, sqlx.Session, string, string) (*Runs, error)
 	ListOperationsTx(context.Context, sqlx.Session, RunOperationFilter) ([]Runs, error)
 	FindOneVisibleForShareTx(context.Context, sqlx.Session, RunOperationFilter) (*Runs, error)
@@ -134,4 +135,46 @@ func (m *customRunsModel) UpdateWaitingTx(ctx context.Context, tx sqlx.Session, 
 }
 func (m *customRunsModel) UpdateResumeTx(ctx context.Context, tx sqlx.Session, row *Runs) error {
 	return requireOne(tx.ExecCtx(ctx, fmt.Sprintf("update %s set dispatch_id=$2,lease_generation=$3,lease_expires_at=null,deadline_at=$4,wait_expires_at=null,resume_data=$5,input_count=$6 where id=$1 and version=$7", m.table), row.Id, row.DispatchId, row.LeaseGeneration, row.DeadlineAt, row.ResumeData, row.InputCount, row.Version))
+}
+
+// RunLifecycleInventory is a metadata-only projection, never a deletion authorization.
+type RunLifecycleInventory struct {
+	MessageCount               int64     `db:"message_count"`
+	EventCount                 int64     `db:"event_count"`
+	ActionCount                int64     `db:"action_count"`
+	ApprovalCount              int64     `db:"approval_count"`
+	PendingApprovalCount       int64     `db:"pending_approval_count"`
+	PendingInputCount          int64     `db:"pending_input_count"`
+	ReceiptCount               int64     `db:"receipt_count"`
+	EvidenceCount              int64     `db:"evidence_count"`
+	DispatchCount              int64     `db:"dispatch_count"`
+	UnsettledDispatchCount     int64     `db:"unsettled_dispatch_count"`
+	RetryLinkCount             int64     `db:"retry_link_count"`
+	ActiveConversationRunCount int64     `db:"active_conversation_run_count"`
+	ResourceReferenceCount     int64     `db:"resource_reference_count"`
+	LeaseActive                bool      `db:"lease_active"`
+	OldEnough                  bool      `db:"old_enough"`
+	ObservedAt                 time.Time `db:"observed_at"`
+}
+
+func (m *customRunsModel) FindLifecycleInventoryTx(ctx context.Context, tx sqlx.Session, tenant, run string) (RunLifecycleInventory, error) {
+	var data RunLifecycleInventory
+	err := tx.QueryRowCtx(ctx, &data, `select
+        (select count(*) from business.messages x where x.tenant_id=r.tenant_id and x.run_id=r.id) message_count,
+        (select count(*) from business.run_events x where x.tenant_id=r.tenant_id and x.run_id=r.id) event_count,
+        (select count(*) from business.actions x where x.tenant_id=r.tenant_id and x.run_id=r.id) action_count,
+        (select count(*) from business.approvals x where x.tenant_id=r.tenant_id and x.run_id=r.id) approval_count,
+        (select count(*) from business.approvals x where x.tenant_id=r.tenant_id and x.run_id=r.id and x.status in ('prepared','pending','approved')) pending_approval_count,
+        (select count(*) from business.pending_inputs x where x.tenant_id=r.tenant_id and x.run_id=r.id and x.status='pending') pending_input_count,
+        (select count(*) from business.action_receipts x join business.actions a on a.tenant_id=x.tenant_id and a.id=x.action_id where a.tenant_id=r.tenant_id and a.run_id=r.id) receipt_count,
+        (select count(*) from business.run_evidence x where x.tenant_id=r.tenant_id and x.run_id=r.id) evidence_count,
+        (select count(*) from business.outbox_events x where x.tenant_id=r.tenant_id and x.aggregate_id=r.id and x.topic in ('run.execute','run.resume','run.cancel')) dispatch_count,
+        (select count(*) from business.outbox_events x where x.tenant_id=r.tenant_id and x.aggregate_id=r.id and x.topic in ('run.execute','run.resume','run.cancel') and (x.status<>'delivered' or x.lease_expires_at>now())) unsettled_dispatch_count,
+        (select count(*) from business.runs x where x.tenant_id=r.tenant_id and (x.retry_of_run_id=r.id or x.id=r.retry_of_run_id)) retry_link_count,
+        (select count(*) from business.runs x where x.tenant_id=r.tenant_id and x.conversation_id=r.conversation_id and x.status in ('queued','running','waiting_input','waiting_approval','cancelling')) active_conversation_run_count,
+        (select count(*) from business.run_ticket_resources x where x.tenant_id=r.tenant_id and x.run_id=r.id) resource_reference_count,
+        coalesce(r.lease_expires_at>now(),false) lease_active,
+        r.updated_at<=now()-interval '30 days' old_enough, now() observed_at
+        from business.runs r where r.tenant_id=$1 and r.id=$2`, tenant, run)
+	return data, err
 }

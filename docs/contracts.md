@@ -1,5 +1,6 @@
 # 接口与跨服务契约
 
+M7.21新增GET /api/v1/runs/:run_id/lifecycle：当前授权任务的消息、关联业务和Agent运行/checkpoint数量、独立观察时间与保护原因。仅元数据，observation_only固定true；archive_candidate只表示规划候选，不是清理许可。服务调用前后复核当前身份/团队及任务版本；409 LIFECYCLE_CHANGED和503 LIFECYCLE_UNAVAILABLE不返回部分数据，响应no-store。内部接口使用可信服务凭据及tenant/run绑定，不创建绑定，不读私有状态，详见[生命周期盘点](m7-run-lifecycle.md)。
 M7.20增加同调查批量归档预览POST /api/v1/source-investigations/:object_ref/history/archive-preview（expected_revision、严格递增且不重复的1–50个revisions），返回当前修订、最大批量和完整选中快照；只读授权、逐项资格检查及脱敏读取审计。POST同路径/history/archive-batch另外要求confirm=true及Idempotency-Key，逐项重新校验M7.19保留条件，同一事务完整移表、批量审计和唯一批量回执；data为object_ref/items，每项与单项归档回执同形。任一项不存在、已归档、受保护或当前修订变化时整批无效果。两接口no-store，当前身份/资源权限逐次复核；预览不持久化授权凭证，不替代提交时验证，旧回执仍当前授权。当前调查不变，无新迁移/S3/Python调用。
 
 M7.19新增POST /api/v1/source-investigations/:object_ref/history/:revision/archive-metadata，当前内置管理员且有knowledge:manage，Idempotency-Key、expected_revision>0及confirm=true。仅当前调查closed、目标不属于最近3修订且changed_at至少30天的热快照可归档。完整原快照移入受保护归档表，当前调查不变，审计及回执同事务；200 data为object_ref/revision/archived_at，409 INVESTIGATION_HISTORY_ARCHIVE_PROTECTED、INVESTIGATION_CHANGED或INVESTIGATION_HISTORY_ALREADY_ARCHIVED分别表示保留保护、当前修订变化或已归档。历史项仅追加可选metadata_archived/archived_at/can_archive/archive_block_reason字段，分页及恢复联合读取两层并复核当前权限。无S3/Python调用，不物理删除内容；同键重放返回原回执。

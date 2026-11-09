@@ -1,0 +1,11 @@
+{
+  "phase": "M7.21",
+  "profile": "mock",
+  "checks": [
+    "authorized metadata-only counts and 30-day protection",
+    "repeated preview preserves public messages and task state",
+    "retry references protect original task",
+    "unauthenticated preview rejected"
+  ],
+  "completed_at": "2026-11-09T01:34:36.343030+00:00"
+}

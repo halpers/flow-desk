@@ -1,5 +1,6 @@
 # 前端详细设计
 
+M7.21任务详情提供按需[生命周期预览](../../docs/m7-run-lifecycle.md)，只读Go的计数和保护原因。独立请求取消及刷新清空，权限拒绝清空父任务及缓存；无清理按钮或浏览器直连Agent。
 M7.20增加当前页多选和InvestigationArchiveBatch服务端逐项预览；翻页/刷新清空选择，确认固定正文/键，预览或执行失权清空父子内容，成功重新读取真实当前调查，详见[批量归档](../../docs/m7-investigation-history-batch.md)。
 
 M7.19 InvestigationArchive展示快照与保留条件，显式确认后固定路径/正文/键重试，当前调查成功后重新读取；历史标记归档并保留恢复入口，冲突重读和失权清空沿用既有父子锁定规则。详情见[调查历史分层归档](../../docs/m7-investigation-history-archive.md)。

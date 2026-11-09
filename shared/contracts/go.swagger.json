@@ -6138,6 +6138,299 @@
         }
       }
     },
+    "/api/v1/runs/{run_id}/lifecycle": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "Preview authorized run lifecycle metadata only | permission=conversation:use/run:observe | auth=required",
+        "operationId": "getRunLifecycle",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "run_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "run",
+                    "observed_at",
+                    "minimum_age_days",
+                    "observation_only",
+                    "archive_candidate",
+                    "protection_reasons",
+                    "business",
+                    "agent"
+                  ],
+                  "properties": {
+                    "agent": {
+                      "type": "object",
+                      "required": [
+                        "available",
+                        "observed_at",
+                        "observation_only",
+                        "command_count",
+                        "queued_command_count",
+                        "running_command_count",
+                        "waiting_command_count",
+                        "live_command_lease_count",
+                        "callback_count",
+                        "unacknowledged_callback_count",
+                        "live_callback_lease_count",
+                        "model_call_count",
+                        "reserved_model_call_count",
+                        "checkpoint_count",
+                        "checkpoint_blob_count",
+                        "checkpoint_write_count",
+                        "tool_result_count",
+                        "execution_span_count",
+                        "retrieval_attempt_count",
+                        "embedding_call_count",
+                        "reserved_embedding_call_count",
+                        "protection_reasons"
+                      ],
+                      "properties": {
+                        "available": {
+                          "type": "boolean"
+                        },
+                        "callback_count": {
+                          "type": "integer"
+                        },
+                        "checkpoint_blob_count": {
+                          "type": "integer"
+                        },
+                        "checkpoint_count": {
+                          "type": "integer"
+                        },
+                        "checkpoint_write_count": {
+                          "type": "integer"
+                        },
+                        "command_count": {
+                          "type": "integer"
+                        },
+                        "embedding_call_count": {
+                          "type": "integer"
+                        },
+                        "execution_span_count": {
+                          "type": "integer"
+                        },
+                        "live_callback_lease_count": {
+                          "type": "integer"
+                        },
+                        "live_command_lease_count": {
+                          "type": "integer"
+                        },
+                        "model_call_count": {
+                          "type": "integer"
+                        },
+                        "observation_only": {
+                          "type": "boolean"
+                        },
+                        "observed_at": {
+                          "type": "string"
+                        },
+                        "protection_reasons": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "queued_command_count": {
+                          "type": "integer"
+                        },
+                        "reserved_embedding_call_count": {
+                          "type": "integer"
+                        },
+                        "reserved_model_call_count": {
+                          "type": "integer"
+                        },
+                        "retrieval_attempt_count": {
+                          "type": "integer"
+                        },
+                        "running_command_count": {
+                          "type": "integer"
+                        },
+                        "tool_result_count": {
+                          "type": "integer"
+                        },
+                        "unacknowledged_callback_count": {
+                          "type": "integer"
+                        },
+                        "waiting_command_count": {
+                          "type": "integer"
+                        }
+                      }
+                    },
+                    "archive_candidate": {
+                      "type": "boolean"
+                    },
+                    "business": {
+                      "type": "object",
+                      "required": [
+                        "message_count",
+                        "event_count",
+                        "action_count",
+                        "approval_count",
+                        "pending_approval_count",
+                        "pending_input_count",
+                        "receipt_count",
+                        "evidence_count",
+                        "dispatch_count",
+                        "unsettled_dispatch_count",
+                        "retry_link_count",
+                        "active_conversation_run_count",
+                        "resource_reference_count",
+                        "lease_active"
+                      ],
+                      "properties": {
+                        "action_count": {
+                          "type": "integer"
+                        },
+                        "active_conversation_run_count": {
+                          "type": "integer"
+                        },
+                        "approval_count": {
+                          "type": "integer"
+                        },
+                        "dispatch_count": {
+                          "type": "integer"
+                        },
+                        "event_count": {
+                          "type": "integer"
+                        },
+                        "evidence_count": {
+                          "type": "integer"
+                        },
+                        "lease_active": {
+                          "type": "boolean"
+                        },
+                        "message_count": {
+                          "type": "integer"
+                        },
+                        "pending_approval_count": {
+                          "type": "integer"
+                        },
+                        "pending_input_count": {
+                          "type": "integer"
+                        },
+                        "receipt_count": {
+                          "type": "integer"
+                        },
+                        "resource_reference_count": {
+                          "type": "integer"
+                        },
+                        "retry_link_count": {
+                          "type": "integer"
+                        },
+                        "unsettled_dispatch_count": {
+                          "type": "integer"
+                        }
+                      }
+                    },
+                    "minimum_age_days": {
+                      "type": "integer"
+                    },
+                    "observation_only": {
+                      "type": "boolean"
+                    },
+                    "observed_at": {
+                      "type": "string"
+                    },
+                    "protection_reasons": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "run": {
+                      "type": "object",
+                      "required": [
+                        "id",
+                        "conversation_id",
+                        "actor_user_id",
+                        "status",
+                        "version",
+                        "error_code",
+                        "tool_call_count",
+                        "created_at",
+                        "updated_at",
+                        "retry_of_run_id",
+                        "retried_by_run_id",
+                        "retry_depth",
+                        "can_retry",
+                        "retry_block_reason"
+                      ],
+                      "properties": {
+                        "actor_user_id": {
+                          "type": "string"
+                        },
+                        "can_retry": {
+                          "type": "boolean"
+                        },
+                        "conversation_id": {
+                          "type": "string"
+                        },
+                        "created_at": {
+                          "type": "string"
+                        },
+                        "error_code": {
+                          "type": "string"
+                        },
+                        "id": {
+                          "type": "string"
+                        },
+                        "retried_by_run_id": {
+                          "type": "string"
+                        },
+                        "retry_block_reason": {
+                          "type": "string"
+                        },
+                        "retry_depth": {
+                          "type": "integer"
+                        },
+                        "retry_of_run_id": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string"
+                        },
+                        "tool_call_count": {
+                          "type": "integer"
+                        },
+                        "updated_at": {
+                          "type": "string"
+                        },
+                        "version": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/runs/{run_id}/retry": {
       "post": {
         "consumes": [

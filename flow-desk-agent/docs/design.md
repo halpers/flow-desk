@@ -1,5 +1,6 @@
 # Python Agent 服务详细设计
 
+M7.21 storage.lifecycle以READ ONLY REPEATABLE READ事务及精确run thread统计运行和checkpoint数量，可信run_observation_scopes隔离租户，Pydantic仅导出必需白名单计数/保护原因，未绑定与错租户同样不可用；不加载图状态或执行清理。详见[生命周期设计](../../docs/m7-run-lifecycle.md)。
 M6.5 的 ticket-v2 使用独立 ScenarioPlan 枚举，支持物流建单、接手和办结；read-v1/ticket-v1 保留旧计划 schema。Go 在新任务首次 outbox 固定版本，恢复继续使用原版本。工单编号只能选择当前授权工具结果中的对象，多工单或编号无匹配时先补充输入；更正编号以最后一次补充选择为准。分配、准备、等待确认、执行节点均沿用稳定 action_id 和既有持久化边界，详见[场景契约](../../docs/m6-business-scenarios.md)。
 
 选型：FastAPI + Pydantic + LangGraph；代码采用 `src/flowdesk_agent/`。本文保留完整目标设计；M1–M4 的已运行图、锁文件及当前接口见[实施记录](../../docs/progress.md)，M5 评测见[复跑说明](../../docs/m5-evaluation.md)。

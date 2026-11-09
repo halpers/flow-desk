@@ -1,5 +1,6 @@
 # 数据模型与一致性设计
 
+M7.21不迁移或删除任何数据。Go通过RunsModel的可信租户/run关联聚合盘点，Python只读自身表及精确run thread的checkpoint数量；服务间通过有界HTTP传递白名单计数，不跨schema读写。任务FOR SHARE与当前授权保护返回，但两库观察并非原子快照，不能授权物理清理，见[生命周期](m7-run-lifecycle.md)。
 M7.20无新迁移，批量归档复用两层历史/完整原件及延迟提交约束。原模型增加可信租户/调查及1–50修订的有界选择读取，父行FOR SHARE预览、FOR UPDATE整批移表与历史读取互斥，批量审计/唯一回执同事务，当前调查不变，详见[批量归档](m7-investigation-history-batch.md)。
 
 M7.19迁移2026110605引入Go自有source_investigation_revision_archives，完整原快照移表并保留UUID/修订/内容/原操作者时间，追加归档操作者时间。数据库验证精确原件和同事务热行移出；热UPDATE/任意删除及两层TRUNCATE继续受保护，冷快照不可变。M7.17的热历史不可删除规则仅增加精确移表例外；历史/恢复联合读取、父行锁隔离、整库备份和旧读者回退限制见[分层归档](m7-investigation-history-archive.md)。

@@ -790,6 +790,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/runs/{run_id}/lifecycle": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Preview authorized run lifecycle metadata only | permission=conversation:use/run:observe | auth=required */
+        get: operations["getRunLifecycle"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/runs/{run_id}/retry": {
         parameters: {
             query?: never;
@@ -3750,6 +3767,93 @@ export interface operations {
                             status: string;
                             tool_call_count: number;
                             version: number;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    getRunLifecycle: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            agent: {
+                                available: boolean;
+                                callback_count: number;
+                                checkpoint_blob_count: number;
+                                checkpoint_count: number;
+                                checkpoint_write_count: number;
+                                command_count: number;
+                                embedding_call_count: number;
+                                execution_span_count: number;
+                                live_callback_lease_count: number;
+                                live_command_lease_count: number;
+                                model_call_count: number;
+                                observation_only: boolean;
+                                observed_at: string;
+                                protection_reasons: string[];
+                                queued_command_count: number;
+                                reserved_embedding_call_count: number;
+                                reserved_model_call_count: number;
+                                retrieval_attempt_count: number;
+                                running_command_count: number;
+                                tool_result_count: number;
+                                unacknowledged_callback_count: number;
+                                waiting_command_count: number;
+                            };
+                            archive_candidate: boolean;
+                            business: {
+                                action_count: number;
+                                active_conversation_run_count: number;
+                                approval_count: number;
+                                dispatch_count: number;
+                                event_count: number;
+                                evidence_count: number;
+                                lease_active: boolean;
+                                message_count: number;
+                                pending_approval_count: number;
+                                pending_input_count: number;
+                                receipt_count: number;
+                                resource_reference_count: number;
+                                retry_link_count: number;
+                                unsettled_dispatch_count: number;
+                            };
+                            minimum_age_days: number;
+                            observation_only: boolean;
+                            observed_at: string;
+                            protection_reasons: string[];
+                            run: {
+                                actor_user_id: string;
+                                can_retry: boolean;
+                                conversation_id: string;
+                                created_at: string;
+                                error_code: string;
+                                id: string;
+                                retried_by_run_id: string;
+                                retry_block_reason: string;
+                                retry_depth: number;
+                                retry_of_run_id: string;
+                                status: string;
+                                tool_call_count: number;
+                                updated_at: string;
+                                version: number;
+                            };
                         };
                         request_id?: string;
                     };

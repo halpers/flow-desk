@@ -14,6 +14,7 @@ from psycopg_pool import AsyncConnectionPool
 from pydantic import BaseModel
 
 from flowdesk_agent.api.schemas import (
+    AgentLifecycleData,
     CancelCommand,
     CleanupCommand,
     CommandReceipt,
@@ -27,6 +28,7 @@ from flowdesk_agent.observability.operations import AgentTraceData, read_trace
 from flowdesk_agent.retrieval import KnowledgeIndex
 from flowdesk_agent.runtime import AgentRuntime
 from flowdesk_agent.storage.commands import CommandConflict
+from flowdesk_agent.storage.lifecycle import read_lifecycle
 from flowdesk_agent.storage.migrations import migrate
 from flowdesk_agent.tools.go_client import ToolError
 
@@ -156,6 +158,16 @@ async def live():
 )
 async def run_trace(run_id: UUID, tenant_id: UUID):
     return await read_trace(app.state.pool, run_id, tenant_id)
+
+
+@app.get(
+    "/internal/v1/runs/{run_id}/lifecycle",
+    response_model=AgentLifecycleData,
+    dependencies=[Depends(service_auth)],
+)
+async def run_lifecycle(run_id: UUID, tenant_id: UUID, response: Response):
+    response.headers["Cache-Control"] = "no-store"
+    return await read_lifecycle(app.state.pool, run_id, tenant_id)
 
 
 @app.get("/metrics", include_in_schema=False)

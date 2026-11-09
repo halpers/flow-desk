@@ -32,6 +32,31 @@ type AgentEventReq struct {
 	Payload         map[string]interface{} `json:"payload"`
 }
 
+type AgentLifecycleData struct {
+	Available                   bool     `json:"available"`
+	ObservedAt                  string   `json:"observed_at"`
+	ObservationOnly             bool     `json:"observation_only"`
+	CommandCount                int64    `json:"command_count"`
+	QueuedCommandCount          int64    `json:"queued_command_count"`
+	RunningCommandCount         int64    `json:"running_command_count"`
+	WaitingCommandCount         int64    `json:"waiting_command_count"`
+	LiveCommandLeaseCount       int64    `json:"live_command_lease_count"`
+	CallbackCount               int64    `json:"callback_count"`
+	UnacknowledgedCallbackCount int64    `json:"unacknowledged_callback_count"`
+	LiveCallbackLeaseCount      int64    `json:"live_callback_lease_count"`
+	ModelCallCount              int64    `json:"model_call_count"`
+	ReservedModelCallCount      int64    `json:"reserved_model_call_count"`
+	CheckpointCount             int64    `json:"checkpoint_count"`
+	CheckpointBlobCount         int64    `json:"checkpoint_blob_count"`
+	CheckpointWriteCount        int64    `json:"checkpoint_write_count"`
+	ToolResultCount             int64    `json:"tool_result_count"`
+	ExecutionSpanCount          int64    `json:"execution_span_count"`
+	RetrievalAttemptCount       int64    `json:"retrieval_attempt_count"`
+	EmbeddingCallCount          int64    `json:"embedding_call_count"`
+	ReservedEmbeddingCallCount  int64    `json:"reserved_embedding_call_count"`
+	ProtectionReasons           []string `json:"protection_reasons"`
+}
+
 type AgentTraceData struct {
 	Available bool               `json:"available"`
 	Truncated bool               `json:"truncated"`
@@ -134,6 +159,23 @@ type ArchiveSourceReq struct {
 	DocumentId     string `path:"document_id"`
 	VersionId      string `path:"version_id"`
 	IdempotencyKey string `header:"Idempotency-Key"`
+}
+
+type BusinessLifecycleData struct {
+	MessageCount               int64 `json:"message_count"`
+	EventCount                 int64 `json:"event_count"`
+	ActionCount                int64 `json:"action_count"`
+	ApprovalCount              int64 `json:"approval_count"`
+	PendingApprovalCount       int64 `json:"pending_approval_count"`
+	PendingInputCount          int64 `json:"pending_input_count"`
+	ReceiptCount               int64 `json:"receipt_count"`
+	EvidenceCount              int64 `json:"evidence_count"`
+	DispatchCount              int64 `json:"dispatch_count"`
+	UnsettledDispatchCount     int64 `json:"unsettled_dispatch_count"`
+	RetryLinkCount             int64 `json:"retry_link_count"`
+	ActiveConversationRunCount int64 `json:"active_conversation_run_count"`
+	ResourceReferenceCount     int64 `json:"resource_reference_count"`
+	LeaseActive                bool  `json:"lease_active"`
 }
 
 type CancelRunReq struct {
@@ -857,6 +899,23 @@ type RunData struct {
 	PendingInputs  []PendingInputData `json:"pending_inputs"`
 	Approvals      []ApprovalData     `json:"approvals"`
 	ActionReceipts []ReceiptData      `json:"action_receipts"`
+}
+
+type RunLifecycleData struct {
+	Run               RunOperationData      `json:"run"`
+	ObservedAt        string                `json:"observed_at"`
+	MinimumAgeDays    int64                 `json:"minimum_age_days"`
+	ObservationOnly   bool                  `json:"observation_only"`
+	ArchiveCandidate  bool                  `json:"archive_candidate"`
+	ProtectionReasons []string              `json:"protection_reasons"`
+	Business          BusinessLifecycleData `json:"business"`
+	Agent             AgentLifecycleData    `json:"agent"`
+}
+
+type RunLifecycleResp struct {
+	Code      string           `json:"code"`
+	RequestId string           `json:"request_id"`
+	Data      RunLifecycleData `json:"data"`
 }
 
 type RunOperationData struct {

@@ -1,5 +1,9 @@
 import { useRef, useState } from "react";
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import {
   Alert,
   Button,
@@ -16,6 +20,7 @@ import {
 } from "antd";
 import { api, type User } from "../../shared/api/client";
 import type { Models } from "../../shared/api/models";
+import { RunLifecycle } from "./RunLifecycle";
 import { newId } from "../../shared/id";
 
 type Task = Models["RunOperationPage"]["items"][number];
@@ -47,6 +52,8 @@ export function Operations({
   user: User;
   onOpen: (conversationId: string, runId: string) => void;
 }) {
+  const queryClient = useQueryClient();
+  const [accessError, setAccessError] = useState("");
   const [open, setOpen] = useState(false);
   const [scope, setScope] = useState("own");
   const [status, setStatus] = useState("");
@@ -160,7 +167,10 @@ export function Operations({
               ]}
             />
             <Button
-              onClick={() => void tasks.refetch()}
+              onClick={() => {
+                setAccessError("");
+                void tasks.refetch();
+              }}
               loading={tasks.isFetching}
             >
               刷新任务
@@ -175,6 +185,7 @@ export function Operations({
             enterButton="定位任务"
             allowClear
           />
+          {accessError && <Alert type="error" title={accessError} />}
           {tasks.isError && (
             <Alert
               type="error"
@@ -182,53 +193,55 @@ export function Operations({
               description={tasks.error.message}
             />
           )}
-          <Table<Task>
-            rowKey="id"
-            loading={tasks.isPending}
-            pagination={false}
-            scroll={{ x: 650 }}
-            dataSource={tasks.data?.pages.flatMap((page) => page.items) || []}
-            columns={[
-              {
-                title: "任务",
-                key: "id",
-                render: (_, task) => (
-                  <Button
-                    type="link"
-                    onClick={() => setSelected(task)}
-                    aria-label={`查看任务 ${task.id}`}
-                  >
-                    {task.id.slice(0, 8)}
-                  </Button>
-                ),
-              },
-              {
-                title: "状态",
-                key: "status",
-                render: (_, task) => (
-                  <Tag>{statuses[task.status] || task.status}</Tag>
-                ),
-              },
-              { title: "创建时间", dataIndex: "created_at", render: time },
-              {
-                title: "来源",
-                key: "retry",
-                render: (_, task) =>
-                  task.retry_of_run_id
-                    ? `重试 ${task.retry_depth}/3`
-                    : "原任务",
-              },
-              {
-                title: "所有者",
-                key: "actor",
-                render: (_, task) =>
-                  task.actor_user_id === user.id
-                    ? "我"
-                    : task.actor_user_id.slice(0, 8),
-              },
-            ]}
-          />
-          {tasks.hasNextPage && (
+          {!accessError && (
+            <Table<Task>
+              rowKey="id"
+              loading={tasks.isPending}
+              pagination={false}
+              scroll={{ x: 650 }}
+              dataSource={tasks.data?.pages.flatMap((page) => page.items) || []}
+              columns={[
+                {
+                  title: "任务",
+                  key: "id",
+                  render: (_, task) => (
+                    <Button
+                      type="link"
+                      onClick={() => setSelected(task)}
+                      aria-label={`查看任务 ${task.id}`}
+                    >
+                      {task.id.slice(0, 8)}
+                    </Button>
+                  ),
+                },
+                {
+                  title: "状态",
+                  key: "status",
+                  render: (_, task) => (
+                    <Tag>{statuses[task.status] || task.status}</Tag>
+                  ),
+                },
+                { title: "创建时间", dataIndex: "created_at", render: time },
+                {
+                  title: "来源",
+                  key: "retry",
+                  render: (_, task) =>
+                    task.retry_of_run_id
+                      ? `重试 ${task.retry_depth}/3`
+                      : "原任务",
+                },
+                {
+                  title: "所有者",
+                  key: "actor",
+                  render: (_, task) =>
+                    task.actor_user_id === user.id
+                      ? "我"
+                      : task.actor_user_id.slice(0, 8),
+                },
+              ]}
+            />
+          )}
+          {!accessError && tasks.hasNextPage && (
             <Button
               loading={tasks.isFetchingNextPage}
               onClick={() => void tasks.fetchNextPage()}
@@ -314,6 +327,21 @@ export function Operations({
                 ]}
               />
               <Space wrap>
+                <RunLifecycle
+                  key={`${user.tenant_id}:${user.id}:${current.id}`}
+                  runId={current.id}
+                  onDenied={(message) => {
+                    setSelected(null);
+                    setConfirm(null);
+                    setAccessError(message);
+                    queryClient.removeQueries({
+                      queryKey: ["run-trace", user.tenant_id, user.id],
+                    });
+                    queryClient.removeQueries({
+                      queryKey: ["operations", user.tenant_id, user.id],
+                    });
+                  }}
+                />
                 <Button
                   onClick={() => void trace.refetch()}
                   loading={trace.isFetching}
