@@ -922,6 +922,7 @@ type RunData struct {
 }
 
 type RunHistoryBatchData struct {
+	Target         string                    `json:"target,optional"`
 	BatchId        string                    `json:"batch_id"`
 	ActorUserId    string                    `json:"actor_user_id"`
 	CreatedAt      string                    `json:"created_at"`
@@ -1028,6 +1029,26 @@ type RunHistoryResp struct {
 	Code      string         `json:"code"`
 	RequestId string         `json:"request_id"`
 	Data      RunHistoryData `json:"data"`
+}
+
+type RunHistoryRestoreBatchPreviewData struct {
+	MaximumItems int64                               `json:"maximum_items"`
+	CanCreate    bool                                `json:"can_create"`
+	Items        []RunHistoryRestoreBatchPreviewItem `json:"items"`
+}
+
+type RunHistoryRestoreBatchPreviewItem struct {
+	RunId              string   `json:"run_id"`
+	ExpectedVersion    int64    `json:"expected_version"`
+	ExpectedGeneration int64    `json:"expected_generation"`
+	CanRestore         bool     `json:"can_restore"`
+	ProtectionReasons  []string `json:"protection_reasons"`
+}
+
+type RunHistoryRestoreBatchPreviewResp struct {
+	Code      string                            `json:"code"`
+	RequestId string                            `json:"request_id"`
+	Data      RunHistoryRestoreBatchPreviewData `json:"data"`
 }
 
 type RunHistoryResumeReq struct {

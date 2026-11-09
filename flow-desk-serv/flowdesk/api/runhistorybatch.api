@@ -38,6 +38,7 @@ type ListRunHistoryBatchesReq {
     Limit int64 `form:"limit,default=10,range=[1:10]"`
 }
 type RunHistoryBatchData {
+    Target string `json:"target,optional"`
     BatchId string `json:"batch_id"`
     ActorUserId string `json:"actor_user_id"`
     CreatedAt string `json:"created_at"`
@@ -70,6 +71,23 @@ type RunHistoryBatchPageResp {
     RequestId string `json:"request_id"`
     Data RunHistoryBatchPage `json:"data"`
 }
+type RunHistoryRestoreBatchPreviewItem {
+    RunId string `json:"run_id"`
+    ExpectedVersion int64 `json:"expected_version"`
+    ExpectedGeneration int64 `json:"expected_generation"`
+    CanRestore bool `json:"can_restore"`
+    ProtectionReasons []string `json:"protection_reasons"`
+}
+type RunHistoryRestoreBatchPreviewData {
+    MaximumItems int64 `json:"maximum_items"`
+    CanCreate bool `json:"can_create"`
+    Items []RunHistoryRestoreBatchPreviewItem `json:"items"`
+}
+type RunHistoryRestoreBatchPreviewResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data RunHistoryRestoreBatchPreviewData `json:"data"`
+}
 @server(prefix: /api/v1 middleware: SessionAuth)
 service flowdesk-api {
     @doc "Preview bounded selected run histories with current authorization | permission=admin/run:observe | auth=required"
@@ -87,4 +105,10 @@ service flowdesk-api {
     @doc "Reconcile one existing history batch operation | permission=admin/run:observe | auth=required"
     @handler ResumeRunHistoryBatch
     post /run-history-batches/:batch_id/operations/:operation_id/resume (ResumeRunHistoryBatchReq) returns (RunHistoryBatchResp)
+    @doc "Preview archived run histories for confirmed bounded restoration | permission=admin/run:observe | auth=required"
+    @handler PreviewRunHistoryRestoreBatch
+    post /run-history-restore-batches/preview (PreviewRunHistoryBatchReq) returns (RunHistoryRestoreBatchPreviewResp)
+    @doc "Atomically register original restoration intents without resuming execution | permission=admin/run:observe | auth=required"
+    @handler CreateRunHistoryRestoreBatch
+    post /run-history-restore-batches (CreateRunHistoryBatchReq) returns (RunHistoryBatchReceiptResp)
 }

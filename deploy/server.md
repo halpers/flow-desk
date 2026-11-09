@@ -569,7 +569,7 @@ SELECT count(*) AS pending_archived_cleanup_count FROM business.source_object_ar
 
 回退前在维护窗口停止 Web/API/Agent 并等待请求/worker 退出，保留一致备份，查询 archived_registration_count。为 0 时可按既有章节条件回退，保留新表与迁移记录，不执行 Down；已有历史行时，旧 API 不能识别完整登记，必须保留支持联合读取的版本，或将整套数据库和对象一致恢复到升级前备份。禁止只恢复热表、把归档行复制回去、只切换旧 API/Web、TRUNCATE 新表或移除永久存储标记。停写及恢复方式继续遵守第 11、17–23 节。
 
-符合条件的终态任务消息/事件载荷与checkpoint已支持第34节人工分层归档、恢复及永久执行封存；自动/批量任务归档、物理对象名回收、供应商历史版本、审计/回执清理和永久删除仍未实现。独立验收脚本不得在服务器执行；本地证据与复跑见[副本历史设计](../docs/m7-source-history.md)。
+符合条件的终态任务消息/事件载荷与checkpoint已支持第34节人工分层归档、恢复及永久执行封存；人工任务批量归档/恢复已由第36/37节补充；自动任务归档、物理对象名回收、供应商历史版本、审计/回执清理和永久删除仍未实现。独立验收脚本不得在服务器执行；本地证据与复跑见[副本历史设计](../docs/m7-source-history.md)。
 
 ## 25. 巡检调查记录
 
@@ -1000,4 +1000,36 @@ docker compose logs --tail 100 migrate agent-migrate api agent
 - 503 `RUN_HISTORY_UNAVAILABLE`：保留原批次/操作ID，检查Agent readiness、连通、空间和配套版本，恢复后继续该项；单项Go事务失败保持其原意图。`RUN_HISTORY_BATCH_INCOMPLETE`表示批次登记不符合完整性要求，应停止维护并联系运维核对迁移/一致备份，不手工补成员。
 - 一致备份须在第34节范围之外额外包含`business.run_history_batches`和`run_history_batch_items`。不能删除或重建批次成员、原维护操作、回执或永久围栏。回退继续受第33/34节约束；退到具备M7.23但没有批次界面的配套版本时，原操作仍可从单项窗口继续，但批次入口不可用，需记录全部待确认项。优先保留支持批次的配套版本并向前修复。
 
-本功能没有定时归档、批量恢复、永久删除或业务回执/证据清理。[本地公开API报告](../reports/m7/run-history-batch-acceptance.json)与[实施记录](../docs/progress.md)列明实际验收边界。
+批量恢复见第37节。本功能没有定时归档、永久删除或业务回执/证据清理。[本地公开API报告](../reports/m7/run-history-batch-acceptance.json)与[实施记录](../docs/progress.md)列明实际验收边界。
+
+## 37. 任务历史批量恢复
+
+M7.27在“任务记录”增加“批量恢复与批次记录”，沿用HTTP IP:port/HTTPS入口和现有服务，不新增公网端口或环境开关。资格与持久批次语义见[专项说明](../docs/m7-run-history-batch-restore.md)。
+
+### 37.1 升级
+
+按第11节做完整一致备份，按第10节发布配套API/Agent/Web。Go有序迁移`2026110904_run_history_batch_direction.sql`，只增强批次成员同方向约束；Agent应用迁移保持11。旧卷仍先满足第33节权限升级，第34节冷表及永久围栏必须保留。
+
+```bash
+python3 scripts/release.py --revision "$FLOWDESK_REVISION" --registry "$FLOWDESK_REGISTRY" --server
+docker compose ps --all
+docker compose logs --tail 100 migrate agent-migrate api agent
+```
+
+按原入口保留`--tls`/`--monitoring`，两个迁移作业退出0及readiness通过后开放入口。本次仅本地mock验收，上述命令未在远程服务器执行。
+
+### 37.2 日常恢复
+
+1. 当前管理员具有`run:observe`时，在“任务记录”切换租户任务，选择1–10项，打开“批量恢复与批次记录”并“预览所选”。恢复要求该项当前归档已完成且没有pending维护；不套用新归档的30天条件。
+2. 核对任务ID、版本、维护代次和恢复资格，勾选后确认。Go原子登记全部恢复意图；登记成功只代表可以逐项核对，页面的完成数以原操作回执为准。
+3. 响应不确定时复用原请求核对；刷新/关闭后从最近批次选择目标为恢复的原批次，也可输入完整批次ID。“继续待核对项”只推进该批次剩余原操作。
+4. 恢复只还原消息/事件/checkpoint存储；永久执行围栏继续保留，不能重新运行旧任务。若后来再次归档，重放旧恢复批次仍返回原完成结果，不再次恢复；当前状态应从单项“历史归档与恢复”核对。
+
+### 37.3 故障、备份和回退
+
+- 401/403/404清空批次和父列表，由当前对全部成员有权的管理员继续原操作，不返回部分成员清单。
+- pending/版本/代次冲突先读取已有维护和新预览；不要另造请求绕过pending，不手改成员、目标或代次。
+- 503保留批次与操作ID，先检查Agent readiness/连接/空间及配套版本，再继续原项。`RUN_HISTORY_BATCH_INCOMPLETE`须停止维护并核对一致备份/迁移，不能手工补成员。
+- 备份包含第34/36节全部热冷载荷、不可变批次/成员、原维护操作/回执和永久围栏。已有live目标批次后使用理解该目标的配套API/Web；旧界面可能误标为归档，不用旧归档界面处理恢复批次。优先向前修复，遵守第33/34节边界，不执行Down或删除记录；跨不兼容边界回退须从升级前一致备份恢复到新空库再切换。
+
+[本地API报告](../reports/m7/run-history-batch-restore-acceptance.json)与[实施记录](../docs/progress.md)说明实际验收范围。合成验收脚本只运行在`work/`独立mock环境，不连接服务器业务库。

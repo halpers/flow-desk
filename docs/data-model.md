@@ -304,3 +304,5 @@ Go迁移 `2026110902_ocr_layout.sql` 仅调整document_versions_layout_source约
 ## M7.22 语义近似索引登记
 
 Agent有序迁移10增加semantic_ann_indexes，以tenant_id/profile/dimension为主键，固定索引名唯一，保存building/ready及定义SHA256。ready必须有非空指纹，支持维度1–2000；向量原表仍支持1–8192。无Go表或公开HTTP变更。当前由独立迁移作业应用该迁移；显式维护CLI仅使用AGENT_MIGRATION_DATABASE_URL，在独立连接使用CREATE/DROP INDEX CONCURRENTLY及同范围advisory lock，查询校验目录与登记一致后才允许近似路径；运行账号继续DML及精确/可选HNSW检索，无索引DDL。登记表与部分表达式索引随Agent schema备份，恢复后重新status核对；不删除向量、manifest、知识原件或幂等身份。见[检索规模优化](m7-retrieval-scale.md)和[迁移边界](m7-agent-migration.md)。
+
+M7.27迁移`2026110904_run_history_batch_direction.sql`增强Go自有批次延迟完整性约束，成员必须全部指向同一archived/live目标。目标由不可变原操作派生，不增加表/列；热冷载荷、围栏与原回执保持。见[批量恢复](m7-run-history-batch-restore.md)。

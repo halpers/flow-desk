@@ -1,0 +1,12 @@
+{
+  "phase": "M7.27",
+  "profile": "disposable-mock",
+  "checks": [
+    "live tasks are ineligible and only administrators can preview restoration",
+    "confirmed registration persists both intents without moving cold payloads",
+    "partial restoration is durable and continuations retain original operation identities",
+    "public payloads are unchanged and permanent execution fences still reject retry",
+    "later re-archival preserves old restoration receipts without repeating restoration"
+  ],
+  "completed_at": "2026-11-09T09:57:42.812961+00:00"
+}

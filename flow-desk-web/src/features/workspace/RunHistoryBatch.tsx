@@ -15,11 +15,16 @@ import type { Models } from "../../shared/api/models";
 import { newId } from "../../shared/id";
 import { protectionLabels } from "./RunLifecycle";
 
-type Preview = Models["RunHistoryBatchPreviewData"];
+type Preview =
+  | Models["RunHistoryBatchPreviewData"]
+  | Models["RunHistoryRestoreBatchPreviewData"];
+type PreviewItem = Preview["items"][number];
+type Target = "archived" | "live";
 type Batch = Models["RunHistoryBatchData"];
 type Page = Models["RunHistoryBatchPage"];
 type Pending = {
   key: string;
+  path: string;
   body: {
     confirm: boolean;
     items: {
@@ -33,6 +38,7 @@ const reasons: Record<string, string> = {
   ...protectionLabels,
   RUN_HISTORY_PENDING: "已有待核对维护操作",
   RUN_HISTORY_ARCHIVED: "已经归档",
+  RUN_HISTORY_NOT_ARCHIVED: "当前尚未归档，不能批量恢复",
   RUN_HISTORY_PROTECTED: "保留或恢复条件仍受保护",
   RUN_HISTORY_LIMIT: "超过单任务维护上限",
 };
@@ -42,16 +48,24 @@ export function RunHistoryBatch(props: {
   onDenied: (message: string) => void;
   onReset: () => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [target, setTarget] = useState<Target | null>(null);
   return (
     <>
-      <Button onClick={() => setOpen(true)}>批量归档与批次记录</Button>
-      {open && <BatchPanel {...props} onClose={() => setOpen(false)} />}
+      <Button onClick={() => setTarget("archived")}>批量归档与批次记录</Button>
+      <Button onClick={() => setTarget("live")}>批量恢复与批次记录</Button>
+      {target && (
+        <BatchPanel
+          {...props}
+          target={target}
+          onClose={() => setTarget(null)}
+        />
+      )}
     </>
   );
 }
 
 function BatchPanel({
+  target,
   selectedIds,
   onDenied,
   onReset,
@@ -61,7 +75,13 @@ function BatchPanel({
   onDenied: (message: string) => void;
   onReset: () => void;
   onClose: () => void;
+  target: Target;
 }) {
+  const restore = target === "live";
+  const action = restore ? "恢复" : "归档";
+  const createPath = restore
+    ? "/run-history-restore-batches"
+    : "/run-history-batches";
   const selection = useRef([...selectedIds].sort());
   const active = useRef<AbortController | null>(null);
   const pending = useRef<Pending | null>(null);
@@ -149,7 +169,7 @@ function BatchPanel({
     setPage(null);
     setConfirmed(false);
     await perform(async (signal) => {
-      const result = await api<Preview>("/run-history-batches/preview", {
+      const result = await api<Preview>(`${createPath}/preview`, {
         method: "POST",
         signal,
         body: JSON.stringify({ run_ids: selection.current }),
@@ -180,6 +200,7 @@ function BatchPanel({
     if (!pending.current && (!confirmed || !preview?.can_create)) return;
     const request = pending.current ?? {
       key: newId(),
+      path: createPath,
       body: {
         confirm: true,
         items: preview!.items.map(
@@ -195,7 +216,7 @@ function BatchPanel({
     setUncertain(true);
     await perform(async (signal) => {
       const receipt = await api<Models["RunHistoryBatchReceipt"]>(
-        "/run-history-batches",
+        request.path,
         {
           method: "POST",
           signal,
@@ -232,7 +253,7 @@ function BatchPanel({
   return (
     <Drawer
       open
-      title="任务历史批量归档"
+      title={`任务历史批量${action}`}
       size={880}
       onClose={() => {
         active.current?.abort();
@@ -242,8 +263,12 @@ function BatchPanel({
       <Space orientation="vertical" style={{ width: "100%" }} size="middle">
         <Alert
           type="info"
-          title="统一确认，逐项归档"
-          description="单批最多10项。已完成项保留结果，待核对项可以继续；刷新后从最近批次找回。消息、事件和检查点完整保留，任务执行身份永久封存。"
+          title={`统一确认，逐项${action}`}
+          description={
+            restore
+              ? "单批最多10项，仅恢复已归档任务的消息、事件和检查点存储。恢复不会重新执行任务，也不会解除永久执行封存。待核对项可从最近批次继续。"
+              : "单批最多10项。已完成项保留结果，待核对项可以继续；刷新后从最近批次找回。消息、事件和检查点完整保留，任务执行身份永久封存。"
+          }
         />
         <Space wrap>
           <Button
@@ -256,11 +281,11 @@ function BatchPanel({
             disabled={busy}
             onClick={() => void perform((signal) => loadPage(signal, ""))}
           >
-            最近归档批次
+            最近维护批次
           </Button>
         </Space>
         <Input.Search
-          aria-label="按归档批次 ID 定位"
+          aria-label="按维护批次 ID 定位"
           placeholder="完整批次 ID"
           value={batchId}
           onChange={(event) => setBatchId(event.target.value)}
@@ -297,7 +322,7 @@ function BatchPanel({
                   key: "batch",
                   render: (_, item) => (
                     <Button
-                      aria-label={`查看归档批次 ${item.batch_id}`}
+                      aria-label={`查看${item.target === "live" ? "恢复" : "归档"}批次 ${item.batch_id}`}
                       type="link"
                       onClick={() =>
                         void perform((signal) =>
@@ -307,6 +332,15 @@ function BatchPanel({
                     >
                       {item.batch_id.slice(0, 8)}
                     </Button>
+                  ),
+                },
+                {
+                  title: "方向",
+                  key: "target",
+                  render: (_, item) => (
+                    <Tag>
+                      {item.target === "live" ? "恢复存储" : "归档历史"}
+                    </Tag>
                   ),
                 },
                 {
@@ -349,7 +383,7 @@ function BatchPanel({
         )}
         {!busy && preview && (
           <>
-            <Table
+            <Table<PreviewItem>
               rowKey="run_id"
               pagination={false}
               dataSource={preview.items}
@@ -359,8 +393,12 @@ function BatchPanel({
                   title: "预览结果",
                   key: "eligible",
                   render: (_, item) =>
-                    item.can_archive ? (
-                      <Tag color="green">可归档</Tag>
+                    (
+                      "can_restore" in item
+                        ? item.can_restore
+                        : item.can_archive
+                    ) ? (
+                      <Tag color="green">可{action}</Tag>
                     ) : (
                       item.protection_reasons
                         .map((code) => reasons[code] || "保护条件尚未确认")
@@ -380,24 +418,29 @@ function BatchPanel({
               disabled={!preview.can_create}
               onChange={(event) => setConfirmed(event.target.checked)}
             >
-              我已核对全部所选任务，确认批量归档并永久封存执行身份
+              {restore
+                ? "我已核对全部所选任务，确认批量恢复存储且不重新执行任务"
+                : "我已核对全部所选任务，确认批量归档并永久封存执行身份"}
             </Checkbox>
             <Button
               type="primary"
               disabled={!confirmed || !preview.can_create}
               onClick={() => void create()}
             >
-              {uncertain ? "使用原批次请求重试" : "确认批量归档"}
+              {uncertain ? "使用原批次请求重试" : `确认批量${action}`}
             </Button>
           </>
         )}
         {batch && (
           <>
-            <p>批次 ID：{batch.batch_id}</p>
+            <p>
+              批次 ID：{batch.batch_id} ·{" "}
+              {batch.target === "live" ? "恢复存储" : "归档历史"}
+            </p>
             <Alert
               type={batch.status === "completed" ? "success" : "warning"}
               title={`已完成 ${batch.completed_count} / ${batch.items.length} 项`}
-              description="这里显示原归档操作的结果；单项后来恢复后，旧批次仍保留原完成回执。当前存储状态请进入任务详情核对。"
+              description="这里显示原维护操作的结果；后续再次归档或恢复后，旧批次仍保留原完成回执。当前存储状态请进入任务详情核对，恢复不解除执行封存。"
             />
             <Space>
               <Button
@@ -436,7 +479,11 @@ function BatchPanel({
                   title: "状态",
                   dataIndex: "status",
                   render: (value: string) => (
-                    <Tag>{value === "completed" ? "归档完成" : "待核对"}</Tag>
+                    <Tag>
+                      {value === "completed"
+                        ? `${batch.target === "live" ? "恢复" : "归档"}完成`
+                        : "待核对"}
+                    </Tag>
                   ),
                 },
                 {
@@ -445,7 +492,7 @@ function BatchPanel({
                   render: (_, item) => (
                     <Button
                       disabled={busy || item.status === "completed"}
-                      aria-label={`继续归档 ${item.run_id}`}
+                      aria-label={`继续${item.target === "live" ? "恢复" : "归档"} ${item.run_id}`}
                       onClick={() =>
                         void perform((signal) =>
                           progress(signal, batch, item.operation_id),

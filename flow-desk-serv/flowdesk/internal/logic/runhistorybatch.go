@@ -18,6 +18,7 @@ import (
 const maximumRunHistoryBatch = 10
 const maximumHistoryObservations = 5
 const runHistoryBatchOperation = "run.history.batch"
+const runHistoryRestoreBatchOperation = "run.history.restore_batch"
 
 func historyBatchAdminTx(ctx context.Context, s *svc.ServiceContext, tx sqlx.Session) (*model.Users, error) {
 	actor, err := operationsViewerTx(ctx, s, tx)
@@ -141,6 +142,12 @@ func PreviewRunHistoryBatch(ctx context.Context, s *svc.ServiceContext, req *typ
 	return result, nil
 }
 func CreateRunHistoryBatch(ctx context.Context, s *svc.ServiceContext, req *types.CreateRunHistoryBatchReq) (types.RunHistoryBatchReceipt, error) {
+	return createRunHistoryBatch(ctx, s, req, "archived", runHistoryBatchOperation)
+}
+func CreateRunHistoryRestoreBatch(ctx context.Context, s *svc.ServiceContext, req *types.CreateRunHistoryBatchReq) (types.RunHistoryBatchReceipt, error) {
+	return createRunHistoryBatch(ctx, s, req, "live", runHistoryRestoreBatchOperation)
+}
+func createRunHistoryBatch(ctx context.Context, s *svc.ServiceContext, req *types.CreateRunHistoryBatchReq, target, operationName string) (types.RunHistoryBatchReceipt, error) {
 	ids := make([]string, len(req.Items))
 	for index, item := range req.Items {
 		ids[index] = item.RunId
@@ -165,7 +172,7 @@ func CreateRunHistoryBatch(ctx context.Context, s *svc.ServiceContext, req *type
 		if err != nil {
 			return err
 		}
-		_, err = s.ApiIdempotencyModel.FindOneByScopeTx(ctx, tx, actor.TenantId, actor.Id, runHistoryBatchOperation, HashToken(req.IdempotencyKey))
+		_, err = s.ApiIdempotencyModel.FindOneByScopeTx(ctx, tx, actor.TenantId, actor.Id, operationName, HashToken(req.IdempotencyKey))
 		if err == nil {
 			needsObservation = false
 		} else if !errors.Is(err, model.ErrNotFound) {
@@ -181,7 +188,7 @@ func CreateRunHistoryBatch(ctx context.Context, s *svc.ServiceContext, req *type
 	if needsObservation {
 		observations, observationErr = observeHistoryBatch(ctx, s, ids)
 	}
-	return idempotentAuthorized(ctx, s, runHistoryBatchOperation, req.IdempotencyKey, req, 200, func(ctx context.Context, tx sqlx.Session) (types.RunHistoryBatchReceipt, error) {
+	return idempotentAuthorized(ctx, s, operationName, req.IdempotencyKey, req, 200, func(ctx context.Context, tx sqlx.Session) (types.RunHistoryBatchReceipt, error) {
 		actor, err := historyBatchAdminTx(ctx, s, tx)
 		if err != nil {
 			return types.RunHistoryBatchReceipt{}, err
@@ -197,7 +204,7 @@ func CreateRunHistoryBatch(ctx context.Context, s *svc.ServiceContext, req *type
 			return types.RunHistoryBatchReceipt{}, err
 		}
 		for index, item := range req.Items {
-			operation, err := prepareRunHistoryTx(ctx, s, tx, &types.RunHistoryChangeReq{RunId: item.RunId, ExpectedVersion: item.ExpectedVersion, ExpectedGeneration: item.ExpectedGeneration, Confirm: true}, "archived", observations[index], nil)
+			operation, err := prepareRunHistoryTx(ctx, s, tx, &types.RunHistoryChangeReq{RunId: item.RunId, ExpectedVersion: item.ExpectedVersion, ExpectedGeneration: item.ExpectedGeneration, Confirm: true}, target, observations[index], nil)
 			if err != nil {
 				return types.RunHistoryBatchReceipt{}, err
 			}
@@ -205,7 +212,7 @@ func CreateRunHistoryBatch(ctx context.Context, s *svc.ServiceContext, req *type
 				return types.RunHistoryBatchReceipt{}, err
 			}
 		}
-		if err = s.AuditEventsModel.InsertTx(ctx, tx, &model.AuditEvents{Id: orderedID(), TenantId: actor.TenantId, ActorUserId: actor.Id, Operation: runHistoryBatchOperation, ObjectType: "run_history_batch", ObjectId: batch.Id, Source: "manual", Summary: fmt.Sprintf("Registered %d confirmed run history intents", len(ids))}); err != nil {
+		if err = s.AuditEventsModel.InsertTx(ctx, tx, &model.AuditEvents{Id: orderedID(), TenantId: actor.TenantId, ActorUserId: actor.Id, Operation: operationName, ObjectType: "run_history_batch", ObjectId: batch.Id, Source: "manual", Summary: fmt.Sprintf("Registered %d confirmed %s run history intents", len(ids), target)}); err != nil {
 			return types.RunHistoryBatchReceipt{}, err
 		}
 		return types.RunHistoryBatchReceipt{BatchId: batch.Id}, nil
@@ -218,7 +225,7 @@ func CreateRunHistoryBatch(ctx context.Context, s *svc.ServiceContext, req *type
 			return errForbidden
 		}
 		for index, item := range data.Items {
-			if item.RunId != ids[index] || item.Target != "archived" || item.Generation != req.Items[index].ExpectedGeneration+1 {
+			if item.RunId != ids[index] || item.Target != target || item.Generation != req.Items[index].ExpectedGeneration+1 {
 				return errForbidden
 			}
 		}
@@ -226,7 +233,7 @@ func CreateRunHistoryBatch(ctx context.Context, s *svc.ServiceContext, req *type
 	})
 }
 func batchData(row *model.RunHistoryBatches, operations []model.RunHistoryOperations) types.RunHistoryBatchData {
-	result := types.RunHistoryBatchData{BatchId: row.Id, ActorUserId: row.ActorUserId, CreatedAt: row.CreatedAt.UTC().Format(time.RFC3339Nano), Status: "completed", Items: []types.RunHistoryOperationData{}}
+	result := types.RunHistoryBatchData{BatchId: row.Id, Target: operations[0].Target, ActorUserId: row.ActorUserId, CreatedAt: row.CreatedAt.UTC().Format(time.RFC3339Nano), Status: "completed", Items: []types.RunHistoryOperationData{}}
 	for index := range operations {
 		result.Items = append(result.Items, historyOperation(&operations[index]))
 		if operations[index].Status == "completed" {
@@ -236,6 +243,21 @@ func batchData(row *model.RunHistoryBatches, operations []model.RunHistoryOperat
 		}
 	}
 	return result
+}
+func validateHistoryBatchMembers(row *model.RunHistoryBatches, operations []model.RunHistoryOperations) error {
+	if len(operations) == 0 || int64(len(operations)) != row.ItemCount {
+		return failure(503, "RUN_HISTORY_BATCH_INCOMPLETE", "批次登记不完整，请联系运维核对")
+	}
+	target := operations[0].Target
+	if target != "live" && target != "archived" {
+		return failure(503, "RUN_HISTORY_BATCH_INCOMPLETE", "批次目标不完整，请联系运维核对")
+	}
+	for _, operation := range operations {
+		if operation.Target != target {
+			return failure(503, "RUN_HISTORY_BATCH_INCOMPLETE", "批次目标不一致，请联系运维核对")
+		}
+	}
+	return nil
 }
 func historyBatchDataTx(ctx context.Context, s *svc.ServiceContext, tx sqlx.Session, id string) (types.RunHistoryBatchData, error) {
 	actor, err := historyBatchAdminTx(ctx, s, tx)
@@ -250,8 +272,8 @@ func historyBatchDataTx(ctx context.Context, s *svc.ServiceContext, tx sqlx.Sess
 	if err != nil {
 		return types.RunHistoryBatchData{}, err
 	}
-	if int64(len(operations)) != row.ItemCount {
-		return types.RunHistoryBatchData{}, failure(503, "RUN_HISTORY_BATCH_INCOMPLETE", "批次登记不完整，请联系运维核对")
+	if err = validateHistoryBatchMembers(row, operations); err != nil {
+		return types.RunHistoryBatchData{}, err
 	}
 	for _, operation := range operations {
 		if _, _, err = historyCurrentTx(ctx, s, tx, operation.RunId, true); err != nil {
@@ -355,8 +377,8 @@ func ListRunHistoryBatches(ctx context.Context, s *svc.ServiceContext, req *type
 			if err != nil {
 				return err
 			}
-			if int64(len(items)) != row.ItemCount {
-				return failure(503, "RUN_HISTORY_BATCH_INCOMPLETE", "批次登记不完整")
+			if err = validateHistoryBatchMembers(&row, items); err != nil {
+				return err
 			}
 			members[row.Id] = items
 			for _, item := range items {

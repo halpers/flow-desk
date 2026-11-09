@@ -8,6 +8,9 @@ type JsonResponse<T> = T extends {
 type Data<T> =
   JsonResponse<T> extends { data?: infer Body } ? NonNullable<Body> : never;
 export type Models = {
+  RunHistoryRestoreBatchPreviewData: Data<
+    paths["/api/v1/run-history-restore-batches/preview"]["post"]
+  >;
   RunHistoryBatchPreviewData: Data<
     paths["/api/v1/run-history-batches/preview"]["post"]
   >;

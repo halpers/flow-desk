@@ -5153,6 +5153,9 @@
                           },
                           "status": {
                             "type": "string"
+                          },
+                          "target": {
+                            "type": "string"
                           }
                         }
                       }
@@ -5452,6 +5455,9 @@
                     },
                     "status": {
                       "type": "string"
+                    },
+                    "target": {
+                      "type": "string"
                     }
                   }
                 },
@@ -5567,6 +5573,198 @@
                     },
                     "status": {
                       "type": "string"
+                    },
+                    "target": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/run-history-restore-batches": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "Atomically register original restoration intents without resuming execution | permission=admin/run:observe | auth=required",
+        "operationId": "createRunHistoryRestoreBatch",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "Idempotency-Key",
+            "in": "header"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": [
+                "items",
+                "confirm"
+              ],
+              "properties": {
+                "confirm": {
+                  "type": "boolean"
+                },
+                "items": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "run_id",
+                      "expected_version",
+                      "expected_generation"
+                    ],
+                    "properties": {
+                      "expected_generation": {
+                        "type": "integer"
+                      },
+                      "expected_version": {
+                        "type": "integer"
+                      },
+                      "run_id": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "batch_id"
+                  ],
+                  "properties": {
+                    "batch_id": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/run-history-restore-batches/preview": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "Preview archived run histories for confirmed bounded restoration | permission=admin/run:observe | auth=required",
+        "operationId": "previewRunHistoryRestoreBatch",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": [
+                "run_ids"
+              ],
+              "properties": {
+                "run_ids": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "maximum_items",
+                    "can_create",
+                    "items"
+                  ],
+                  "properties": {
+                    "can_create": {
+                      "type": "boolean"
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "run_id",
+                          "expected_version",
+                          "expected_generation",
+                          "can_restore",
+                          "protection_reasons"
+                        ],
+                        "properties": {
+                          "can_restore": {
+                            "type": "boolean"
+                          },
+                          "expected_generation": {
+                            "type": "integer"
+                          },
+                          "expected_version": {
+                            "type": "integer"
+                          },
+                          "protection_reasons": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "run_id": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "maximum_items": {
+                      "type": "integer"
                     }
                   }
                 },

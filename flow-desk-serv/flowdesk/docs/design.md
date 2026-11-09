@@ -229,3 +229,5 @@ Go 保存不可变 pdf_layout，验证文件/OCR 组合、上传幂等及索引 
 ## M7.24 联合OCR的可信来源与审核
 
 PDF的auto/force可与columns/table联合，迁移2026110902只放开对应CHECK约束。两个选择参与上传幂等，内部source传递原选择；Go不接受浏览器或模型提供parser/页内容。回调必须匹配联合parser和完整text/ocr/empty来源，force不得混入text页，实际OCR/空白处理不超过10页；原生auto和旧parser继续接受既有形状。首次成功/错误冻结、索引代次与一致重放保持。实际联合OCR版本同时要求当前管理员confirm_ocr与confirm_layout，两项审计和激活同事务，失败全部回滚；引用仍由当前ACL和不可变物理页复核，撤回后拒绝。完整有限支持与回退边界见[M7.24](../../../docs/m7-ocr-layout.md)。
+
+M7.27[批量恢复](../../../docs/m7-run-history-batch-restore.md)复用现有批次与原维护操作，新增独立恢复入口及幂等作用域，不改变旧归档请求摘要。全成员当前授权、全部原意图原子登记、逐项跨服务核对与原回执恢复保持；延迟约束拒绝混合目标，恢复不解除永久执行封存。

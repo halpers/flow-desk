@@ -68,3 +68,5 @@ M7.22 [语义检索规模优化](m7-retrieval-scale.md)提供按租户/profile/�
 M7.25 [Agent独立迁移](m7-agent-migration.md)提供一次性迁移、checkpointer setup、运行权限只读门禁和旧卷显式升级；操作及跨版本回退限制见[服务器手册§33](../deploy/server.md#33-agent-独立迁移与运行权限收紧)。M7.23[任务历史归档与恢复](m7-run-history.md)已完成本地验收，操作与兼容边界见[服务器手册§34](../deploy/server.md#34-任务历史归档与恢复)。M7.24[OCR与版面联合处理](m7-ocr-layout.md)支持受控扫描双栏、简单表格同行和混合页来源，激活同时核对OCR与版面；配套升级与回退见[服务器手册§35](../deploy/server.md#35-ocr与版面联合处理)，实际验收状态见[实施记录](progress.md)。
 
 M7.26 [任务历史批量归档](m7-run-history-batch.md)提供至多10项统一预览、全部原维护意图原子登记、逐项进度和刷新后按批次继续；升级、日常操作及回退见[服务器手册§36](../deploy/server.md#36-任务历史批量归档)。
+
+- [M7.27 任务历史批量恢复](m7-run-history-batch-restore.md)：独立恢复入口、同方向批次、原操作逐项核对和永久执行封存。

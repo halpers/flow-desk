@@ -757,6 +757,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/run-history-restore-batches": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Atomically register original restoration intents without resuming execution | permission=admin/run:observe | auth=required */
+        post: operations["createRunHistoryRestoreBatch"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/run-history-restore-batches/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Preview archived run histories for confirmed bounded restoration | permission=admin/run:observe | auth=required */
+        post: operations["previewRunHistoryRestoreBatch"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/runs": {
         parameters: {
             query?: never;
@@ -1553,6 +1587,25 @@ export interface components {
             content: {
                 "application/json": {
                     expected_version: number;
+                };
+            };
+        };
+        createRunHistoryBatchBody: {
+            content: {
+                "application/json": {
+                    confirm: boolean;
+                    items: {
+                        expected_generation: number;
+                        expected_version: number;
+                        run_id: string;
+                    }[];
+                };
+            };
+        };
+        previewRunHistoryBatchBody: {
+            content: {
+                "application/json": {
+                    run_ids: string[];
                 };
             };
         };
@@ -3581,6 +3634,7 @@ export interface operations {
                                     target: string;
                                 }[];
                                 status: string;
+                                target?: string;
                             }[];
                             next_cursor: string;
                         };
@@ -3599,18 +3653,7 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": {
-                    confirm: boolean;
-                    items: {
-                        expected_generation: number;
-                        expected_version: number;
-                        run_id: string;
-                    }[];
-                };
-            };
-        };
+        requestBody: components["requestBodies"]["createRunHistoryBatchBody"];
         responses: {
             200: {
                 headers: {
@@ -3635,13 +3678,7 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": {
-                    run_ids: string[];
-                };
-            };
-        };
+        requestBody: components["requestBodies"]["previewRunHistoryBatchBody"];
         responses: {
             200: {
                 headers: {
@@ -3701,6 +3738,7 @@ export interface operations {
                                 target: string;
                             }[];
                             status: string;
+                            target?: string;
                         };
                         request_id?: string;
                     };
@@ -3743,6 +3781,67 @@ export interface operations {
                                 target: string;
                             }[];
                             status: string;
+                            target?: string;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    createRunHistoryRestoreBatch: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: components["requestBodies"]["createRunHistoryBatchBody"];
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            batch_id: string;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    previewRunHistoryRestoreBatch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: components["requestBodies"]["previewRunHistoryBatchBody"];
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            can_create: boolean;
+                            items: {
+                                can_restore: boolean;
+                                expected_generation: number;
+                                expected_version: number;
+                                protection_reasons: string[];
+                                run_id: string;
+                            }[];
+                            maximum_items: number;
                         };
                         request_id?: string;
                     };

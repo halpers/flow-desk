@@ -408,3 +408,7 @@ PUT 必须有 Idempotency-Key，正文 expected_revision、status、note、confi
 ## M7.26 任务历史批次
 
 [批量归档契约](m7-run-history-batch.md)规定1–10项当前授权预览、全批意图原子登记、不可变成员及逐项原操作核对。所有HTTP定义先维护api/runhistorybatch.api再生成；跨服务执行允许已完成/待核对并存，禁止把逐项恢复描述为整批回滚。
+
+## M7.27 任务历史批量恢复
+
+新增独立的POST /api/v1/run-history-restore-batches/preview及POST /api/v1/run-history-restore-batches；输入结构沿用原批次预览/确认请求，使用独立run.history.restore_batch幂等作用域，不改变M7.26归档请求摘要。统一GET/list/逐项resume支持两种同方向批次，响应增加target=archived/live；不能提交混合方向成员。恢复仍需当前管理员、可信会话、完整成员当前授权及原版本/代次，全部原意图在一个Go事务登记，跨服务逐项核对原操作。只恢复存储，不解除永久执行封存；旧批次重放不覆盖后来单项操作。详见[批量恢复](m7-run-history-batch-restore.md)，实际验收状态见[实施记录](progress.md)。
