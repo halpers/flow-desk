@@ -1,5 +1,7 @@
 # Python Agent 服务详细设计
 
+M7.23 `storage.history` 只接受内部服务身份和已由Go建立的run/tenant绑定。持有与图执行器/checkpointer完全一致的逐run advisory lock（种子3）并锁定命令后，重新检查命令、回调、模型/向量预算静默；在同一事务推进维护代次、建立永久执行围栏、以原JSONB/BYTEA类型移动三类checkpoint并保存不可变回执。相同操作返回原回执，恢复后围栏仍阻止旧命令接收/claim/ownership、回调及checkpoint写入。生命周期统计包含热冷两层，不解码或公开图状态；迁移11经独立agent-migrate在checkpointer setup后应用，见[任务历史设计](../../docs/m7-run-history.md)。
+
 M7.21 storage.lifecycle以READ ONLY REPEATABLE READ事务及精确run thread统计运行和checkpoint数量，可信run_observation_scopes隔离租户，Pydantic仅导出必需白名单计数/保护原因，未绑定与错租户同样不可用；不加载图状态或执行清理。详见[生命周期设计](../../docs/m7-run-lifecycle.md)。
 M6.5 的 ticket-v2 使用独立 ScenarioPlan 枚举，支持物流建单、接手和办结；read-v1/ticket-v1 保留旧计划 schema。Go 在新任务首次 outbox 固定版本，恢复继续使用原版本。工单编号只能选择当前授权工具结果中的对象，多工单或编号无匹配时先补充输入；更正编号以最后一次补充选择为准。分配、准备、等待确认、执行节点均沿用稳定 action_id 和既有持久化边界，详见[场景契约](../../docs/m6-business-scenarios.md)。
 

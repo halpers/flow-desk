@@ -1,5 +1,11 @@
 # 数据模型与一致性设计
 
+M7.23 的 Go 迁移 `2026110901_run_history.sql` 新增 `run_history_operations`、`message_payload_archives`、`run_event_payload_archives`。维护操作以可信租户/run/代次唯一，同任务仅一项pending；保存原申请人、目标、检查点计数与完成时间，已完成行不可变。消息/事件身份与外键行留在热表，只将正文、引用、动作回执字段及事件载荷移至冷表；`messages_history_read`、`run_events_history_read` 联合返回原载荷，原位置/序号/时间/hash和逻辑总数保持。首次操作后任务执行与载荷写入受永久围栏保护。
+
+Agent有序迁移11新增 `run_history_fences`、`run_history_receipts` 及三类 `checkpoint*_history` 表；LIKE结构在独立checkpointer setup后建立。内部维护在同一事务、相同逐run执行锁（种子3）下用原类型移动JSONB/BYTEA，严格代次、可信绑定、命令/回调/预算静默条件、永久围栏和不可变回执共同保护；生命周期计数包含热冷两层。恢复只回迁载荷，不移除围栏，不重开旧命令、checkpoint写入或任务重试。
+
+Go先事务提交申请和幂等身份，事务外请求Agent，再在当前授权及条件复核后原子完成Go载荷迁移/审计/回执。跨服务没有原子提交；失联、晚期失败或撤权保留可按原操作核对的pending状态。备份需一次性包含两侧热/冷数据、视图/触发器、申请、回执和永久围栏；有维护历史后不回退到忽略冷表或围栏的旧版本。详见[任务历史归档设计](m7-run-history.md)。
+
 M7.25 将 Agent 应用迁移和 checkpointer setup 移入独立 `agent-migrate` 作业，由 `fd_agent_migrator` 拥有 agent/knowledge schema 和 Agent 表。运行 `fd_agent` 仅有 schema USAGE、必要表 DML/序列权限，schema_versions/checkpoint_migrations 只读；不拥有关系、routine 或独立类型，无 CREATE/TEMP、角色提升及业务 schema 访问。当前镜像要求完整连续的应用与 checkpointer 版本，缺项、间隙或未来版本均拒绝启动。旧卷通过显式 owner-only 事务升级，不清数据或重置密码，详见[独立迁移](m7-agent-migration.md)。
 
 M7.21不迁移或删除任何数据。Go通过RunsModel的可信租户/run关联聚合盘点，Python只读自身表及精确run thread的checkpoint数量；服务间通过有界HTTP传递白名单计数，不跨schema读写。任务FOR SHARE与当前授权保护返回，但两库观察并非原子快照，不能授权物理清理，见[生命周期](m7-run-lifecycle.md)。

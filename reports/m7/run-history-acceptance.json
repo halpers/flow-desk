@@ -1,0 +1,11 @@
+{
+  "phase": "M7.23",
+  "profile": "disposable-mock",
+  "checks": [
+    "ordinary operator cannot authorize maintenance",
+    "hot payloads physically tiered; original events and hashes remain readable",
+    "authorized public reads/counts preserved and retry permanently fenced",
+    "restore is byte-preserving storage recovery; old receipt replay has no new effect"
+  ],
+  "completed_at": "2026-11-09T04:30:28.662711+00:00"
+}

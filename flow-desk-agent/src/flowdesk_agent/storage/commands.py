@@ -71,8 +71,10 @@ class CommandStore:
             row = await (
                 await conn.execute(
                     "SELECT * FROM execution_commands WHERE "
-                    "(status='queued' AND available_at<=now()) OR "
-                    "(status='running' AND lease_expires_at<now()) "
+                    "NOT EXISTS(SELECT 1 FROM run_history_fences f "
+                    "WHERE f.run_id=execution_commands.run_id) "
+                    "AND ((status='queued' AND available_at<=now()) OR "
+                    "(status='running' AND lease_expires_at<now())) "
                     "ORDER BY created_at,dispatch_id LIMIT 1 FOR UPDATE SKIP LOCKED"
                 )
             ).fetchone()
@@ -108,6 +110,13 @@ class CommandStore:
             )
 
     async def own(self, conn, command: ExecutionCommand, owner: UUID):
+        fenced = await (
+            await conn.execute(
+                "SELECT 1 FROM run_history_fences WHERE run_id=%s", (command.run_id,)
+            )
+        ).fetchone()
+        if fenced:
+            return False
         result = await conn.execute(
             "INSERT INTO "
             "execution_owners(run_id,current_generation,dispatch_id,worker_id) "
@@ -125,6 +134,8 @@ class CommandStore:
             await conn.execute(
                 "SELECT 1 FROM execution_commands WHERE dispatch_id=%s AND lease_owner=%s "
                 "AND status='running' AND lease_expires_at>now() "
+                "AND NOT EXISTS(SELECT 1 FROM run_history_fences f "
+                "WHERE f.run_id=execution_commands.run_id) "
                 "AND NOT EXISTS(SELECT 1 FROM execution_cancellations c "
                 "WHERE c.run_id=execution_commands.run_id) "
                 "AND EXISTS(SELECT 1 FROM execution_owners o "

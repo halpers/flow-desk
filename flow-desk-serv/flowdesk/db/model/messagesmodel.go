@@ -7,6 +7,8 @@ import (
 )
 
 type MessagesModel interface {
+	UpdateArchivedPayloadTx(context.Context, sqlx.Session, string, string) error
+	UpdateRestoredPayloadTx(context.Context, sqlx.Session, string, string) error
 	FindOneByClientMessageTx(context.Context, sqlx.Session, string, string, string) (*Messages, error)
 	messagesModel
 	withSession(sqlx.Session) MessagesModel
@@ -22,7 +24,7 @@ type MessagesModel interface {
 
 func (m *customMessagesModel) FindOneByClientMessageTx(ctx context.Context, tx sqlx.Session, tenant, conversation, clientID string) (*Messages, error) {
 	var row Messages
-	err := tx.QueryRowCtx(ctx, &row, fmt.Sprintf("select %s from %s where tenant_id=$1 and conversation_id=$2 and client_message_id=$3", messagesRows, m.table), tenant, conversation, clientID)
+	err := tx.QueryRowCtx(ctx, &row, fmt.Sprintf("select %s from %s where tenant_id=$1 and conversation_id=$2 and client_message_id=$3", messagesRows, `"business"."messages_history_read"`), tenant, conversation, clientID)
 	return &row, err
 }
 
@@ -41,12 +43,12 @@ func (m *customMessagesModel) InsertTx(ctx context.Context, tx sqlx.Session, row
 }
 func (m *customMessagesModel) FindOneTx(ctx context.Context, tx sqlx.Session, tenant, id string) (*Messages, error) {
 	var row Messages
-	err := tx.QueryRowCtx(ctx, &row, fmt.Sprintf("select %s from %s where tenant_id=$1 and id=$2", messagesRows, m.table), tenant, id)
+	err := tx.QueryRowCtx(ctx, &row, fmt.Sprintf("select %s from %s where tenant_id=$1 and id=$2", messagesRows, `"business"."messages_history_read"`), tenant, id)
 	return &row, err
 }
 func (m *customMessagesModel) ListByConversation(ctx context.Context, tenant, conversation string, after, limit int64) ([]Messages, error) {
 	rows := []Messages{}
-	err := m.conn.QueryRowsCtx(ctx, &rows, fmt.Sprintf("select %s from %s where tenant_id=$1 and conversation_id=$2 and position>$3 order by position limit $4", messagesRows, m.table), tenant, conversation, after, limit)
+	err := m.conn.QueryRowsCtx(ctx, &rows, fmt.Sprintf("select %s from %s where tenant_id=$1 and conversation_id=$2 and position>$3 order by position limit $4", messagesRows, `"business"."messages_history_read"`), tenant, conversation, after, limit)
 	return rows, err
 }
 func (m *customMessagesModel) UpdateFinalTx(ctx context.Context, tx sqlx.Session, id, content, citations, receipts string) error {
@@ -61,4 +63,13 @@ func (m *customMessagesModel) UpdateReceiptsTx(ctx context.Context, tx sqlx.Sess
 }
 func (m *customMessagesModel) UpdateInputPositionTx(ctx context.Context, tx sqlx.Session, id string, previous, next int64) error {
 	return requireOne(tx.ExecCtx(ctx, fmt.Sprintf("update %s set position=$3 where id=$1 and position=$2 and role='assistant' and status='streaming'", m.table), id, previous, next))
+}
+
+func (m *customMessagesModel) UpdateArchivedPayloadTx(ctx context.Context, tx sqlx.Session, tenant, run string) error {
+	_, err := tx.ExecCtx(ctx, "update business.messages set content='',citations='[]',action_receipts='[]' where tenant_id=$1 and run_id=$2", tenant, run)
+	return err
+}
+func (m *customMessagesModel) UpdateRestoredPayloadTx(ctx context.Context, tx sqlx.Session, tenant, run string) error {
+	_, err := tx.ExecCtx(ctx, "update business.messages x set content=a.content,citations=a.citations,action_receipts=a.action_receipts from business.message_payload_archives a where x.id=a.id and x.tenant_id=a.tenant_id and x.tenant_id=$1 and x.run_id=$2", tenant, run)
+	return err
 }

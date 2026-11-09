@@ -11,6 +11,7 @@ from uuid import uuid4
 
 import httpx
 import psycopg
+from acceptance_http import login_with_backoff
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -71,15 +72,14 @@ def main():
             return result.get("data")
 
         def login(account):
-            data = call(
-                "POST",
-                "/auth/login",
-                {
-                    "account": account,
-                    "password": settings["DEMO_PASSWORD"],
-                },
+            response = login_with_backoff(http, account, settings["DEMO_PASSWORD"])
+            envelope = response.json()
+            assert response.status_code == 200, (
+                "login",
+                response.status_code,
+                envelope.get("code"),
             )
-            http.headers["Authorization"] = "Bearer " + data["access_token"]
+            http.headers["Authorization"] = "Bearer " + envelope["data"]["access_token"]
 
         login("demo.admin")
         base = call(

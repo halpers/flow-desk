@@ -21,6 +21,7 @@ import {
 import { api, type User } from "../../shared/api/client";
 import type { Models } from "../../shared/api/models";
 import { RunLifecycle } from "./RunLifecycle";
+import { RunHistory } from "./RunHistory";
 import { newId } from "../../shared/id";
 
 type Task = Models["RunOperationPage"]["items"][number];
@@ -36,6 +37,7 @@ const statuses: Record<string, string> = {
   cancelled: "已取消",
 };
 const retryReasons: Record<string, string> = {
+  RUN_HISTORY_FENCED: "历史任务执行身份已封存，请新建任务并重新核对当前授权",
   OWNER_REQUIRED: "仅任务所有者可重试",
   NOT_RETRYABLE_STATE: "仅失败或超时的任务可重试",
   RETRY_REQUIRES_REVIEW:
@@ -330,6 +332,22 @@ export function Operations({
                 <RunLifecycle
                   key={`${user.tenant_id}:${user.id}:${current.id}`}
                   runId={current.id}
+                  onDenied={(message) => {
+                    setSelected(null);
+                    setConfirm(null);
+                    setAccessError(message);
+                    queryClient.removeQueries({
+                      queryKey: ["run-trace", user.tenant_id, user.id],
+                    });
+                    queryClient.removeQueries({
+                      queryKey: ["operations", user.tenant_id, user.id],
+                    });
+                  }}
+                />
+                <RunHistory
+                  key={`${user.tenant_id}:${user.id}:${current.id}`}
+                  runId={current.id}
+                  version={current.version}
                   onDenied={(message) => {
                     setSelected(null);
                     setConfirm(null);

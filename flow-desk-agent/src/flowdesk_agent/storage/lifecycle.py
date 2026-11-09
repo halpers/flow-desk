@@ -44,10 +44,14 @@ SELECT command_count, queued_command_count, running_command_count, waiting_comma
        live_command_lease_count, callback_count, unacknowledged_callback_count,
        live_callback_lease_count, model_call_count, reserved_model_call_count,
        unknown_model_state_count, embedding_call_count, reserved_embedding_call_count,
-       (SELECT count(*) FROM checkpoints WHERE thread_id=%(thread_id)s) AS checkpoint_count,
-       (SELECT count(*) FROM checkpoint_blobs WHERE thread_id=%(thread_id)s)
+       ((SELECT count(*) FROM checkpoints WHERE thread_id=%(thread_id)s)
+        +(SELECT count(*) FROM checkpoints_history WHERE thread_id=%(thread_id)s))
+           AS checkpoint_count,
+       ((SELECT count(*) FROM checkpoint_blobs WHERE thread_id=%(thread_id)s)
+        +(SELECT count(*) FROM checkpoint_blobs_history WHERE thread_id=%(thread_id)s))
            AS checkpoint_blob_count,
-       (SELECT count(*) FROM checkpoint_writes WHERE thread_id=%(thread_id)s)
+       ((SELECT count(*) FROM checkpoint_writes WHERE thread_id=%(thread_id)s)
+        +(SELECT count(*) FROM checkpoint_writes_history WHERE thread_id=%(thread_id)s))
            AS checkpoint_write_count,
        (SELECT count(*) FROM tool_results t
         JOIN execution_commands c ON c.dispatch_id=t.dispatch_id

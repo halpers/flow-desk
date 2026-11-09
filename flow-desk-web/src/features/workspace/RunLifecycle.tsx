@@ -3,7 +3,9 @@ import { Alert, Button, Descriptions, Drawer, Space, Spin, Tag } from "antd";
 import { api, ApiError } from "../../shared/api/client";
 import type { Models } from "../../shared/api/models";
 
-const protectionLabels: Record<string, string> = {
+export const protectionLabels: Record<string, string> = {
+  AGENT_UNAVAILABLE: "执行历史服务暂不可用，修复连接后可继续核对已有操作",
+  RUN_HISTORY_LIMIT: "任务历史超过单次维护上限，继续保留当前内容",
   RUN_NOT_TERMINAL: "任务尚未结束，保留恢复所需记录",
   BUSINESS_LEASE_ACTIVE: "业务执行租约仍有效",
   DISPATCH_UNSETTLED: "任务投递尚未完成，或仍有待处理死信",

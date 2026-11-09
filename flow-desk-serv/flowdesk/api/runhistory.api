@@ -1,0 +1,56 @@
+type RunHistoryOperationData {
+    OperationId string `json:"operation_id"`
+    RunId string `json:"run_id"`
+    Generation int64 `json:"generation"`
+    Target string `json:"target"`
+    Status string `json:"status"`
+    CheckpointCount int64 `json:"checkpoint_count"`
+    CheckpointBlobCount int64 `json:"checkpoint_blob_count"`
+    CheckpointWriteCount int64 `json:"checkpoint_write_count"`
+}
+type RunHistoryData {
+    RunId string `json:"run_id"`
+    State string `json:"state"`
+    Generation int64 `json:"generation"`
+    CanManage bool `json:"can_manage"`
+    CanArchive bool `json:"can_archive"`
+    CanRestore bool `json:"can_restore"`
+    ProtectionReasons []string `json:"protection_reasons"`
+    Operation RunHistoryOperationData `json:"operation"`
+}
+type RunHistoryChangeReq {
+    RunId string `path:"run_id"`
+    ExpectedVersion int64 `json:"expected_version"`
+    ExpectedGeneration int64 `json:"expected_generation"`
+    Confirm bool `json:"confirm"`
+    IdempotencyKey string `header:"Idempotency-Key"`
+}
+type RunHistoryResumeReq {
+    RunId string `path:"run_id"`
+    OperationId string `path:"operation_id"`
+}
+type RunHistoryResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data RunHistoryData `json:"data"`
+}
+type RunHistoryOperationResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data RunHistoryOperationData `json:"data"`
+}
+@server(prefix: /api/v1 middleware: SessionAuth)
+service flowdesk-api {
+    @doc "Read authorized run history storage preview | permission=conversation:use/run:observe | auth=required"
+    @handler GetRunHistory
+    get /runs/:run_id/history (RunReq) returns (RunHistoryResp)
+    @doc "Archive eligible read-only run payload and checkpoints | permission=admin/run:observe | auth=required"
+    @handler ArchiveRunHistory
+    post /runs/:run_id/history/archive (RunHistoryChangeReq) returns (RunHistoryOperationResp)
+    @doc "Restore archived run payload and checkpoints without executing it | permission=admin/run:observe | auth=required"
+    @handler RestoreRunHistory
+    post /runs/:run_id/history/restore (RunHistoryChangeReq) returns (RunHistoryOperationResp)
+    @doc "Reconcile durable pending history operation | permission=admin/run:observe | auth=required"
+    @handler ResumeRunHistory
+    post /runs/:run_id/history/operations/:operation_id/resume (RunHistoryResumeReq) returns (RunHistoryOperationResp)
+}

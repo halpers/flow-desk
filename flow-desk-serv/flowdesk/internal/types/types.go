@@ -901,6 +901,53 @@ type RunData struct {
 	ActionReceipts []ReceiptData      `json:"action_receipts"`
 }
 
+type RunHistoryChangeReq struct {
+	RunId              string `path:"run_id"`
+	ExpectedVersion    int64  `json:"expected_version"`
+	ExpectedGeneration int64  `json:"expected_generation"`
+	Confirm            bool   `json:"confirm"`
+	IdempotencyKey     string `header:"Idempotency-Key"`
+}
+
+type RunHistoryData struct {
+	RunId             string                  `json:"run_id"`
+	State             string                  `json:"state"`
+	Generation        int64                   `json:"generation"`
+	CanManage         bool                    `json:"can_manage"`
+	CanArchive        bool                    `json:"can_archive"`
+	CanRestore        bool                    `json:"can_restore"`
+	ProtectionReasons []string                `json:"protection_reasons"`
+	Operation         RunHistoryOperationData `json:"operation"`
+}
+
+type RunHistoryOperationData struct {
+	OperationId          string `json:"operation_id"`
+	RunId                string `json:"run_id"`
+	Generation           int64  `json:"generation"`
+	Target               string `json:"target"`
+	Status               string `json:"status"`
+	CheckpointCount      int64  `json:"checkpoint_count"`
+	CheckpointBlobCount  int64  `json:"checkpoint_blob_count"`
+	CheckpointWriteCount int64  `json:"checkpoint_write_count"`
+}
+
+type RunHistoryOperationResp struct {
+	Code      string                  `json:"code"`
+	RequestId string                  `json:"request_id"`
+	Data      RunHistoryOperationData `json:"data"`
+}
+
+type RunHistoryResp struct {
+	Code      string         `json:"code"`
+	RequestId string         `json:"request_id"`
+	Data      RunHistoryData `json:"data"`
+}
+
+type RunHistoryResumeReq struct {
+	RunId       string `path:"run_id"`
+	OperationId string `path:"operation_id"`
+}
+
 type RunLifecycleData struct {
 	Run               RunOperationData      `json:"run"`
 	ObservedAt        string                `json:"observed_at"`

@@ -177,6 +177,85 @@ MIGRATIONS = [
         CHECK(state<>'ready' OR definition_hash<>'')
     );
     """,
+    """
+    CREATE TABLE run_history_fences (
+        run_id UUID PRIMARY KEY,tenant_id UUID NOT NULL,
+        generation BIGINT NOT NULL CHECK(generation>0),
+        operation_id UUID NOT NULL UNIQUE,state TEXT NOT NULL CHECK(state IN ('live','archived'))
+    );
+    CREATE TABLE run_history_receipts (
+        operation_id UUID PRIMARY KEY,run_id UUID NOT NULL REFERENCES run_history_fences(run_id),
+        tenant_id UUID NOT NULL,generation BIGINT NOT NULL,target TEXT NOT NULL,
+        checkpoint_count BIGINT NOT NULL,checkpoint_blob_count BIGINT NOT NULL,
+        checkpoint_write_count BIGINT NOT NULL,completed_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+        UNIQUE(run_id,generation)
+    );
+    CREATE TABLE checkpoints_history (LIKE checkpoints INCLUDING ALL);
+    CREATE TABLE checkpoint_blobs_history (LIKE checkpoint_blobs INCLUDING ALL);
+    CREATE TABLE checkpoint_writes_history (LIKE checkpoint_writes INCLUDING ALL);
+    CREATE FUNCTION guard_history_receipt() RETURNS trigger LANGUAGE plpgsql AS $$
+    BEGIN
+      RAISE EXCEPTION 'RUN_HISTORY_IMMUTABLE' USING ERRCODE='23514';
+    END $$;
+    CREATE TRIGGER history_receipt_guard BEFORE UPDATE OR DELETE ON run_history_receipts
+      FOR EACH ROW EXECUTE FUNCTION guard_history_receipt();
+    CREATE FUNCTION guard_history_fence() RETURNS trigger LANGUAGE plpgsql AS $$
+    BEGIN
+      IF TG_OP='DELETE' OR NEW.run_id<>OLD.run_id OR NEW.tenant_id<>OLD.tenant_id
+         OR NEW.generation<>OLD.generation+1 OR NEW.state=OLD.state THEN
+        RAISE EXCEPTION 'RUN_HISTORY_IMMUTABLE' USING ERRCODE='23514';
+      END IF;
+      RETURN NEW;
+    END $$;
+    CREATE TRIGGER history_fence_guard BEFORE UPDATE OR DELETE ON run_history_fences
+      FOR EACH ROW EXECUTE FUNCTION guard_history_fence();
+    CREATE FUNCTION reject_history_execution() RETURNS trigger LANGUAGE plpgsql AS $$
+    BEGIN
+      IF TG_TABLE_NAME='execution_commands' THEN
+        PERFORM pg_advisory_xact_lock(hashtextextended(NEW.run_id::text,3));
+      ELSE
+        PERFORM dispatch_id FROM execution_commands WHERE run_id=NEW.run_id FOR SHARE;
+      END IF;
+      IF EXISTS(SELECT 1 FROM run_history_fences WHERE run_id=NEW.run_id) THEN
+        RAISE EXCEPTION 'RUN_HISTORY_FENCED' USING ERRCODE='23514';
+      END IF;
+      RETURN NEW;
+    END $$;
+    CREATE TRIGGER history_execution_guard BEFORE INSERT ON execution_commands
+      FOR EACH ROW EXECUTE FUNCTION reject_history_execution();
+    CREATE TRIGGER history_callback_guard BEFORE INSERT OR UPDATE ON callback_outbox
+      FOR EACH ROW EXECUTE FUNCTION reject_history_execution();
+    CREATE FUNCTION reject_history_checkpoint() RETURNS trigger LANGUAGE plpgsql AS $$
+    DECLARE thread TEXT; operation UUID;
+    BEGIN
+      thread := CASE WHEN TG_OP='DELETE' THEN OLD.thread_id ELSE NEW.thread_id END;
+      SELECT operation_id INTO operation FROM run_history_fences
+        WHERE 'run:'||run_id::text=thread;
+      IF operation IS NOT NULL AND
+         current_setting('flowdesk.history_operation',true) IS DISTINCT FROM operation::text THEN
+        RAISE EXCEPTION 'RUN_HISTORY_FENCED' USING ERRCODE='23514';
+      END IF;
+      IF TG_TABLE_NAME LIKE '%_history' AND operation IS NULL THEN
+        RAISE EXCEPTION 'RUN_HISTORY_NOT_MANAGED' USING ERRCODE='23514';
+      END IF;
+      RETURN CASE WHEN TG_OP='DELETE' THEN OLD ELSE NEW END;
+    END $$;
+    CREATE TRIGGER history_checkpoint_guard BEFORE INSERT OR UPDATE OR DELETE ON checkpoints
+      FOR EACH ROW EXECUTE FUNCTION reject_history_checkpoint();
+    CREATE TRIGGER history_blob_guard BEFORE INSERT OR UPDATE OR DELETE ON checkpoint_blobs
+      FOR EACH ROW EXECUTE FUNCTION reject_history_checkpoint();
+    CREATE TRIGGER history_write_guard BEFORE INSERT OR UPDATE OR DELETE ON checkpoint_writes
+      FOR EACH ROW EXECUTE FUNCTION reject_history_checkpoint();
+    CREATE TRIGGER history_cold_checkpoint_guard BEFORE INSERT OR UPDATE OR DELETE
+      ON checkpoints_history
+      FOR EACH ROW EXECUTE FUNCTION reject_history_checkpoint();
+    CREATE TRIGGER history_cold_blob_guard BEFORE INSERT OR UPDATE OR DELETE
+      ON checkpoint_blobs_history
+      FOR EACH ROW EXECUTE FUNCTION reject_history_checkpoint();
+    CREATE TRIGGER history_cold_write_guard BEFORE INSERT OR UPDATE OR DELETE
+      ON checkpoint_writes_history
+      FOR EACH ROW EXECUTE FUNCTION reject_history_checkpoint();
+    """,
 ]
 
 

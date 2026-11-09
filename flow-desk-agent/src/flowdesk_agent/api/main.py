@@ -28,6 +28,7 @@ from flowdesk_agent.observability.operations import AgentTraceData, read_trace
 from flowdesk_agent.retrieval import KnowledgeIndex
 from flowdesk_agent.runtime import AgentRuntime
 from flowdesk_agent.storage.commands import CommandConflict
+from flowdesk_agent.storage.history import HistoryCommand, HistoryReceipt, change_history
 from flowdesk_agent.storage.lifecycle import read_lifecycle
 from flowdesk_agent.storage.permissions import verify_runtime
 from flowdesk_agent.tools.go_client import ToolError
@@ -188,3 +189,16 @@ async def ready():
     except Exception as exc:
         raise HTTPException(503, "database unavailable") from exc
     return {"status": "ok", "service": "flowdesk-agent"}
+
+
+@app.post(
+    "/internal/v1/runs/{run_id}/history",
+    response_model=HistoryReceipt,
+    dependencies=[Depends(service_auth)],
+)
+async def update_run_history(run_id: UUID, command: HistoryCommand, response: Response):
+    response.headers["Cache-Control"] = "no-store"
+    try:
+        return await change_history(app.state.pool, run_id, command)
+    except ToolError as error:
+        raise HTTPException(409, str(error)) from error

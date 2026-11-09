@@ -4,6 +4,7 @@
 
 | 文档 | 内容 |
 | --- | --- |
+| [M7.23 任务历史归档与恢复](m7-run-history.md) | 热/冷载荷及检查点、显式确认、持久操作核对与永久执行封存 |
 | [M7.25 Agent 独立迁移](m7-agent-migration.md) | 独立迁移账号/作业、旧卷所有权升级、运行DDL收紧与HNSW维护 |
 | [M7.18 调查历史内容恢复](m7-investigation-restore.md) | 已记录旧快照人工确认恢复为新修订、并发保护及原回执重放 |
 | [M7.17 调查完整编辑历史](m7-investigation-history.md) | 不可变修订快照、升级基线、当前授权及稳定分页 |
@@ -64,4 +65,4 @@ M7.21 [任务生命周期盘点](m7-run-lifecycle.md)按当前授权展示消息
 
 M7.22 [语义检索规模优化](m7-retrieval-scale.md)提供按租户/profile/维度维护的可选HNSW索引、默认精确及有界回退；实际基准见报告，部署与回退见[服务器手册§32](../deploy/server.md#32-可选语义检索索引)。
 
-M7.25 [Agent独立迁移](m7-agent-migration.md)提供一次性迁移、checkpointer setup、运行权限只读门禁和旧卷显式升级；操作及跨版本回退限制见[服务器手册§33](../deploy/server.md#33-agent-独立迁移与运行权限收紧)。M7.23任务历史归档、M7.24 OCR与版面联合解析仍待集成验收，以实施记录为准。
+M7.25 [Agent独立迁移](m7-agent-migration.md)提供一次性迁移、checkpointer setup、运行权限只读门禁和旧卷显式升级；操作及跨版本回退限制见[服务器手册§33](../deploy/server.md#33-agent-独立迁移与运行权限收紧)。M7.23[任务历史归档与恢复](m7-run-history.md)已完成本地验收，操作与兼容边界见[服务器手册§34](../deploy/server.md#34-任务历史归档与恢复)。M7.24 OCR与版面联合解析仍待集成验收，以实施记录为准。

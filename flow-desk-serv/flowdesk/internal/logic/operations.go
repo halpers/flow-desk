@@ -53,7 +53,15 @@ func operationDataTx(ctx context.Context, s *svc.ServiceContext, tx sqlx.Session
 	if err != nil {
 		return data, err
 	}
+	historyFenced := false
+	if _, historyErr := s.RunHistoryOperationsModel.FindLatestTx(ctx, tx, row.TenantId, row.Id); historyErr == nil {
+		historyFenced = true
+	} else if !errors.Is(historyErr, model.ErrNotFound) {
+		return data, historyErr
+	}
 	switch {
+	case historyFenced:
+		data.RetryBlockReason = "RUN_HISTORY_FENCED"
 	case actor.Id != row.ActorUserId:
 		data.RetryBlockReason = "OWNER_REQUIRED"
 	case row.Status != domain.RunFailed && row.Status != domain.RunExpired:
@@ -236,6 +244,11 @@ func RetryRun(ctx context.Context, s *svc.ServiceContext, req *types.RetryRunReq
 		}
 		if !metadata.CanRetry {
 			return types.RunData{}, failure(409, metadata.RetryBlockReason, "此任务不能直接重试，请查看原会话及办理回执")
+		}
+		if _, fenceErr := s.RunHistoryOperationsModel.FindLatestTx(ctx, tx, actor.TenantId, parent.Id); fenceErr == nil {
+			return types.RunData{}, failure(409, "RUN_HISTORY_FENCED", "历史任务不能重试执行")
+		} else if !errors.Is(fenceErr, model.ErrNotFound) {
+			return types.RunData{}, fenceErr
 		}
 		input, err := s.MessagesModel.FindOneTx(ctx, tx, actor.TenantId, parent.InputMessageId)
 		if err != nil {

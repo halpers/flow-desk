@@ -376,6 +376,107 @@
         "title": "Health",
         "type": "object"
       },
+      "HistoryCommand": {
+        "additionalProperties": false,
+        "properties": {
+          "generation": {
+            "maximum": 9007199254740991.0,
+            "minimum": 1.0,
+            "title": "Generation",
+            "type": "integer"
+          },
+          "operation_id": {
+            "format": "uuid",
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "target": {
+            "enum": [
+              "archived",
+              "live"
+            ],
+            "title": "Target",
+            "type": "string"
+          },
+          "tenant_id": {
+            "format": "uuid",
+            "title": "Tenant Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "operation_id",
+          "tenant_id",
+          "generation",
+          "target"
+        ],
+        "title": "HistoryCommand",
+        "type": "object"
+      },
+      "HistoryReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "checkpoint_blob_count": {
+            "maximum": 100000.0,
+            "minimum": 0.0,
+            "title": "Checkpoint Blob Count",
+            "type": "integer"
+          },
+          "checkpoint_count": {
+            "maximum": 100000.0,
+            "minimum": 0.0,
+            "title": "Checkpoint Count",
+            "type": "integer"
+          },
+          "checkpoint_write_count": {
+            "maximum": 100000.0,
+            "minimum": 0.0,
+            "title": "Checkpoint Write Count",
+            "type": "integer"
+          },
+          "generation": {
+            "maximum": 9007199254740991.0,
+            "minimum": 1.0,
+            "title": "Generation",
+            "type": "integer"
+          },
+          "operation_id": {
+            "format": "uuid",
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "run_id": {
+            "format": "uuid",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "target": {
+            "enum": [
+              "archived",
+              "live"
+            ],
+            "title": "Target",
+            "type": "string"
+          },
+          "tenant_id": {
+            "format": "uuid",
+            "title": "Tenant Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "operation_id",
+          "run_id",
+          "tenant_id",
+          "generation",
+          "target",
+          "checkpoint_count",
+          "checkpoint_blob_count",
+          "checkpoint_write_count"
+        ],
+        "title": "HistoryReceipt",
+        "type": "object"
+      },
       "IndexCommand": {
         "additionalProperties": false,
         "properties": {
@@ -914,6 +1015,66 @@
           }
         },
         "summary": "Accept Index"
+      }
+    },
+    "/internal/v1/runs/{run_id}/history": {
+      "post": {
+        "operationId": "update_run_history_internal_v1_runs__run_id__history_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Authorization",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HistoryCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoryReceipt"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Run History"
       }
     },
     "/internal/v1/runs/{run_id}/lifecycle": {

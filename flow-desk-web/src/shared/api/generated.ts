@@ -773,6 +773,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/runs/{run_id}/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read authorized run history storage preview | permission=conversation:use/run:observe | auth=required */
+        get: operations["getRunHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/runs/{run_id}/history/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Archive eligible read-only run payload and checkpoints | permission=admin/run:observe | auth=required */
+        post: operations["archiveRunHistory"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/runs/{run_id}/history/operations/{operation_id}/resume": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reconcile durable pending history operation | permission=admin/run:observe | auth=required */
+        post: operations["resumeRunHistory"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/runs/{run_id}/history/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Restore archived run payload and checkpoints without executing it | permission=admin/run:observe | auth=required */
+        post: operations["restoreRunHistory"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/runs/{run_id}/inputs": {
         parameters: {
             query?: never;
@@ -1392,6 +1460,15 @@ export interface components {
                 "application/json": {
                     confirm: boolean;
                     expected_source_epoch: number;
+                };
+            };
+        };
+        archiveRunHistoryBody: {
+            content: {
+                "application/json": {
+                    confirm: boolean;
+                    expected_generation: number;
+                    expected_version: number;
                 };
             };
         };
@@ -3678,6 +3755,156 @@ export interface operations {
                         schema_version?: string;
                         seq?: number;
                         type?: string;
+                    };
+                };
+            };
+        };
+    };
+    getRunHistory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            can_archive: boolean;
+                            can_manage: boolean;
+                            can_restore: boolean;
+                            generation: number;
+                            operation: {
+                                checkpoint_blob_count: number;
+                                checkpoint_count: number;
+                                checkpoint_write_count: number;
+                                generation: number;
+                                operation_id: string;
+                                run_id: string;
+                                status: string;
+                                target: string;
+                            };
+                            protection_reasons: string[];
+                            run_id: string;
+                            state: string;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    archiveRunHistory: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: components["requestBodies"]["archiveRunHistoryBody"];
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            checkpoint_blob_count: number;
+                            checkpoint_count: number;
+                            checkpoint_write_count: number;
+                            generation: number;
+                            operation_id: string;
+                            run_id: string;
+                            status: string;
+                            target: string;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    resumeRunHistory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+                operation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            checkpoint_blob_count: number;
+                            checkpoint_count: number;
+                            checkpoint_write_count: number;
+                            generation: number;
+                            operation_id: string;
+                            run_id: string;
+                            status: string;
+                            target: string;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    restoreRunHistory: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: components["requestBodies"]["archiveRunHistoryBody"];
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            checkpoint_blob_count: number;
+                            checkpoint_count: number;
+                            checkpoint_write_count: number;
+                            generation: number;
+                            operation_id: string;
+                            run_id: string;
+                            status: string;
+                            target: string;
+                        };
+                        request_id?: string;
                     };
                 };
             };

@@ -66,6 +66,11 @@ func authorizeRunTx(ctx context.Context, s *svc.ServiceContext, tx sqlx.Session,
 	if !active {
 		return errForbidden
 	}
+	if row, err := s.RunHistoryOperationsModel.FindLatestTx(ctx, tx, run.TenantId, run.Id); err == nil && row != nil {
+		return failure(409, "RUN_HISTORY_FENCED", "历史任务已封存执行身份")
+	} else if err != nil && !errors.Is(err, model.ErrNotFound) {
+		return err
+	}
 	return nil
 }
 func authorizeCapabilityTx(ctx context.Context, s *svc.ServiceContext, tx sqlx.Session, run *model.Runs, claims *runCapability, scope string) error {

@@ -1,5 +1,13 @@
 # 接口与跨服务契约
 
+M7.23 增加任务历史维护接口，机器源为 `api/runhistory.api` 和 Python `storage.history` 的 Pydantic 模型。`GET /api/v1/runs/:run_id/history` 返回当前授权任务的 live/archived/pending 状态、维护代次、可操作标记、保护原因及最近操作；Agent 暂不可用时仍可返回当前授权的持久操作及保护原因。维护写要求当前内置 admin + run:observe，调用前后复核当前会话/角色/租户/任务/团队；原归档候选不能代替提交验证。
+
+`POST .../history/archive` 与 `POST .../history/restore` 要求 `Idempotency-Key`，正文 `expected_version>=1`、`expected_generation>=0`、`confirm=true`；200 返回 operation_id/run_id/generation/target/status 和三类 checkpoint 数量。归档仅限满30天、无业务动作/审批/输入/回执/证据/资源/重试链、无活动执行/未确认回调/未结算预算的终态任务；单任务最多50,000个事件与100,000行checkpoint。消息及事件完整内容继续读取，恢复不开放旧执行身份。`POST .../history/operations/:operation_id/resume` 无可改写的目标或代次，使用原持久操作核对；当前有权管理员可继续，不限定原申请人。
+
+版本冲突为 VERSION_CONFLICT，存储代次变化为 RUN_HISTORY_CHANGED，已有待确认操作为 RUN_HISTORY_PENDING，受保护/超限为 RUN_HISTORY_PROTECTED/RUN_HISTORY_LIMIT（均409）。Agent调用未确认或回执无效返回503 RUN_HISTORY_UNAVAILABLE，原操作保留pending；当前授权失败沿用401/403/404且不返回部分结果。恢复后重试返回409 RUN_HISTORY_FENCED，既有LEASE_STALE等更早的执行拒绝语义保留。所有历史响应no-store；通用幂等有效期内同键重放返回原操作回执，不覆盖较新恢复。
+
+Go事务外调用 `POST /internal/v1/runs/:run_id/history`，只接受内部服务身份及 operation_id/tenant_id/generation/target；target仅archived/live，generation严格递增。Agent在精确执行锁内验证可信run/tenant绑定和静默条件，原子移动检查点、建立永久围栏和保存不可变回执；重复原操作返回原回执，冲突拒绝。没有新SSE类型、永久删除或自动批量入口，完整恢复协议见[任务历史归档](m7-run-history.md)。
+
 M7.25 不增加业务 HTTP/SSE 字段。Agent 启动前必须由独立 `agent-migrate` 成功完成应用和 checkpointer 迁移；启动及 `/health/ready` 只读验证当前镜像要求的完整版本序列和运行角色权限，缺失/未来/间隙版本、额外 DDL/所有权或缺少必要 DML 均拒绝就绪，运行中检查失败返回503。迁移凭据不传入运行服务，HNSW维护也使用显式迁移连接，不回退到运行 DSN。现有卷升级和首次权限收紧后的回退限制见[独立迁移契约](m7-agent-migration.md)。
 
 M7.21新增GET /api/v1/runs/:run_id/lifecycle：当前授权任务的消息、关联业务和Agent运行/checkpoint数量、独立观察时间与保护原因。仅元数据，observation_only固定true；archive_candidate只表示规划候选，不是清理许可。服务调用前后复核当前身份/团队及任务版本；409 LIFECYCLE_CHANGED和503 LIFECYCLE_UNAVAILABLE不返回部分数据，响应no-store。内部接口使用可信服务凭据及tenant/run绑定，不创建绑定，不读私有状态，详见[生命周期盘点](m7-run-lifecycle.md)。

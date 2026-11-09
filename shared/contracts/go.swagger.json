@@ -5856,6 +5856,418 @@
         }
       }
     },
+    "/api/v1/runs/{run_id}/history": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "Read authorized run history storage preview | permission=conversation:use/run:observe | auth=required",
+        "operationId": "getRunHistory",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "run_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "run_id",
+                    "state",
+                    "generation",
+                    "can_manage",
+                    "can_archive",
+                    "can_restore",
+                    "protection_reasons",
+                    "operation"
+                  ],
+                  "properties": {
+                    "can_archive": {
+                      "type": "boolean"
+                    },
+                    "can_manage": {
+                      "type": "boolean"
+                    },
+                    "can_restore": {
+                      "type": "boolean"
+                    },
+                    "generation": {
+                      "type": "integer"
+                    },
+                    "operation": {
+                      "type": "object",
+                      "required": [
+                        "operation_id",
+                        "run_id",
+                        "generation",
+                        "target",
+                        "status",
+                        "checkpoint_count",
+                        "checkpoint_blob_count",
+                        "checkpoint_write_count"
+                      ],
+                      "properties": {
+                        "checkpoint_blob_count": {
+                          "type": "integer"
+                        },
+                        "checkpoint_count": {
+                          "type": "integer"
+                        },
+                        "checkpoint_write_count": {
+                          "type": "integer"
+                        },
+                        "generation": {
+                          "type": "integer"
+                        },
+                        "operation_id": {
+                          "type": "string"
+                        },
+                        "run_id": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string"
+                        },
+                        "target": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "protection_reasons": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "run_id": {
+                      "type": "string"
+                    },
+                    "state": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/runs/{run_id}/history/archive": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "Archive eligible read-only run payload and checkpoints | permission=admin/run:observe | auth=required",
+        "operationId": "archiveRunHistory",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "run_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "Idempotency-Key",
+            "in": "header"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": [
+                "expected_version",
+                "expected_generation",
+                "confirm"
+              ],
+              "properties": {
+                "confirm": {
+                  "type": "boolean"
+                },
+                "expected_generation": {
+                  "type": "integer"
+                },
+                "expected_version": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "operation_id",
+                    "run_id",
+                    "generation",
+                    "target",
+                    "status",
+                    "checkpoint_count",
+                    "checkpoint_blob_count",
+                    "checkpoint_write_count"
+                  ],
+                  "properties": {
+                    "checkpoint_blob_count": {
+                      "type": "integer"
+                    },
+                    "checkpoint_count": {
+                      "type": "integer"
+                    },
+                    "checkpoint_write_count": {
+                      "type": "integer"
+                    },
+                    "generation": {
+                      "type": "integer"
+                    },
+                    "operation_id": {
+                      "type": "string"
+                    },
+                    "run_id": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "target": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/runs/{run_id}/history/operations/{operation_id}/resume": {
+      "post": {
+        "consumes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "Reconcile durable pending history operation | permission=admin/run:observe | auth=required",
+        "operationId": "resumeRunHistory",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "run_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "operation_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "operation_id",
+                    "run_id",
+                    "generation",
+                    "target",
+                    "status",
+                    "checkpoint_count",
+                    "checkpoint_blob_count",
+                    "checkpoint_write_count"
+                  ],
+                  "properties": {
+                    "checkpoint_blob_count": {
+                      "type": "integer"
+                    },
+                    "checkpoint_count": {
+                      "type": "integer"
+                    },
+                    "checkpoint_write_count": {
+                      "type": "integer"
+                    },
+                    "generation": {
+                      "type": "integer"
+                    },
+                    "operation_id": {
+                      "type": "string"
+                    },
+                    "run_id": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "target": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/runs/{run_id}/history/restore": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "Restore archived run payload and checkpoints without executing it | permission=admin/run:observe | auth=required",
+        "operationId": "restoreRunHistory",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "run_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "Idempotency-Key",
+            "in": "header"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": [
+                "expected_version",
+                "expected_generation",
+                "confirm"
+              ],
+              "properties": {
+                "confirm": {
+                  "type": "boolean"
+                },
+                "expected_generation": {
+                  "type": "integer"
+                },
+                "expected_version": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "operation_id",
+                    "run_id",
+                    "generation",
+                    "target",
+                    "status",
+                    "checkpoint_count",
+                    "checkpoint_blob_count",
+                    "checkpoint_write_count"
+                  ],
+                  "properties": {
+                    "checkpoint_blob_count": {
+                      "type": "integer"
+                    },
+                    "checkpoint_count": {
+                      "type": "integer"
+                    },
+                    "checkpoint_write_count": {
+                      "type": "integer"
+                    },
+                    "generation": {
+                      "type": "integer"
+                    },
+                    "operation_id": {
+                      "type": "string"
+                    },
+                    "run_id": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "target": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/runs/{run_id}/inputs": {
       "post": {
         "consumes": [
