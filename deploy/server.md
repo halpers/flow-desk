@@ -75,7 +75,7 @@ python3 scripts/bootstrap-server.py --origin http://203.0.113.10:13000
 chmod 600 .env
 ```
 
-脚本从 `.env.example` 创建忽略提交的 `.env`，为数据库三个角色、JWT、服务间令牌、演示账号和 Grafana 生成独立随机凭据，不打印密钥。已有 `.env` 时拒绝覆盖。HTTP 入口自动配置：
+脚本从 `.env.example` 创建忽略提交的 `.env`，为数据库四个角色（owner、business、agent、agent migrator）、JWT、服务间令牌、演示账号和 Grafana 生成独立随机凭据，不打印密钥。已有 `.env` 时拒绝覆盖。旧卷首次升级独立迁移按第33节操作。HTTP 入口自动配置：
 
 ```dotenv
 WEB_BIND_ADDRESS=0.0.0.0
@@ -128,7 +128,8 @@ openssl x509 -in runtime/server-tls/server.crt -noout -dates -ext subjectAltName
 
 | 配置 | 运维要求 |
 | --- | --- |
-| `POSTGRES_PASSWORD` / `BUSINESS_PASSWORD` / `AGENT_PASSWORD` | 空数据卷首次初始化三个角色；已有卷不会因修改 `.env` 自动改密码，轮换需同时修改数据库角色密码与容器配置 |
+| `POSTGRES_PASSWORD` / `BUSINESS_PASSWORD` / `AGENT_PASSWORD` | owner、业务运行、Agent运行凭据；已有卷不会因修改 `.env` 自动改密码，轮换需同时修改数据库角色密码与容器配置 |
+| `AGENT_MIGRATION_PASSWORD` | 独立 `fd_agent_migrator` 凭据，bootstrap随机生成；已有配置仅通过显式脚本追加缺项，已有卷先按第33节升级，不重置旧密码 |
 | `JWT_SECRET` / `INTERNAL_TOKEN` | 所有服务保持一致；轮换会影响会话或服务间调用，需安排窗口 |
 | `DEMO_PASSWORD` | 六个合成演示账号首次创建时的密码，重复迁移不重置已有账号密码 |
 | `PG_HOST_PORT` / `API_HOST_PORT` | 默认 55432 / 18080，只绑定 127.0.0.1；同机多个应用注意冲突 |
@@ -184,9 +185,9 @@ python3 scripts/release.py --revision "$FLOWDESK_REVISION" --registry "$FLOWDESK
 
 需要监控时，在实际发布命令中同时加 `--monitoring`。`--plan` 只输出固定镜像与 Compose 文件选择，不拉取、不迁移，也不代表配置或证书已经通过验收。
 
-实际发布依次验证配置、拉取三个 `sha-<完整SHA>` 镜像、启动 PostgreSQL、执行 owner 业务迁移、启动 Agent 并迁移自身 schema、等待 Go 和 Web readiness。所有门禁通过后写入 `runtime/releases/state.json` 的 current/previous；失败保留 pending 与上次成功记录，不执行数据库 Down 或删除数据卷。
+实际发布依次验证配置、拉取三个 `sha-<完整SHA>` 镜像、启动 PostgreSQL、执行 owner 业务迁移、执行独立 `agent-migrate`、启动只做只读版本/权限检查的 Agent，再等待 Go 和 Web readiness。Agent迁移用同一发布版本镜像，任何迁移失败均停止后续步骤。所有门禁通过后写入 `runtime/releases/state.json` 的 current/previous；失败保留 pending 与上次成功记录，不执行数据库 Down 或删除数据卷。
 
-Go 运行账号为 `fd_business`，Python 为 `fd_agent`；owner 仅用于初始化/业务迁移。当前 Python 运行角色仍负责自身 DDL，独立迁移作业和进一步收紧 DDL 属于后续运维改造。四个基础常驻服务使用 `restart: unless-stopped`，Docker 服务设为开机启动后会恢复未手工停止的容器。
+Go 运行账号为 `fd_business`，Python 为 `fd_agent`；owner仅用于初始化、业务迁移和显式旧卷维护。`fd_agent_migrator` 拥有Agent schema/表，仅一次性迁移和维护作业使用。`fd_agent`只有必要DML/schema USAGE、只读迁移元数据，无DDL/CREATE/TEMP、所有权或角色提升，也无业务schema访问；运行服务不持有迁移密码。四个基础常驻服务使用 `restart: unless-stopped`，Docker 服务设为开机启动后会恢复未手工停止的容器。
 
 **后续重新创建容器仍使用 release.py 并重复相同入口/监控参数。** 本次固定镜像 env 记录在 `runtime/releases/`，不会改写根 `.env`；直接运行裸 `docker compose up` 或 `scripts/start.ps1` 可能换成本地 latest/源码镜像并丢失入口选项。`ps`、`logs`、`exec`、`stop`、`restart` 可用根 Compose 操作已有同名服务。
 
@@ -261,6 +262,8 @@ docker compose stop web api agent
 
 ## 10. 升级与回滚
 
+首次从 M7.25 之前升级时，先按[第33节](#33-agent-独立迁移与运行权限收紧)备份、补齐独立凭据并停止旧运行进程执行所有权升级；不能直接套用下方普通发布命令。后续已有独立迁移角色的兼容升级由发布作业完成迁移。
+
 包含 M7.2 时应同时升级三个镜像，让 Go 执行 `2026110405_run_operations.sql`、Agent 追加 run/tenant 观测绑定表。无需新增公网端口、模型配置或代理路由。升级后用“任务记录”查询自己的任务，主管可切换“租户任务”；旧任务可能显示暂无执行记录，新任务应显示节点/用量或明确的未知标记。失败任务仅在无业务动作、无补充输入时可重试；有回执时回原会话核对，不能以重试代替恢复。不要在生产执行合成故障验收脚本；操作与本地复跑见[M7.2](../docs/m7-run-operations.md)。旧镜像会忽略重试关联，回退前处理新建重试任务，不执行数据库 Down。
 
 升级前记录 current SHA、配置与证书版本，执行第 11 节备份；确认迁移和图版本兼容，并在维护窗口处理仍运行/待批准任务。当前支持 read-v1/ticket-v1/ticket-v2，但旧镜像不一定识别较新的图和动作，不能仅凭数据库兼容决定可回滚。
@@ -276,6 +279,8 @@ python3 scripts/release.py --revision "$FLOWDESK_REVISION" --registry "$FLOWDESK
 ```
 
 HTTPS/监控部署须在上述两条命令中继续携带 `--tls` / `--monitoring`。发布存在短暂重建窗口，当前不承诺无停机。
+
+执行应用回滚前还需满足第33节权限边界：收紧运行权限后，不能回退到启动时运行setup/migrate或缺少独立迁移模块的旧Agent镜像。下方命令仅适用于已确认支持独立迁移且兼容当前图/历史数据的配套版本；不能临时归还运行DDL/owner权限来启动旧版。
 
 ```bash
 python3 scripts/release.py --rollback --plan
@@ -327,7 +332,7 @@ docker compose exec -T postgres psql -U flowdesk_owner -d "$FLOWDESK_RESTORE_DB"
 | IP 页面新建/审批失败且提示 randomUUID | Web 镜像版本过旧，使用包含 HTTP UUID 兼容修复的完整发布版本 |
 | HTTPS 名称不匹配/证书不受信任 | 检查 IP SAN、有效期、完整链及客户端信任；不要把 localhost 证书复制到服务器 |
 | 数据库密码错误 | 已有卷不会重新执行初始化；不要只改 `.env`，应协调修改角色密码并重建相关容器，不能删卷 |
-| readiness 失败或迁移失败 | `logs --tail 100` 检查失败服务；保留 pending、上次成功 SHA 和错误码；不对业务表手工补 SQL“修状态” |
+| readiness 失败或迁移失败 | 检查 `migrate`、`agent-migrate` 和 `agent` 日志；保留pending、上次成功SHA和错误码；旧卷按第33节核对所有权，不能让运行服务补迁移或手工改版本 |
 | 模型失败但页面健康 | 检查出站网络、兼容 endpoint/模型名、预算和脱敏错误；服务 ready 不代表供应商可用 |
 | RETRIEVAL_INDEX_NOT_READY | 使用当前 embedding profile 完成该租户知识重建，或回退 baseline 后重新发布 |
 | SSE 一次性返回或频繁断开 | 检查额外代理的缓冲/超时，浏览器刷新后应从持久快照恢复；不要重发新 action 代替原任务恢复 |
@@ -793,7 +798,7 @@ M7.21新增只读预览，不增加表、环境变量、公开端口或存储权
 
 ## 32. 可选语义检索索引
 
-M7.22默认继续精确查询；升级会由Agent执行有序迁移10，增加semantic_ann_indexes，不自动建向量索引，也没有新端口、模型调用或Go迁移。按第10节备份并发布配套镜像，等Agent readiness通过。IP:port及域名入口一致。若只使用baseline，无需开启本功能。
+M7.22默认继续精确查询；有序迁移10增加semantic_ann_indexes，当前由独立agent-migrate作业执行，运行Agent不执行DDL。不自动建向量索引，也没有新端口、模型调用或Go迁移。按第10/33节备份并发布配套镜像，等Agent readiness通过。IP:port及域名入口一致。若只使用baseline，无需开启本功能。
 
 1. 先按现有语义重建流程配置独立embedding服务，并完成目标租户当前profile的语义manifest；保持RETRIEVAL_PROFILE=semantic和SEMANTIC_SEARCH_MODE=exact。未完成索引时不要为消除错误直接改业务激活状态。
 2. 在获授权的Agent维护连接执行以下只读聚合，核对租户、profile和实际维度，仅输出ID/数量，不输出正文或密钥。选择已核对的一行；维度1–2000才能用本阶段HNSW，高维继续exact。每个租户/profile/维度单独维护，索引数量与容量需纳入评估。
@@ -809,14 +814,16 @@ with psycopg.connect(os.environ["AGENT_DATABASE_URL"]) as connection:
 PY
 ```
 
-3. 在维护窗口设置以下三个已核对的值，先status再create。CLI只接受固定UUID/profile/维度，数据库连接从容器环境读取，不在命令行传密码；需要pgvector 0.8+。构建会增加资源负载并等待事务，语句上限300秒、锁等待5秒，并发同目标维护拒绝。运行中断后重新执行同一create，状态未就绪时查询使用精确路径。
+3. 在维护窗口设置以下三个已核对的值，先status再create。使用第6节同一仓库/发布SHA的Agent镜像，通过一次性agent-migrate容器调用CLI；其只读取AGENT_MIGRATION_DATABASE_URL，不使用运行DSN、不把迁移密码传入运行Agent。CLI只接受固定UUID/profile/维度，需要pgvector 0.8+。构建会增加资源负载并等待事务，语句上限300秒、锁等待5秒，并发同目标维护拒绝。运行中断后重新执行同一create，状态未就绪时查询使用精确路径。
 
 ```bash
 TENANT_UUID="REPLACE_WITH_VERIFIED_TENANT_UUID"
 SEMANTIC_PROFILE="REPLACE_WITH_VERIFIED_SEMANTIC_PROFILE"
 VECTOR_DIMENSION=1536
-docker compose exec -T agent python -m flowdesk_agent.ann_index status --tenant-id "$TENANT_UUID" --profile "$SEMANTIC_PROFILE" --dimension "$VECTOR_DIMENSION"
-docker compose exec -T agent python -m flowdesk_agent.ann_index create --tenant-id "$TENANT_UUID" --profile "$SEMANTIC_PROFILE" --dimension "$VECTOR_DIMENSION" --confirm-maintenance
+FLOWDESK_MIGRATION_IMAGE="$FLOWDESK_REGISTRY/flow-desk-agent:sha-$FLOWDESK_REVISION"
+docker pull "$FLOWDESK_MIGRATION_IMAGE"
+FLOWDESK_AGENT_IMAGE="$FLOWDESK_MIGRATION_IMAGE" docker compose run --rm --no-deps --entrypoint python agent-migrate -m flowdesk_agent.ann_index status --tenant-id "$TENANT_UUID" --profile "$SEMANTIC_PROFILE" --dimension "$VECTOR_DIMENSION"
+FLOWDESK_AGENT_IMAGE="$FLOWDESK_MIGRATION_IMAGE" docker compose run --rm --no-deps --entrypoint python agent-migrate -m flowdesk_agent.ann_index create --tenant-id "$TENANT_UUID" --profile "$SEMANTIC_PROFILE" --dimension "$VECTOR_DIMENSION" --confirm-maintenance
 ```
 
 4. 只有status输出ready且目标环境容量/召回验证通过后，才在服务器.env配置SEMANTIC_SEARCH_MODE=hnsw、SEMANTIC_HNSW_EF_SEARCH=100、SEMANTIC_HNSW_MAX_SCAN_TUPLES=20000。按第6/10节以相同发布SHA、仓库和--server/--tls/--monitoring选项重新发布，不能用裸compose up替换固定镜像。默认值分别为exact、100、20000；ef_search范围40–1000，max_scan_tuples范围1000–100000。
@@ -835,9 +842,37 @@ docker compose exec -T agent python -m flowdesk_agent.ann_index create --tenant-
 快速回退：将SEMANTIC_SEARCH_MODE=exact，并按原固定SHA发布方式重建容器，向量及索引均可保留。若决定释放该索引空间，再在维护窗口执行：
 
 ```bash
-docker compose exec -T agent python -m flowdesk_agent.ann_index drop --tenant-id "$TENANT_UUID" --profile "$SEMANTIC_PROFILE" --dimension "$VECTOR_DIMENSION" --confirm-maintenance
+FLOWDESK_AGENT_IMAGE="$FLOWDESK_MIGRATION_IMAGE" docker compose run --rm --no-deps --entrypoint python agent-migrate -m flowdesk_agent.ann_index drop --tenant-id "$TENANT_UUID" --profile "$SEMANTIC_PROFILE" --dimension "$VECTOR_DIMENSION" --confirm-maintenance
 ```
 
-drop只处理登记且定义匹配的索引，先撤销ready，原向量/manifest/知识及引用保持。备份应包含Agent登记表和索引；恢复到新库后status复核；若恢复后schema名称改变，原指纹会安全失效并回退exact，核对来源后重新执行同一create校验目录并更新登记指纹，不手工修改ready/hash。回退旧应用时保留迁移10及登记表，不执行Down；需保留精确语义时先用本版CLI明确drop后再退旧版，旧查询不能保证避开仍存在的ANN索引。原有图版本和调查历史回退限制仍适用。
+drop只处理登记且定义匹配的索引，先撤销ready，原向量/manifest/知识及引用保持。备份应包含Agent登记表和索引；恢复到新库后status复核；若恢复后schema名称改变，原指纹会安全失效并回退exact，核对来源后重新执行同一create校验目录并更新登记指纹，不手工修改ready/hash。回退保留迁移10及登记表，不执行Down；若目标查询不能保证避开ANN且需保留精确语义，先用当前独立维护镜像明确drop。目标镜像还必须满足第33节独立迁移边界，不能直接回退到M7.25前的运行DDL版本；原有图版本和调查历史限制继续适用。
 
 本地已运行80项Linux隔离测试及一万条向量合成基准，未在真实服务器部署上述步骤。详细限制、维护恢复和[基准报告](../reports/m7/retrieval-scale-acceptance.json)见[专项设计](../docs/m7-retrieval-scale.md)；基准脚本需临时schema创建权限，仅供一次性验收库，不在服务器业务库运行。
+
+## 33. Agent 独立迁移与运行权限收紧
+
+M7.25将Agent应用迁移、checkpointer setup和HNSW维护分离到一次性迁移角色。完整凭据、对象依赖、失败处理和本地验收见[专项手册](../docs/m7-agent-migration.md)。本节适用于HTTP IP:port、HTTPS及域名入口，无新公网端口或付费服务。
+
+**空数据卷首次部署：** 第4节bootstrap生成独立AGENT_MIGRATION_PASSWORD，初始化脚本创建fd_agent_migrator并授予Agent schema所有权。第6节发布依次执行Go迁移、agent-migrate、只读检查的运行Agent和API/Web；迁移失败停止后续启动。普通重启不执行运行DDL。
+
+**既有数据卷首次升级：** 先记录原SHA/配置与在途任务，按第11节备份整个数据库、角色恢复方案及.env，再切换到包含本阶段的目标源码。保留原.env、数据卷和密码，不重新bootstrap或删除卷。在维护窗口处理运行/待确认任务，使用已成功发布的同一目标SHA和仓库：
+
+```bash
+python3 scripts/configure-agent-migration.py --env-file .env
+chmod 600 .env
+FLOWDESK_MIGRATION_IMAGE="$FLOWDESK_REGISTRY/flow-desk-agent:sha-$FLOWDESK_REVISION"
+docker pull "$FLOWDESK_MIGRATION_IMAGE"
+docker compose stop web api agent
+FLOWDESK_AGENT_IMAGE="$FLOWDESK_MIGRATION_IMAGE" docker compose run --rm --no-deps agent-role-upgrade
+FLOWDESK_AGENT_IMAGE="$FLOWDESK_MIGRATION_IMAGE" docker compose run --rm --no-deps agent-migrate
+python3 scripts/release.py --revision "$FLOWDESK_REVISION" --registry "$FLOWDESK_REGISTRY" --server
+docker compose ps --all
+```
+
+最后发布命令继续携带原有--tls/--monitoring选项。configure只追加缺失的随机迁移凭据，已有值保持；已有迁移角色的真实密码也不重置，错误凭据须按正式轮换流程核对。agent-role-upgrade是maintenance profile的显式owner-only作业，Compose已带维护确认参数；拒绝活跃fd_agent连接、异常所有权或迁移角色权限。只事务转移已核对的agent/knowledge对象；自动TOAST/类型按实际依赖核对，未知函数/独立类型等检查失败全部回滚。业务数据、Agent历史行及checkpoint保留，不使用REASSIGN OWNED。
+
+升级后确认agent-migrate退出0、agent/api/web健康；Agent启动和ready只读核对应用/checkpointer完整连续版本、当前角色与schema以及必要DML/额外权限。旧/新镜像与数据库不匹配、缺少DML或仍有DDL/所有权均拒绝就绪。先检查两个迁移作业日志和脱敏错误码，不改schema_versions，不让运行进程补迁移。HNSW维护继续使用第32节固定镜像的一次性agent-migrate命令。
+
+**回退边界：** 权限收紧后，M7.25之前在启动中执行setup/migrate或没有独立迁移模块的镜像不能直接运行。第10节及此前各专项的应用回退建议均受此边界约束；仅选择已支持独立迁移且兼容当前图/历史的配套版本。首次跨边界发布失败时保持维护状态并向前修复，确需恢复升级前环境则将升级前一致备份恢复到新空库后另行切换；不临时授回运行DDL/owner、不执行Down或删历史。
+
+已在一次性本地旧卷验证所有权升级、独立迁移和完整Compose健康，并通过真实登录角色checkpoint/HNSW/拒绝DDL及升级回滚测试。脚本验收限work/下mock栈；未在真实服务器执行本节部署命令，详细数量见[实施记录](../docs/progress.md)。

@@ -14,18 +14,20 @@
 
 Agent 自有 semantic_ann_indexes 记录租户/profile/维度、固定名称、building/ready 及定义指纹；索引直接建在语义向量表，新增/清理向量由 PostgreSQL 自动维护对应条目。查询不仅检查登记，还核对 pg_catalog 中所属 schema/表、HNSW 方法、单表达式、knowledge.vector_cosine_ops、固定部分条件、构建参数及有效/就绪状态。任意同名索引不会被直接信任或删除。
 
-每个索引仅覆盖一个租户/profile/维度，名称由这三项 SHA256 派生，不接受任意表、SQL、索引名或自由表达式。固定 m=16、ef_construction=64；CLI 不自动遍历所有租户。当前运行角色已经拥有 Agent 表及 DDL；该 CLI 只供受信任运维调用，不是租户用户或模型工具。独立迁移角色拆分不在本阶段。
+每个索引仅覆盖一个租户/profile/维度，名称由这三项 SHA256 派生，不接受任意表、SQL、索引名或自由表达式。固定 m=16、ef_construction=64；CLI 不自动遍历所有租户。M7.22的索引能力现由M7.25[独立迁移与维护角色](m7-agent-migration.md)执行：运行Agent只保留DML和检索权限，无索引DDL；CLI仅读取AGENT_MIGRATION_DATABASE_URL，不回退读取运行DSN，只供受信任运维调用。
 
 ## 显式维护和恢复
 
-先完成备份及新版本 Agent 迁移，在维护窗口核对目标租户/profile/维度和索引容量。可从 Agent 自有 semantic_manifests 的聚合查询核对已完成 profile；不直接读取 Go 业务表。以下变量仅表示已核对的 ID，不含模型密钥：
+先完成备份及新版本独立agent-migrate作业；旧卷先按[服务器手册§33](../deploy/server.md#33-agent-独立迁移与运行权限收紧)升级所有权。在维护窗口核对目标租户/profile/维度和索引容量，可从Agent自有semantic_manifests聚合核对已完成profile，不读取Go业务表。FLOWDESK_REGISTRY/FLOWDESK_REVISION沿用已经发布的同一仓库和完整SHA；以下命令使用该版本的一次性迁移容器，不含模型密钥：
 
 ```bash
 TENANT_UUID="已核对的租户UUID"
 SEMANTIC_PROFILE="semantic-v1-已核对的24位十六进制profile摘要"
 VECTOR_DIMENSION=1536
-docker compose exec -T agent python -m flowdesk_agent.ann_index status --tenant-id "$TENANT_UUID" --profile "$SEMANTIC_PROFILE" --dimension "$VECTOR_DIMENSION"
-docker compose exec -T agent python -m flowdesk_agent.ann_index create --tenant-id "$TENANT_UUID" --profile "$SEMANTIC_PROFILE" --dimension "$VECTOR_DIMENSION" --confirm-maintenance
+FLOWDESK_MIGRATION_IMAGE="$FLOWDESK_REGISTRY/flow-desk-agent:sha-$FLOWDESK_REVISION"
+docker pull "$FLOWDESK_MIGRATION_IMAGE"
+FLOWDESK_AGENT_IMAGE="$FLOWDESK_MIGRATION_IMAGE" docker compose run --rm --no-deps --entrypoint python agent-migrate -m flowdesk_agent.ann_index status --tenant-id "$TENANT_UUID" --profile "$SEMANTIC_PROFILE" --dimension "$VECTOR_DIMENSION"
+FLOWDESK_AGENT_IMAGE="$FLOWDESK_MIGRATION_IMAGE" docker compose run --rm --no-deps --entrypoint python agent-migrate -m flowdesk_agent.ann_index create --tenant-id "$TENANT_UUID" --profile "$SEMANTIC_PROFILE" --dimension "$VECTOR_DIMENSION" --confirm-maintenance
 ```
 
 CLI 使用独立 autocommit 连接以及租户/profile/维度的会话 advisory lock；并发维护同一索引明确拒绝，不相互覆盖。CREATE/DROP INDEX CONCURRENTLY 不放入业务事务；固定锁等待 5 秒、单语句 300 秒上限。建索引增加 CPU、I/O、内存及磁盘负载，并可能等待旧事务，因此需要维护窗口，不能据此声明无停机能力。确认 profile 实际存在且所有对应 manifest 维度一致才允许创建。
@@ -33,10 +35,12 @@ CLI 使用独立 autocommit 连接以及租户/profile/维度的会话 advisory 
 先登记 building，构建成功且定义校验通过后发布 ready。失败/连接中断不会把未完成索引发布为可用；重新执行同一 create 命令会识别已完成索引，或丢弃定义匹配的无效构建后重建。若定义不符则明确停止，交由运维排查，不删其他索引。DROP 先撤销 ready；过程中查询走精确回退。登记表和索引应随同 Agent schema 一致备份。
 
 ```bash
-docker compose exec -T agent python -m flowdesk_agent.ann_index drop --tenant-id "$TENANT_UUID" --profile "$SEMANTIC_PROFILE" --dimension "$VECTOR_DIMENSION" --confirm-maintenance
+FLOWDESK_AGENT_IMAGE="$FLOWDESK_MIGRATION_IMAGE" docker compose run --rm --no-deps --entrypoint python agent-migrate -m flowdesk_agent.ann_index drop --tenant-id "$TENANT_UUID" --profile "$SEMANTIC_PROFILE" --dimension "$VECTOR_DIMENSION" --confirm-maintenance
 ```
 
 只有在 status=ready 后才将 SEMANTIC_SEARCH_MODE=hnsw 并按现有发布流程重建 Agent。回退改回 exact 并重建 Agent；不需要删除知识、切换模型、撤回版本或删除索引。运维可随后显式 drop 对应索引，向量、manifest、原件和激活状态不变。供应商不支持所需 HNSW/pgvector 0.8+ 时，保持 exact。
+
+应用版本回退还须满足M7.25权限边界，不能直接回退到仍在运行启动中执行DDL的旧镜像；目标查询不保证避开ANN且要求精确时，先用当前维护镜像显式drop。登记表和有序迁移继续保留，不执行Down或临时给运行账号授回DDL。
 
 ## 查询、授权和有界回退
 

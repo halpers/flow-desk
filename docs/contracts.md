@@ -1,5 +1,7 @@
 # 接口与跨服务契约
 
+M7.25 不增加业务 HTTP/SSE 字段。Agent 启动前必须由独立 `agent-migrate` 成功完成应用和 checkpointer 迁移；启动及 `/health/ready` 只读验证当前镜像要求的完整版本序列和运行角色权限，缺失/未来/间隙版本、额外 DDL/所有权或缺少必要 DML 均拒绝就绪，运行中检查失败返回503。迁移凭据不传入运行服务，HNSW维护也使用显式迁移连接，不回退到运行 DSN。现有卷升级和首次权限收紧后的回退限制见[独立迁移契约](m7-agent-migration.md)。
+
 M7.21新增GET /api/v1/runs/:run_id/lifecycle：当前授权任务的消息、关联业务和Agent运行/checkpoint数量、独立观察时间与保护原因。仅元数据，observation_only固定true；archive_candidate只表示规划候选，不是清理许可。服务调用前后复核当前身份/团队及任务版本；409 LIFECYCLE_CHANGED和503 LIFECYCLE_UNAVAILABLE不返回部分数据，响应no-store。内部接口使用可信服务凭据及tenant/run绑定，不创建绑定，不读私有状态，详见[生命周期盘点](m7-run-lifecycle.md)。
 M7.20增加同调查批量归档预览POST /api/v1/source-investigations/:object_ref/history/archive-preview（expected_revision、严格递增且不重复的1–50个revisions），返回当前修订、最大批量和完整选中快照；只读授权、逐项资格检查及脱敏读取审计。POST同路径/history/archive-batch另外要求confirm=true及Idempotency-Key，逐项重新校验M7.19保留条件，同一事务完整移表、批量审计和唯一批量回执；data为object_ref/items，每项与单项归档回执同形。任一项不存在、已归档、受保护或当前修订变化时整批无效果。两接口no-store，当前身份/资源权限逐次复核；预览不持久化授权凭证，不替代提交时验证，旧回执仍当前授权。当前调查不变，无新迁移/S3/Python调用。
 

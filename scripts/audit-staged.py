@@ -12,7 +12,7 @@ def git(*args):
 files = git("diff", "--cached", "--name-only", "-z", "--diff-filter=ACMR").decode().split("\0")
 files = [name for name in files if name]
 forbidden = {".env", ".venv", "node_modules", ".cache", ".gocache", "work", "runtime", "__pycache__"}
-secret_names = {"POSTGRES_PASSWORD", "BUSINESS_PASSWORD", "AGENT_PASSWORD", "JWT_SECRET", "INTERNAL_TOKEN", "DEMO_PASSWORD", "MODEL_API_KEY", "EMBEDDING_API_KEY", "GRAFANA_ADMIN_PASSWORD", "FILE_STORE_ACCESS_KEY", "FILE_STORE_SECRET_KEY"}
+secret_names = {"POSTGRES_PASSWORD", "BUSINESS_PASSWORD", "AGENT_PASSWORD", "AGENT_MIGRATION_PASSWORD", "JWT_SECRET", "INTERNAL_TOKEN", "DEMO_PASSWORD", "MODEL_API_KEY", "EMBEDDING_API_KEY", "GRAFANA_ADMIN_PASSWORD", "FILE_STORE_ACCESS_KEY", "FILE_STORE_SECRET_KEY"}
 settings = {}
 env_file = root / ".env"
 if env_file.exists():

@@ -188,6 +188,27 @@ async def migrate(pool: AsyncConnectionPool) -> None:
                 "CREATE TABLE IF NOT EXISTS schema_versions "
                 "(version INTEGER PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())"
             )
+            versions = await (
+                await conn.execute("SELECT version FROM schema_versions ORDER BY version")
+            ).fetchall()
+            if len(versions) > len(MIGRATIONS) or [row["version"] for row in versions] != list(
+                range(1, len(versions) + 1)
+            ):
+                raise RuntimeError("AGENT_SCHEMA_VERSION_MISMATCH")
+            checkpoint_table = await (
+                await conn.execute("SELECT to_regclass('checkpoint_migrations') AS name")
+            ).fetchone()
+            if checkpoint_table["name"]:
+                checkpoints = await (
+                    await conn.execute("SELECT v FROM checkpoint_migrations ORDER BY v")
+                ).fetchall()
+                if len(checkpoints) > len(AsyncPostgresSaver.MIGRATIONS) or [
+                    row["v"] for row in checkpoints
+                ] != list(range(len(checkpoints))):
+                    raise RuntimeError("AGENT_CHECKPOINT_VERSION_MISMATCH")
+            # Later application migrations may preserve checkpoint table layouts.
+            # Only this explicit migration connection runs the library's DDL.
+            await AsyncPostgresSaver(conn).setup()
             for version, sql in enumerate(MIGRATIONS, start=1):
                 existing = await (
                     await conn.execute(
@@ -201,6 +222,5 @@ async def migrate(pool: AsyncConnectionPool) -> None:
                     await conn.execute(
                         "INSERT INTO schema_versions(version) VALUES (%s)", (version,)
                     )
-            await AsyncPostgresSaver(pool).setup()
         finally:
             await conn.execute("SELECT pg_advisory_unlock(%s)", (MIGRATION_LOCK,))

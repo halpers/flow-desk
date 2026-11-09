@@ -1,5 +1,7 @@
 # 部署说明
 
+Agent 的应用迁移和 checkpointer 升级已拆为独立一次性作业；运行角色无 DDL。新环境随 bootstrap 初始化，已有卷首次收紧权限前须按[服务器手册§33](server.md#33-agent-独立迁移与运行权限收紧)和[专项手册](../docs/m7-agent-migration.md)备份、补齐独立凭据并升级所有权。
+
 退休登记可在完成副本清理后移入历史表，完整身份及旧回执继续保留；升级迁移、人工确认、备份和旧版本回退限制见[服务器手册 §24](server.md#24-完整副本历史与退休登记归档)。
 
 原文件默认使用 PostgreSQL；启用外部私有 S3 或本地 SeaweedFS 沙箱，以及备份/恢复/回退步骤，见[原文件存储手册](source-storage.md)。
@@ -20,6 +22,8 @@
 | `api` | 127.0.0.1:18080 → 8080 | Go API、业务工具和调度 | PostgreSQL `business` |
 | `agent` | 不发布；容器内 8000 | FastAPI、图执行、知识检索；可访问外部模型 | PostgreSQL `agent` / `knowledge` |
 | `migrate` | 不发布 | 一次性 Go 迁移与合成演示账号初始化，成功后退出 | PostgreSQL `business` |
+| `agent-migrate` | 不发布 | 一次性 Agent/checkpointer 迁移及运行授权；独立迁移账号 | PostgreSQL `agent` / `knowledge` |
+| `agent-role-upgrade` | 不发布 | maintenance profile 下显式 owner-only 旧卷所有权升级，不随普通启动执行 | 保留原有数据及密码 |
 | `postgres` | 127.0.0.1:55432 → 5432 | PostgreSQL 18 + pgvector，仅本机和容器网络 | `flowdesk_pgdata` 命名卷 |
 
 生产 Web 构建为静态资源，经同一 TLS 入口代理 Go；Python、数据库和内部 API 使用网络隔离和服务身份。Go 容器中的 Python endpoint 使用服务 DNS，不能配置成容器自身的 localhost。
@@ -29,17 +33,20 @@
 1. 验证所有必填环境变量、运行时基线和依赖锁文件。
 2. 启动 PostgreSQL；空数据卷首次启动时初始化角色、schema 和 pgvector 扩展。
 3. 数据库健康后执行 `migrate`；幂等应用 Go 迁移并初始化合成演示账号。
-4. 迁移成功后启动 Python，迁移自身 schema、初始化 checkpointer 并通过 readiness。
-5. 启动 Go API/调度，readiness 通过后启动 Web。
-6. Web 健康后启动命令返回，随后可执行小规模 smoke test。
+4. Go 迁移成功后执行 `agent-migrate`，以独立 `fd_agent_migrator` 初始化/升级 checkpointer、应用 Agent 迁移并授予必要运行 DML。
+5. 迁移成功后启动 Python；`fd_agent` 只读检查精确版本和权限后通过 readiness，不执行 DDL。
+6. 启动 Go API/调度，readiness 通过后启动 Web。
+7. Web 健康后启动命令返回，随后可执行小规模 smoke test。
 
-当前 Compose 利用 healthcheck 和一次性 Go migration job 依赖。Go 使用独立业务运行账号；Python 当前在启动时以 Agent 角色迁移自身 schema。生产应将 Python 迁移拆为独立作业，收回运行角色 DDL 权限。
+Compose 用 healthcheck 和两个一次性迁移作业控制顺序；`release.py` 同样在启动 Agent 前显式执行两个作业。任何迁移失败均停止后续发布。Go 使用独立业务运行账号，Agent 运行账号只保留自身表必要 DML、schema USAGE 和只读迁移元数据，不持有 migrator/owner 凭据。
 
 长期运行的四个服务使用 `restart: unless-stopped`，迁移任务不自动重启。启动依赖只控制启动顺序；运行中的依赖故障由应用重试和持久化恢复处理。不要通过删除卷重启已有数据库。
 
 ## 3. 配置与密钥
 
 [.env.example](../.env.example) 提供端口、数据库角色密码、JWT 和内部服务凭据、模型参数以及可选发布镜像变量。真实 `.env` 被 Git 忽略；启动脚本仅在文件不存在时生成随机本地凭据。模型密钥不参与镜像构建或流水线测试。
+
+`AGENT_MIGRATION_PASSWORD` 独立于 `AGENT_PASSWORD`。已有 `.env` 缺项时使用 `scripts/configure-agent-migration.py` 显式追加，不覆盖现有字节/密钥；已有数据库还须执行所有权升级，不能只追加变量后直接启动。已有角色密码不会被迁移或初始化脚本重置。
 
 模型名称、embedding 维度、价格版本、graph/prompt 版本必须可追踪；运行时依赖固定到镜像/锁文件，避免 latest 镜像标签改变检查点或数据库结构。
 
@@ -52,6 +59,8 @@ live 表示事件循环/服务进程存活；ready 表示数据库、迁移和�
 ## 5. 发布、回滚与备份
 
 数据库使用向前兼容迁移；先部署能兼容旧字段的服务，再开放新能力。包含破坏性 schema、graph 或 checkpoint 变更时提供专门迁移计划；回滚应用不自动执行破坏性 Down。
+
+M7.25 是运行权限兼容边界：升级后不能直接回退到仍在 Agent 启动中执行 setup/migrate 的旧镜像，也不能临时恢复运行 DDL/owner 权限。优先修复并向前发布兼容版本；首次升级失败需回到升级前环境时，按备份手册恢复到新空库后另行切换。HNSW create/status/drop 使用固定版本 Agent 镜像的 `agent-migrate` 一次性容器，命令见[专项手册](../docs/m7-agent-migration.md)。
 
 升级 graph/prompt/model profile 保留任务原版本快照。旧图版本执行器保留到活动任务结束，或通过显式验证的迁移恢复；不能让滚动发布随机改变已批准动作。
 

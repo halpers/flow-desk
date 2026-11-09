@@ -386,7 +386,7 @@ class SemanticSearch:
 
 
 async def cli(arguments):
-    dsn = os.getenv("AGENT_DATABASE_URL")
+    dsn = os.getenv("AGENT_MIGRATION_DATABASE_URL")
     if not dsn:
         raise ToolError("SEMANTIC_INDEX_DATABASE_NOT_CONFIGURED")
     async with await psycopg.AsyncConnection.connect(

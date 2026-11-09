@@ -1,5 +1,7 @@
 # 数据模型与一致性设计
 
+M7.25 将 Agent 应用迁移和 checkpointer setup 移入独立 `agent-migrate` 作业，由 `fd_agent_migrator` 拥有 agent/knowledge schema 和 Agent 表。运行 `fd_agent` 仅有 schema USAGE、必要表 DML/序列权限，schema_versions/checkpoint_migrations 只读；不拥有关系、routine 或独立类型，无 CREATE/TEMP、角色提升及业务 schema 访问。当前镜像要求完整连续的应用与 checkpointer 版本，缺项、间隙或未来版本均拒绝启动。旧卷通过显式 owner-only 事务升级，不清数据或重置密码，详见[独立迁移](m7-agent-migration.md)。
+
 M7.21不迁移或删除任何数据。Go通过RunsModel的可信租户/run关联聚合盘点，Python只读自身表及精确run thread的checkpoint数量；服务间通过有界HTTP传递白名单计数，不跨schema读写。任务FOR SHARE与当前授权保护返回，但两库观察并非原子快照，不能授权物理清理，见[生命周期](m7-run-lifecycle.md)。
 M7.20无新迁移，批量归档复用两层历史/完整原件及延迟提交约束。原模型增加可信租户/调查及1–50修订的有界选择读取，父行FOR SHARE预览、FOR UPDATE整批移表与历史读取互斥，批量审计/唯一回执同事务，当前调查不变，详见[批量归档](m7-investigation-history-batch.md)。
 
@@ -32,6 +34,8 @@ M6.4 新增 `teams`、`team_members`、`run_ticket_resources`，在 `tickets` �
 ## 1. 数据库与公共字段
 
 PostgreSQL 单实例分 `business`、`agent`、`knowledge` 三个 schema；Go、Python、迁移程序使用不同角色。跨服务通过 API 获取对方事实，不通过数据库 JOIN 绕过授权。需要扩展到不同数据库时维持相同 API 边界。
+
+`fd_business` 负责 Go 业务 DML，owner 只用于初始化、Go 迁移和显式维护升级；`fd_agent_migrator` 不写 Go 业务表，运行 `fd_agent` 不持有其凭据。既有卷只转移核对过的 Agent/knowledge 关系及 schema 所有权；自动 TOAST、行/数组类型按真实依赖核对，其他 schema/关系或自有 routine/独立类型导致整笔所有权升级回滚，禁止全库 REASSIGN OWNED。
 
 Go 所有表采用单列 UUID 主键 id；租户表另设 `UNIQUE(tenant_id,id)`，供同租户复合外键使用。tenant_id 非空并指向 tenants；所有租户对象关系使用 `(tenant_id,object_id)` 外键，阻止跨租户关联。避免将复合主键支持问题留给 goctl 生成器。
 
@@ -209,7 +213,7 @@ topic 包含 run.execute、run.resume、run.cancel、knowledge.index。唯一 di
 | callback_outbox | source_event_id 唯一、run_id、代次、稳定 payload/hash、顺序、重试和 ack |
 | index_commands | job_id/dispatch_id 唯一、版本和索引阶段、错误及重试状态 |
 
-Python 自有迁移与 checkpointer 的 setup/升级通过受控迁移任务完成。运行时账号不给任意 DDL 权限；启动前验证迁移版本。不得从 Go goose 迁移越权修改 Python 框架表。
+Python 自有迁移与 checkpointer 的 setup/升级由独立迁移账号完成：同一 advisory lock 内先校验连续版本、执行锁定库的 setup，再应用待执行应用迁移，完成后授予运行 DML。先 setup 允许后续迁移依赖已有 checkpoint 表结构。运行启动和 readiness 为只读检查，不补建表或授予权限；不得从 Go goose 迁移越权修改 Python 框架表。
 
 执行锁保证同 run 图只有一个检查点写入者；checkpoint 适配必须校验所有权。Go 业务动作由租约代次额外围栏。该并发保证需作为 M4 故障测试的硬验收，不能只依赖框架“支持恢复”的说明。
 
@@ -284,4 +288,4 @@ Go 迁移 `2026110502_pdf_layout.sql` 为 document_versions 增加 pdf_layout，
 
 ## M7.22 语义近似索引登记
 
-Agent有序迁移10增加semantic_ann_indexes，以tenant_id/profile/dimension为主键，固定索引名唯一，保存building/ready及定义SHA256。ready必须有非空指纹，支持维度1–2000；向量原表仍支持1–8192。无Go表或公开HTTP变更。显式维护CLI在独立连接使用CREATE/DROP INDEX CONCURRENTLY及同范围advisory lock，查询校验目录与登记一致后才允许近似路径；默认和回退保持精确排序。登记表与部分表达式索引随Agent schema备份，恢复后重新status核对；不删除向量、manifest、知识原件或幂等身份。见[检索规模优化](m7-retrieval-scale.md)。
+Agent有序迁移10增加semantic_ann_indexes，以tenant_id/profile/dimension为主键，固定索引名唯一，保存building/ready及定义SHA256。ready必须有非空指纹，支持维度1–2000；向量原表仍支持1–8192。无Go表或公开HTTP变更。当前由独立迁移作业应用该迁移；显式维护CLI仅使用AGENT_MIGRATION_DATABASE_URL，在独立连接使用CREATE/DROP INDEX CONCURRENTLY及同范围advisory lock，查询校验目录与登记一致后才允许近似路径；运行账号继续DML及精确/可选HNSW检索，无索引DDL。登记表与部分表达式索引随Agent schema备份，恢复后重新status核对；不删除向量、manifest、知识原件或幂等身份。见[检索规模优化](m7-retrieval-scale.md)和[迁移边界](m7-agent-migration.md)。

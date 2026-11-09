@@ -32,16 +32,31 @@
 | M7.20 调查历史批量归档 | 已完成本地验收 | 多选预览、整批回滚、50项上限、当前授权及唯一批次回执 |
 | M7.21 任务生命周期盘点 | 已完成本地验收 | 当前授权下消息/任务/checkpoint计数、恢复/引用保护及只读预览 |
 | M7.22 语义检索规模优化 | 已完成本地验收 | 显式租户/profile/维度HNSW、默认精确、有界回退及合成规模对照 |
+| M7.23 任务历史归档 | 待集成验收 | 任务热/冷历史、跨服务执行隔离及恢复；本阶段不计入完成范围 |
+| M7.24 OCR与版面联合解析 | 待集成验收 | OCR与阅读方式联合处理；本阶段不计入完成范围 |
+| M7.25 Agent独立迁移 | 已完成本地验收 | 独立迁移作业、旧卷所有权升级、DML运行角色、只读版本/权限门禁及HNSW维护兼容 |
 
 M6.1–M6.5 按用户选定范围在本地实施，未连接或部署服务器。设计及验收见 [M6 专项计划](m6-plan.md)和[M6.3 运维说明](m6-deployment-monitoring.md)。
 
+## M7.25 Agent独立迁移与运行权限收紧（2026-11-09）
+
+- [独立迁移设计](m7-agent-migration.md)增加fd_agent_migrator和一次性agent-migrate：同一锁内验证连续版本、执行锁定checkpointer setup、应用待执行迁移并授予运行DML。Compose及release均在Agent前等待迁移成功；运行启动与readiness只读检查精确版本和权限，不执行DDL。schema_versions/checkpoint_migrations只读，运行角色无所有权、CREATE/TEMP、角色提升或业务schema访问。
+- 旧卷通过显式owner-only agent-role-upgrade事务转移核对过的agent/knowledge对象，不使用REASSIGN OWNED，不删数据或重置已有密码。自动TOAST/行/数组类型按依赖处理；异常迁移角色、外部schema/关系或自有routine/独立类型明确拒绝，后置失败回滚先前所有权调整。configure脚本仅追加缺失随机凭据，2/2单测验证已有字节/密钥保持及重跑幂等。
+- Linux Agent最终全量86/86通过（包含真实角色专项6/6）；此前中间全量84/84已由这次完整复验覆盖。专项覆盖实际登录下checkpoint图写入/替换后恢复、队列与语义DML、DDL/业务/元数据越权拒绝、缺失/未来/间隙版本、权限扩张/缺DML、旧所有权回滚和密码保持，以及独立迁移角色HNSW create/status/drop、运行角色exact/HNSW检索及无索引回退。Ruff及格式/diff检查通过。
+- [独立部署验收报告](../reports/m7/agent-migration-acceptance.json)；Windows Python3.12专项验收4/4通过：实际运行身份/精确版本/权限、SQL越权拒绝、真实LangGraph checkpoint持久化恢复和迁移授权重放；脚本通过独立SelectorEventLoop支持Psycopg。独立fresh-c新卷经初始化→Go迁移→agent-migrate→Agent/API/Web全部健康并已清理；旧卷显式所有权升级、独立迁移和完整Compose readiness健康，预置execution_commands 1/1及run_observation_scopes 1/1保留核对通过。无付费模型调用，未部署真实服务器。
+- README、运行/数据/契约、[服务器手册§33](../deploy/server.md#33-agent-独立迁移与运行权限收紧)及HNSW命令同步。运行容器不携带迁移凭据；HNSW维护改用同一固定SHA的agent-migrate容器。首次权限收紧后不直接回退到启动中执行DDL的旧Agent镜像；向前修复或恢复升级前一致备份到新空库，不临时归还运行DDL。
+- 本阶段同步的13份Markdown、341个本地链接及标题锚点、56组围栏、8个JSON示例和35段Bash/sh语法检查通过，git diff --check通过。文档命令验证不代表远程部署已执行。
+- M7.23/24仍待后续集成验收；本阶段只交付迁移和权限边界。镜像发布仍按PR/main检查、v* tag双仓库发布，未增加服务器自动上线。
+
+提交主题：`feat(m7.25): isolate agent migrations and remove runtime DDL`。
+
 ## M7.22 语义检索规模优化（2026-11-09）
 
-- [可选HNSW](m7-retrieval-scale.md)以租户/profile/维度部分表达式索引隔离候选；Agent迁移10增加索引登记，显式CLI建/查/删，独立连接和目标advisory lock，中断后可恢复。运行时核对真实目录和指纹，默认及回退的距离加零保持精确，无新HTTP或Go表写入。
+- [可选HNSW](m7-retrieval-scale.md)以租户/profile/维度部分表达式索引隔离候选；Agent迁移10增加索引登记，显式CLI建/查/删，独立连接和目标advisory lock，中断后可恢复。当前迁移与维护由M7.25独立迁移作业/角色执行，运行Agent只做DML/检索及目录核对。默认及回退的距离加零保持精确，无新HTTP或Go表写入。
 - Linux Agent全量80/80（含新增9项ANN及原生OCR）通过，静态/格式检查通过。验证定义拒绝、维护互斥/恢复、当前租户/profile/版本过滤、默认精确、索引失效/构建中/候选不足回退、真实访问方法、超时和连接池设置恢复；原语义/RRF及撤权回归通过。600条fixture访问方法测试局部关闭顺序扫描/排序，与自然规模基准分开记录。
 - [一万条64维/40查询合成报告](../reports/m7/retrieval-scale-acceptance.json)：自然EXPLAIN实际使用HNSW，40/40走合格路径；精确与ANN top20平均集合重合率97.5%、最低85%，P95 12.060ms→5.822ms，索引约4.29MB。结果含登记/目录检查，不含embedding/模型/完整问答，不能替代真实语义质量、生产吞吐或完整召回保证。
 - .env.example和Compose默认exact；服务器手册§32补齐manifest聚合核对、迁移、容量、维护恢复、固定镜像重建、快速exact回退及旧应用索引兼容限制。CI新增隔离规模基准，仍main/PR只检查、v* tag双仓库发布。 Compose配置、Agent新镜像升级迁移/readiness、维护CLI及生命周期公开接口4/4回归通过；63份Markdown/533个本地链接和服务器23个Bash代码块语法验证通过。
-- M7.21先独立提交e1bfef0并推送，等待远端检查时继续本阶段实现及验收；均不部署服务器或调用付费模型。任务物理归档/删除、独立迁移角色、分区及生产环境规模调优仍为后续范围。
+- M7.21先独立提交e1bfef0并推送，等待远端检查时继续本阶段实现及验收；均不部署服务器或调用付费模型。独立迁移角色后由M7.25交付；任务物理归档/删除、分区及生产环境规模调优仍为后续范围。
 
 提交主题：`feat(m7.22): add isolated opt-in HNSW semantic retrieval`。
 

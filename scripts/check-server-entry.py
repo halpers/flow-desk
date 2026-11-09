@@ -33,7 +33,9 @@ def main():
             assert bootstrap(path, origin).returncode == 0
             original = path.read_bytes()
             assert bootstrap(path, origin).returncode != 0
-            assert path.read_bytes() == original, "existing credentials were overwritten"
+            assert path.read_bytes() == original, (
+                "existing credentials were overwritten"
+            )
             settings = dict(
                 line.split("=", 1)
                 for line in original.decode().splitlines()
@@ -43,6 +45,7 @@ def main():
                 "POSTGRES_PASSWORD",
                 "BUSINESS_PASSWORD",
                 "AGENT_PASSWORD",
+                "AGENT_MIGRATION_PASSWORD",
                 "JWT_SECRET",
                 "INTERNAL_TOKEN",
                 "DEMO_PASSWORD",
@@ -55,10 +58,16 @@ def main():
             files = [
                 "docker-compose.yaml",
                 "deploy/compose.monitoring.yaml",
-                "deploy/compose.server-tls.yaml" if secure else "deploy/compose.server.yaml",
+                "deploy/compose.server-tls.yaml"
+                if secure
+                else "deploy/compose.server.yaml",
             ]
             config = json.loads(
-                run(["config", "--format", "json"], compose_files=files, env_files=[path.name])
+                run(
+                    ["config", "--format", "json"],
+                    compose_files=files,
+                    env_files=[path.name],
+                )
             )
             services = config["services"]
             assert services["web"]["ports"] == [
@@ -70,9 +79,30 @@ def main():
                     "protocol": "tcp",
                 }
             ], "server entry must replace, rather than append to, the base port mapping"
-            for name in ("postgres", "api", "grafana", "prometheus", "jaeger", "otel-collector"):
-                assert all(mapping["host_ip"] == "127.0.0.1" for mapping in services[name]["ports"])
+            for name in (
+                "postgres",
+                "api",
+                "grafana",
+                "prometheus",
+                "jaeger",
+                "otel-collector",
+            ):
+                assert all(
+                    mapping["host_ip"] == "127.0.0.1"
+                    for mapping in services[name]["ports"]
+                )
             assert not services["agent"].get("ports")
+            runtime_environment = services["agent"]["environment"]
+            assert "AGENT_MIGRATION_DATABASE_URL" not in runtime_environment
+            assert "AGENT_OWNER_DATABASE_URL" not in runtime_environment
+            migration_environment = services["agent-migrate"]["environment"]
+            assert "AGENT_MIGRATION_DATABASE_URL" in migration_environment
+            assert "AGENT_DATABASE_URL" not in migration_environment
+            assert (
+                services["agent"]["depends_on"]["agent-migrate"]["condition"]
+                == "service_completed_successfully"
+            )
+            assert "agent-role-upgrade" not in services
             environment = services["api"]["environment"]
             assert environment["ALLOWED_ORIGINS"] == origin
             assert environment["COOKIE_SECURE"] == str(secure).lower()

@@ -1,5 +1,7 @@
 # FlowDesk（智办台）
 
+[Agent 独立迁移](docs/m7-agent-migration.md)将建表、checkpointer 升级和 HNSW 维护交给一次性迁移服务；运行 Agent 只保留必要读写权限。已有数据卷首次升级须先执行[服务器手册§33](deploy/server.md#33-agent-独立迁移与运行权限收紧)的所有权升级。
+
 [语义检索规模优化](docs/m7-retrieval-scale.md)支持显式维护租户隔离的HNSW索引；默认精确检索，未就绪或候选不足时回退。合成规模基准及召回差异见专项文档。
 
 [任务生命周期盘点](docs/m7-run-lifecycle.md)可从任务详情查看消息、执行及checkpoint数量与保留保护原因，便于规划后续归档；当前只读，不删除历史或改变恢复能力。
@@ -67,7 +69,7 @@ M1–M4 已交付：登录与租户权限、持久化任务/SSE、版本化知�
 
 在 PowerShell 执行 `.\scripts\start.ps1`。默认打开 `http://localhost:13000`，账号 `demo.operator`，密码读取本地 `.env` 的 `DEMO_PASSWORD`。凭据由启动脚本随机生成，不会提交 Git。
 
-根目录 [docker-compose.yaml](docker-compose.yaml) 编排 PostgreSQL/pgvector、一次性迁移、Python Agent、Go API 和 Web；启动脚本等待服务健康后返回。已有 `.env` 且本机可使用 Docker 时，也可执行 `docker compose up --detach --build --wait`。各服务默认端口及操作见 [部署说明](deploy/README.md)。
+根目录 [docker-compose.yaml](docker-compose.yaml) 依次编排 PostgreSQL/pgvector、Go 迁移、独立 Agent 迁移、Python Agent、Go API 和 Web；启动脚本等待服务健康后返回。新环境随机生成独立迁移凭据；已有 `.env` 和数据卷先按上述手册升级，再执行 `docker compose up --detach --build --wait`。各服务默认端口及操作见 [部署说明](deploy/README.md)。
 
 [CI/CD](deploy/ci-cd.md) 在 PR 和 `main` 推送时执行测试与 Compose 启动检查；仅推送 `v*` tag 且检查通过后，才将三个服务镜像发布到 GHCR 和阿里云 ACR，同时保留版本和完整 SHA 标签。手动运行只检查，不发布；`latest` 不再更新。发布步骤见 CI/CD 文档。阿里云推送凭据使用仓库 Secrets `ACR_USERNAME`、`ACR_PASSWORD`；公网地址和命名空间已配置默认值。
 

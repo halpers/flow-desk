@@ -15,7 +15,7 @@
 
 统一配置为根目录 [docker-compose.yaml](../docker-compose.yaml)。`compose.ps1` 显式加载该文件，并在 Windows 没有 Docker 命令时转发给 WSL。`start.ps1` 构建镜像，最多等待 180 秒使服务健康；失败时检查 `compose.ps1 ps --all` 和 `compose.ps1 logs --tail 100`。
 
-已有 `.env` 且 Docker 可直接使用时，在根目录也可执行：
+已有 `.env` 且 Docker 可直接使用时，在根目录也可执行以下命令。若数据卷来自 M7.25 之前，先按[独立迁移手册](m7-agent-migration.md)补齐独立凭据、停止旧 Agent 并升级所有权；普通启动不会自动改写已有配置或所有权：
 
 ```sh
 docker compose config --quiet
@@ -28,14 +28,16 @@ docker compose stop
 
 登录账号为 `demo.operator`、`demo.supervisor`、`demo.admin`；第二个合成租户使用 `other.` 前缀。密码是本地 `.env` 中的 `DEMO_PASSWORD`。不存在通用默认密码。迁移重复运行不重置已有账号密码。
 
-迁移使用 owner，Go 使用 `fd_business`（业务 DML），Python 使用 `fd_agent`（agent/knowledge）。一期 Python 账号负责自己 schema 的建表；正式部署应将迁移账号和只读/写运行账号进一步拆开。
+Go 迁移使用 owner，Go 运行使用 `fd_business`（业务 DML）。`agent-migrate` 使用独立 `fd_agent_migrator`，负责 Agent 有序迁移、checkpointer setup 和运行授权；成功后才启动 `fd_agent`。Agent 启动和 readiness 只读验证精确迁移版本及权限，运行账号无 DDL、CREATE/TEMP、所有权或迁移角色成员身份，迁移元数据只读，也不能读写业务表。
+
+新环境 bootstrap 为 `AGENT_PASSWORD` 与 `AGENT_MIGRATION_PASSWORD` 分别生成随机值。已有文件用 `python scripts/configure-agent-migration.py --env-file .env` 只追加缺少的迁移凭据，再在维护窗口执行专项手册中的 `agent-role-upgrade`；不能靠改密码、删卷或让运行进程补迁移解决。HNSW 也通过 `agent-migrate` 一次性容器维护，运行容器不获得迁移密钥。首次收紧权限后，不可直接回退到仍在启动时执行 DDL 的旧 Agent 镜像。
 
 停止：`.\scripts\compose.ps1 stop`。该命令保留数据库。不要用 `down -v` 作为普通重启方式。
 
 ## 本机开发
 
 - Go：1.27.1，go-zero 1.10.3，goctl 1.10.2。模块在 `flow-desk-serv/flowdesk`，依赖由 `go.mod/go.sum` 固定。
-- Python：3.12，推荐本地独立 `.venv`，`pip install -r requirements.lock`。M2 已接入 LangGraph 和 PostgreSQL checkpointer；运行需设置 `AGENT_DATABASE_URL`、`GO_BASE_URL`、`INTERNAL_TOKEN`。
+- Python：3.12，推荐本地独立 `.venv`，`pip install -r requirements.lock`。先以独立 `AGENT_MIGRATION_DATABASE_URL` 执行 `python -m flowdesk_agent.storage.migrate`；运行进程只配置 `AGENT_DATABASE_URL`、`GO_BASE_URL`、`INTERNAL_TOKEN` 等运行参数，不携带迁移或 owner 连接。推荐由 Compose 完成迁移顺序。
 - Node：22.12+ 或 24，pnpm 11.25.0，使用 `pnpm install --frozen-lockfile`。
 - PostgreSQL：18 + pgvector，Compose 镜像提供扩展。
 
@@ -58,6 +60,8 @@ pnpm.cmd --dir flow-desk-web test:e2e
 ```
 
 `check-go.ps1` 创建并删除唯一命名的测试数据库，不重置业务 schema。覆盖认证、事务回滚及 M2 任务、事件、授权和并发配额。`check-agent.py` 使用独立临时 schema。HTTP smoke 通过实际前端代理检查认证及三服务查询，E2E 使用本机 Chrome 验证页面和重连。详见 [M2 交付说明](m2-read-tasks.md)。
+
+`tests/test_migration_roles.py` 另用唯一临时数据库和实际登录角色验证权限、升级回滚、checkpoint 与 HNSW。`scripts/check-agent-migration.py` 只接受仓库 `work/` 下的一次性 mock 栈配置；Python3.12 在 Windows 使用 SelectorEventLoop，兼容本地 `.venv`。命令与验收范围见[专项手册](m7-agent-migration.md)，不能用于真实服务器业务库。
 
 契约从 `.api` 导出 Swagger，再转换 OpenAPI 3、生成 TypeScript；Python 从 FastAPI 导出 OpenAPI。第二次导出应无 diff。新增接口必须先扩展来源，禁止手改生成文件。
 

@@ -10,7 +10,7 @@ M1 提供工程基础；M2 已接入持久化命令队列、回调 outbox、Lang
 - 图执行、文档索引 worker 属于同一 Python 服务代码库，可按需扩展副本。
 - 离线评测目录：`evals/datasets/`、`evals/reports/`；仅提交合成数据。
 
-Python 3.12 创建独立 `.venv` 后执行 `pip install -r requirements.lock`；设置 `AGENT_DATABASE_URL`，以 `PYTHONPATH=src` 运行 `uvicorn flowdesk_agent.api.main:app --port 8000`。推荐使用根目录 Compose。`python scripts/export_contract.py` 不建立数据库连接即可导出 OpenAPI。
+Python 3.12 创建独立 `.venv` 后执行 `pip install -r requirements.lock`。先在独立迁移环境设置 `AGENT_MIGRATION_DATABASE_URL`，以 `PYTHONPATH=src` 执行 `python -m flowdesk_agent.storage.migrate`；运行环境只设置 `AGENT_DATABASE_URL` 等运行参数，不携带迁移/owner凭据，再运行 `uvicorn flowdesk_agent.api.main:app --port 8000`。推荐根目录Compose自动完成迁移门禁；运行Agent无DDL，旧卷升级及HNSW维护见[专项手册](../docs/m7-agent-migration.md)。`python scripts/export_contract.py` 不建立数据库连接即可导出 OpenAPI。
 
 跨服务接口见 [接口契约](../docs/contracts.md)，实际阶段状态见 [实施记录](../docs/progress.md)。
 

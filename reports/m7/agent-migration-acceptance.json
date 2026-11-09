@@ -1,0 +1,12 @@
+{
+  "phase": "M7.25",
+  "profile": "mock",
+  "migration_count": 10,
+  "model_calls": 0,
+  "checks": [
+    "runtime identity, schema versions and least-privilege boundary",
+    "DDL, temporary schema, role elevation and business access rejected",
+    "DML-only runtime persists and restores real LangGraph checkpoints",
+    "explicit migration and grants replay without widening runtime privileges"
+  ]
+}

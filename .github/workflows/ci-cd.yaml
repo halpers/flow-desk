@@ -118,6 +118,11 @@ jobs:
           docker compose config --quiet
           docker compose up --detach --build --wait --wait-timeout 180
           docker compose ps --all
+      - name: Check independent Agent migration and DML-only runtime
+        run: |
+          mkdir -p work
+          install -m 600 .env work/agent-migration-ci.env
+          python scripts/check-agent-migration.py --env-file work/agent-migration-ci.env --output work/agent-migration-ci.json
       - name: Check HTTP authentication through Web proxy
         run: python scripts/smoke.py
       - name: Check account roles, password recovery and session revocation

@@ -29,7 +29,7 @@ from flowdesk_agent.retrieval import KnowledgeIndex
 from flowdesk_agent.runtime import AgentRuntime
 from flowdesk_agent.storage.commands import CommandConflict
 from flowdesk_agent.storage.lifecycle import read_lifecycle
-from flowdesk_agent.storage.migrations import migrate
+from flowdesk_agent.storage.permissions import verify_runtime
 from flowdesk_agent.tools.go_client import ToolError
 
 
@@ -53,7 +53,7 @@ async def lifespan(app: FastAPI):
     await pool.open(wait=True)
     tracing = telemetry.configure()
     try:
-        await migrate(pool)
+        await verify_runtime(pool)
         async with httpx.AsyncClient(
             base_url=os.environ["GO_BASE_URL"],
             timeout=5,
@@ -184,8 +184,7 @@ async def ready():
     try:
         if any(worker.done() for worker in app.state.workers):
             raise RuntimeError("worker unavailable")
-        async with app.state.pool.connection() as conn:
-            await conn.execute("SELECT 1")
+        await verify_runtime(app.state.pool)
     except Exception as exc:
         raise HTTPException(503, "database unavailable") from exc
     return {"status": "ok", "service": "flowdesk-agent"}

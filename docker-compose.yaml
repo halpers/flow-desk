@@ -1,7 +1,7 @@
 name: flowdesk
 
 # Local credentials and model settings are loaded from the ignored root .env.
-# Startup: postgres -> migrate -> agent -> api -> web.
+# Startup: postgres -> migrate -> agent-migrate -> agent -> api -> web.
 services:
   postgres:
     image: pgvector/pgvector:pg18
@@ -13,6 +13,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?run bootstrap-local}
       BUSINESS_PASSWORD: ${BUSINESS_PASSWORD:?run bootstrap-local}
       AGENT_PASSWORD: ${AGENT_PASSWORD:?run bootstrap-local}
+      AGENT_MIGRATION_PASSWORD: ${AGENT_MIGRATION_PASSWORD:?configure independent Agent migration credential}
     ports:
       - "127.0.0.1:${PG_HOST_PORT:-55432}:5432"
     volumes:
@@ -40,6 +41,29 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+
+  agent-migrate:
+    image: ${FLOWDESK_AGENT_IMAGE:-flowdesk-agent:latest}
+    build:
+      context: ./flow-desk-agent
+      args:
+        PIP_INDEX_URL: ${PYPI_INDEX_URL:-https://pypi.tuna.tsinghua.edu.cn/simple}
+    restart: "no"
+    entrypoint: ["python", "-m", "flowdesk_agent.storage.migrate"]
+    environment:
+      AGENT_MIGRATION_DATABASE_URL: postgresql://fd_agent_migrator:${AGENT_MIGRATION_PASSWORD:?configure independent Agent migration credential}@postgres:5432/flowdesk?options=-csearch_path%3Dagent
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  agent-role-upgrade:
+    image: ${FLOWDESK_AGENT_IMAGE:-flowdesk-agent:latest}
+    profiles: ["maintenance"]
+    restart: "no"
+    entrypoint: ["python", "-m", "flowdesk_agent.storage.upgrade_roles", "--confirm-maintenance"]
+    environment:
+      AGENT_OWNER_DATABASE_URL: postgresql://flowdesk_owner:${POSTGRES_PASSWORD}@postgres:5432/flowdesk
+      AGENT_MIGRATION_PASSWORD: ${AGENT_MIGRATION_PASSWORD:?configure independent Agent migration credential}
 
   agent:
     image: ${FLOWDESK_AGENT_IMAGE:-flowdesk-agent:latest}
@@ -72,7 +96,7 @@ services:
       TOOL_TRANSPORT: ${TOOL_TRANSPORT:-http}
       OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: ${OTEL_EXPORTER_OTLP_TRACES_ENDPOINT:-}
     depends_on:
-      migrate:
+      agent-migrate:
         condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready', timeout=2)"]

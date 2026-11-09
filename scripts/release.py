@@ -150,6 +150,7 @@ def main():
             *infrastructure,
         )
         compose("run", "--rm", "--no-deps", "migrate")
+        compose("run", "--rm", "--no-deps", "agent-migrate")
         for service in ("agent", "api", "web"):
             compose(
                 "up",
