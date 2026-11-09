@@ -404,3 +404,7 @@ GET /api/v1/source-investigations/:object_ref 与 PUT 同路径，当前内置 a
 PUT 必须有 Idempotency-Key，正文 expected_revision、status、note、confirm=true；首次额外提供租户巡检项 investigation_token 作为 selection_token。令牌15分钟、绑定当前用户/租户/存储/对象，与分页及登记凭证隔离；要求两个巡检开关。既有记录更新可省略令牌且不依赖 S3/巡检开关。note 去除首尾空白后1–2000个Unicode字符，允许换行/制表，不允许其他控制字符。状态为 open/investigating/closed，仅代表跟进进度。保存行、审计与不可变回执同事务，无下游副作用/outbox。
 
 修订不符为 INVESTIGATION_CHANGED（409），同键变参 IDEMPOTENCY_CONFLICT（409）；首次令牌到期 INVENTORY_CURSOR_EXPIRED（410），首次巡检未启用 TENANT_SOURCE_INVENTORY_DISABLED（409），无存储配置 SOURCE_UNAVAILABLE（503），无效说明/状态/凭证400。授权遵守既有401/403/404隐藏规则。已有原请求在30天幂等有效期内同键重放返回原修订，继续复核当前资源权限，后来恢复的版本身份同样受 ACL 约束。不得据调查状态授权登记或删除，详情见[设计与验收](m7-source-investigations.md)。
+
+## M7.26 任务历史批次
+
+[批量归档契约](m7-run-history-batch.md)规定1–10项当前授权预览、全批意图原子登记、不可变成员及逐项原操作核对。所有HTTP定义先维护api/runhistorybatch.api再生成；跨服务执行允许已完成/待核对并存，禁止把逐项恢复描述为整批回滚。

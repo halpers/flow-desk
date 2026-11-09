@@ -1,0 +1,12 @@
+{
+  "phase": "M7.26",
+  "profile": "disposable-mock",
+  "checks": [
+    "operator cannot preview or list administrative batches",
+    "confirmed registration atomically persists both original intents without archiving",
+    "partial completion is durable and both resume and batch replay preserve identities",
+    "public task payloads remain unchanged and old execution stays fenced",
+    "later single restoration does not alter old batch results or replay archival"
+  ],
+  "completed_at": "2026-11-09T08:58:46.666988+00:00"
+}

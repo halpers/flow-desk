@@ -1,0 +1,90 @@
+type RunHistoryBatchSelection {
+    RunId string `json:"run_id"`
+    ExpectedVersion int64 `json:"expected_version"`
+    ExpectedGeneration int64 `json:"expected_generation"`
+}
+type PreviewRunHistoryBatchReq {
+    RunIds []string `json:"run_ids"`
+}
+type RunHistoryBatchPreviewItem {
+    RunId string `json:"run_id"`
+    ExpectedVersion int64 `json:"expected_version"`
+    ExpectedGeneration int64 `json:"expected_generation"`
+    CanArchive bool `json:"can_archive"`
+    ProtectionReasons []string `json:"protection_reasons"`
+}
+type RunHistoryBatchPreviewData {
+    MaximumItems int64 `json:"maximum_items"`
+    CanCreate bool `json:"can_create"`
+    Items []RunHistoryBatchPreviewItem `json:"items"`
+}
+type CreateRunHistoryBatchReq {
+    Items []RunHistoryBatchSelection `json:"items"`
+    Confirm bool `json:"confirm"`
+    IdempotencyKey string `header:"Idempotency-Key"`
+}
+type RunHistoryBatchReceipt {
+    BatchId string `json:"batch_id"`
+}
+type RunHistoryBatchReq {
+    BatchId string `path:"batch_id"`
+}
+type ResumeRunHistoryBatchReq {
+    BatchId string `path:"batch_id"`
+    OperationId string `path:"operation_id"`
+}
+type ListRunHistoryBatchesReq {
+    Cursor string `form:"cursor,optional"`
+    Limit int64 `form:"limit,default=10,range=[1:10]"`
+}
+type RunHistoryBatchData {
+    BatchId string `json:"batch_id"`
+    ActorUserId string `json:"actor_user_id"`
+    CreatedAt string `json:"created_at"`
+    Status string `json:"status"`
+    CompletedCount int64 `json:"completed_count"`
+    Items []RunHistoryOperationData `json:"items"`
+}
+type RunHistoryBatchPage {
+    Items []RunHistoryBatchData `json:"items"`
+    NextCursor string `json:"next_cursor"`
+    HasMore bool `json:"has_more"`
+}
+type RunHistoryBatchPreviewResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data RunHistoryBatchPreviewData `json:"data"`
+}
+type RunHistoryBatchReceiptResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data RunHistoryBatchReceipt `json:"data"`
+}
+type RunHistoryBatchResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data RunHistoryBatchData `json:"data"`
+}
+type RunHistoryBatchPageResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data RunHistoryBatchPage `json:"data"`
+}
+@server(prefix: /api/v1 middleware: SessionAuth)
+service flowdesk-api {
+    @doc "Preview bounded selected run histories with current authorization | permission=admin/run:observe | auth=required"
+    @handler PreviewRunHistoryBatch
+    post /run-history-batches/preview (PreviewRunHistoryBatchReq) returns (RunHistoryBatchPreviewResp)
+    @doc "Atomically register confirmed durable run history batch | permission=admin/run:observe | auth=required"
+    @handler CreateRunHistoryBatch
+    post /run-history-batches (CreateRunHistoryBatchReq) returns (RunHistoryBatchReceiptResp)
+    @doc "List currently authorized durable history batches | permission=admin/run:observe | auth=required"
+    @handler ListRunHistoryBatches
+    get /run-history-batches (ListRunHistoryBatchesReq) returns (RunHistoryBatchPageResp)
+    @doc "Read all authorized members and original operation results | permission=admin/run:observe | auth=required"
+    @handler GetRunHistoryBatch
+    get /run-history-batches/:batch_id (RunHistoryBatchReq) returns (RunHistoryBatchResp)
+    @doc "Reconcile one existing history batch operation | permission=admin/run:observe | auth=required"
+    @handler ResumeRunHistoryBatch
+    post /run-history-batches/:batch_id/operations/:operation_id/resume (ResumeRunHistoryBatchReq) returns (RunHistoryBatchResp)
+}

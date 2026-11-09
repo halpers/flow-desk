@@ -1,5 +1,7 @@
 # 数据模型与一致性设计
 
+M7.26 的Go迁移`2026110903_run_history_batches.sql`新增`run_history_batches`和`run_history_batch_items`，前者保存申请人/1–10项总数，后者以可信租户绑定原维护操作和顺序。批次/成员不可更新或删除，延迟约束保证登记总数完整；全部原操作、批次、成员、申请审计及幂等映射在同一Go事务登记。实际跨服务移动逐项复用M7.23，不覆盖原回执或清理永久封存。分页及读取逐项重验当前授权，详见[批量归档](m7-run-history-batch.md)。
+
 M7.23 的 Go 迁移 `2026110901_run_history.sql` 新增 `run_history_operations`、`message_payload_archives`、`run_event_payload_archives`。维护操作以可信租户/run/代次唯一，同任务仅一项pending；保存原申请人、目标、检查点计数与完成时间，已完成行不可变。消息/事件身份与外键行留在热表，只将正文、引用、动作回执字段及事件载荷移至冷表；`messages_history_read`、`run_events_history_read` 联合返回原载荷，原位置/序号/时间/hash和逻辑总数保持。首次操作后任务执行与载荷写入受永久围栏保护。
 
 Agent有序迁移11新增 `run_history_fences`、`run_history_receipts` 及三类 `checkpoint*_history` 表；LIKE结构在独立checkpointer setup后建立。内部维护在同一事务、相同逐run执行锁（种子3）下用原类型移动JSONB/BYTEA，严格代次、可信绑定、命令/回调/预算静默条件、永久围栏和不可变回执共同保护；生命周期计数包含热冷两层。恢复只回迁载荷，不移除围栏，不重开旧命令、checkpoint写入或任务重试。

@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   useInfiniteQuery,
   useQuery,
@@ -22,6 +22,7 @@ import { api, type User } from "../../shared/api/client";
 import type { Models } from "../../shared/api/models";
 import { RunLifecycle } from "./RunLifecycle";
 import { RunHistory } from "./RunHistory";
+import { RunHistoryBatch } from "./RunHistoryBatch";
 import { newId } from "../../shared/id";
 
 type Task = Models["RunOperationPage"]["items"][number];
@@ -65,6 +66,10 @@ export function Operations({
   const [confirm, setConfirm] = useState<Task | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [historySelection, setHistorySelection] = useState<string[]>([]);
+  useEffect(() => {
+    setHistorySelection([]);
+  }, [scope, status, runId, open, user.tenant_id, user.id]);
   const pending = useRef<{ id: string; version: number; key: string } | null>(
     null,
   );
@@ -178,6 +183,35 @@ export function Operations({
               刷新任务
             </Button>
           </Space>
+          {user.role === "admin" &&
+            user.permissions.includes("run:observe") &&
+            !accessError && (
+              <Space>
+                <span>已选择 {historySelection.length} / 10 项</span>
+                <RunHistoryBatch
+                  key={`${user.tenant_id}:${user.id}`}
+                  selectedIds={historySelection}
+                  onReset={() => {
+                    setHistorySelection([]);
+                    void queryClient.invalidateQueries({
+                      queryKey: ["operations", user.tenant_id, user.id],
+                    });
+                  }}
+                  onDenied={(message) => {
+                    setHistorySelection([]);
+                    setSelected(null);
+                    setConfirm(null);
+                    setAccessError(message);
+                    queryClient.removeQueries({
+                      queryKey: ["run-trace", user.tenant_id, user.id],
+                    });
+                    queryClient.removeQueries({
+                      queryKey: ["operations", user.tenant_id, user.id],
+                    });
+                  }}
+                />
+              </Space>
+            )}
           <Input.Search
             aria-label="按任务 ID 定位"
             placeholder="完整任务 ID"
@@ -197,6 +231,23 @@ export function Operations({
           )}
           {!accessError && (
             <Table<Task>
+              rowSelection={
+                user.role === "admin" &&
+                user.permissions.includes("run:observe")
+                  ? {
+                      selectedRowKeys: historySelection,
+                      hideSelectAll: true,
+                      onChange: (keys) => setHistorySelection(keys.map(String)),
+                      getCheckboxProps: (task) => ({
+                        "aria-label": `选择归档任务 ${task.id}`,
+                        disabled:
+                          tasks.isFetching ||
+                          (historySelection.length >= 10 &&
+                            !historySelection.includes(task.id)),
+                      }),
+                    }
+                  : undefined
+              }
               rowKey="id"
               loading={tasks.isPending}
               pagination={false}

@@ -262,6 +262,12 @@ type CreateManagedUserReq struct {
 	IdempotencyKey string   `header:"Idempotency-Key"`
 }
 
+type CreateRunHistoryBatchReq struct {
+	Items          []RunHistoryBatchSelection `json:"items"`
+	Confirm        bool                       `json:"confirm"`
+	IdempotencyKey string                     `header:"Idempotency-Key"`
+}
+
 type CreateTeamReq struct {
 	IdempotencyKey string `header:"Idempotency-Key"`
 	Name           string `json:"name"`
@@ -588,6 +594,11 @@ type LeaseResp struct {
 	Data      ExecutionContext `json:"data"`
 }
 
+type ListRunHistoryBatchesReq struct {
+	Cursor string `form:"cursor,optional"`
+	Limit  int64  `form:"limit,default=10,range=[1:10]"`
+}
+
 type LoginReq struct {
 	Account  string `json:"account"`
 	Password string `json:"password"`
@@ -811,6 +822,10 @@ type PreviewInvestigationArchiveReq struct {
 	Revisions        []int64 `json:"revisions"`
 }
 
+type PreviewRunHistoryBatchReq struct {
+	RunIds []string `json:"run_ids"`
+}
+
 type ReceiptData struct {
 	ActionId           string                 `json:"action_id"`
 	ToolName           string                 `json:"tool_name"`
@@ -839,6 +854,11 @@ type RestoreInvestigationRevisionReq struct {
 	ExpectedRevision int64  `json:"expected_revision"`
 	Confirm          bool   `json:"confirm"`
 	IdempotencyKey   string `header:"Idempotency-Key"`
+}
+
+type ResumeRunHistoryBatchReq struct {
+	BatchId     string `path:"batch_id"`
+	OperationId string `path:"operation_id"`
 }
 
 type RetentionItem struct {
@@ -899,6 +919,73 @@ type RunData struct {
 	PendingInputs  []PendingInputData `json:"pending_inputs"`
 	Approvals      []ApprovalData     `json:"approvals"`
 	ActionReceipts []ReceiptData      `json:"action_receipts"`
+}
+
+type RunHistoryBatchData struct {
+	BatchId        string                    `json:"batch_id"`
+	ActorUserId    string                    `json:"actor_user_id"`
+	CreatedAt      string                    `json:"created_at"`
+	Status         string                    `json:"status"`
+	CompletedCount int64                     `json:"completed_count"`
+	Items          []RunHistoryOperationData `json:"items"`
+}
+
+type RunHistoryBatchPage struct {
+	Items      []RunHistoryBatchData `json:"items"`
+	NextCursor string                `json:"next_cursor"`
+	HasMore    bool                  `json:"has_more"`
+}
+
+type RunHistoryBatchPageResp struct {
+	Code      string              `json:"code"`
+	RequestId string              `json:"request_id"`
+	Data      RunHistoryBatchPage `json:"data"`
+}
+
+type RunHistoryBatchPreviewData struct {
+	MaximumItems int64                        `json:"maximum_items"`
+	CanCreate    bool                         `json:"can_create"`
+	Items        []RunHistoryBatchPreviewItem `json:"items"`
+}
+
+type RunHistoryBatchPreviewItem struct {
+	RunId              string   `json:"run_id"`
+	ExpectedVersion    int64    `json:"expected_version"`
+	ExpectedGeneration int64    `json:"expected_generation"`
+	CanArchive         bool     `json:"can_archive"`
+	ProtectionReasons  []string `json:"protection_reasons"`
+}
+
+type RunHistoryBatchPreviewResp struct {
+	Code      string                     `json:"code"`
+	RequestId string                     `json:"request_id"`
+	Data      RunHistoryBatchPreviewData `json:"data"`
+}
+
+type RunHistoryBatchReceipt struct {
+	BatchId string `json:"batch_id"`
+}
+
+type RunHistoryBatchReceiptResp struct {
+	Code      string                 `json:"code"`
+	RequestId string                 `json:"request_id"`
+	Data      RunHistoryBatchReceipt `json:"data"`
+}
+
+type RunHistoryBatchReq struct {
+	BatchId string `path:"batch_id"`
+}
+
+type RunHistoryBatchResp struct {
+	Code      string              `json:"code"`
+	RequestId string              `json:"request_id"`
+	Data      RunHistoryBatchData `json:"data"`
+}
+
+type RunHistoryBatchSelection struct {
+	RunId              string `json:"run_id"`
+	ExpectedVersion    int64  `json:"expected_version"`
+	ExpectedGeneration int64  `json:"expected_generation"`
 }
 
 type RunHistoryChangeReq struct {

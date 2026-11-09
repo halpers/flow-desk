@@ -81,3 +81,7 @@ M7.1 的 PDF 解析器随 Agent 镜像安装，无需额外解析服务或 API k
 管理员登录后打开“账号与角色”，可管理本租户账号和角色。账号/角色变更会撤销受影响账号的全部会话，旧任务凭证也失效；当前账号需由其他管理员维护。角色采用基础角色加增量权限，见[M7.6](m7-accounts.md)。
 
 仅在可丢弃 mock 环境运行 `python scripts/check-accounts.py --env-file /path/to/disposable/.env --output work/accounts-check.json`，检查创建重放、密码重置、角色变更、会话撤销、禁用和分页。Go 集成测试自动创建并删除独立数据库；Chrome 用例为 flow-desk-web/tests/e2e/accounts.spec.ts。不要在生产运行合成验收脚本。
+
+## M7.26 任务历史批次
+
+运行时新增五项Go公开批次操作，仍只有浏览器→Go→Agent。Go迁移2026110903在现有一次性迁移作业执行；Agent没有新DDL或版本。批次统一登记、页面逐项推进，关闭后通过最近批次继续；没有后台定时归档器。只在可丢弃mock栈运行`python scripts/check-run-history-batch.py --env-file work/retention-ci.env --output work/run-history-batch.json`，该脚本会调整自身新建合成任务的时间，不能连接业务服务器。流程及回退见[服务器手册§36](../deploy/server.md#36-任务历史批量归档)。

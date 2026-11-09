@@ -688,6 +688,75 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/run-history-batches": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List currently authorized durable history batches | permission=admin/run:observe | auth=required */
+        get: operations["listRunHistoryBatches"];
+        put?: never;
+        /** Atomically register confirmed durable run history batch | permission=admin/run:observe | auth=required */
+        post: operations["createRunHistoryBatch"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/run-history-batches/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Preview bounded selected run histories with current authorization | permission=admin/run:observe | auth=required */
+        post: operations["previewRunHistoryBatch"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/run-history-batches/{batch_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read all authorized members and original operation results | permission=admin/run:observe | auth=required */
+        get: operations["getRunHistoryBatch"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/run-history-batches/{batch_id}/operations/{operation_id}/resume": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reconcile one existing history batch operation | permission=admin/run:observe | auth=required */
+        post: operations["resumeRunHistoryBatch"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/runs": {
         parameters: {
             query?: never;
@@ -3467,6 +3536,213 @@ export interface operations {
                                 source_updated_at: string;
                                 status: string;
                             }[];
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    listRunHistoryBatches: {
+        parameters: {
+            query: {
+                cursor?: string;
+                /** @example 10 */
+                limit: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            has_more: boolean;
+                            items: {
+                                actor_user_id: string;
+                                batch_id: string;
+                                completed_count: number;
+                                created_at: string;
+                                items: {
+                                    checkpoint_blob_count: number;
+                                    checkpoint_count: number;
+                                    checkpoint_write_count: number;
+                                    generation: number;
+                                    operation_id: string;
+                                    run_id: string;
+                                    status: string;
+                                    target: string;
+                                }[];
+                                status: string;
+                            }[];
+                            next_cursor: string;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    createRunHistoryBatch: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    confirm: boolean;
+                    items: {
+                        expected_generation: number;
+                        expected_version: number;
+                        run_id: string;
+                    }[];
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            batch_id: string;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    previewRunHistoryBatch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    run_ids: string[];
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            can_create: boolean;
+                            items: {
+                                can_archive: boolean;
+                                expected_generation: number;
+                                expected_version: number;
+                                protection_reasons: string[];
+                                run_id: string;
+                            }[];
+                            maximum_items: number;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    getRunHistoryBatch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                batch_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            actor_user_id: string;
+                            batch_id: string;
+                            completed_count: number;
+                            created_at: string;
+                            items: {
+                                checkpoint_blob_count: number;
+                                checkpoint_count: number;
+                                checkpoint_write_count: number;
+                                generation: number;
+                                operation_id: string;
+                                run_id: string;
+                                status: string;
+                                target: string;
+                            }[];
+                            status: string;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    resumeRunHistoryBatch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                batch_id: string;
+                operation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            actor_user_id: string;
+                            batch_id: string;
+                            completed_count: number;
+                            created_at: string;
+                            items: {
+                                checkpoint_blob_count: number;
+                                checkpoint_count: number;
+                                checkpoint_write_count: number;
+                                generation: number;
+                                operation_id: string;
+                                run_id: string;
+                                status: string;
+                                target: string;
+                            }[];
+                            status: string;
                         };
                         request_id?: string;
                     };

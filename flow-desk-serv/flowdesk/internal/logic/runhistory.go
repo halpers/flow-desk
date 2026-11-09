@@ -101,53 +101,7 @@ func ChangeRunHistory(ctx context.Context, s *svc.ServiceContext, req *types.Run
 	}
 	lifecycle, observationErr := GetRunLifecycle(ctx, s, req.RunId)
 	result, err := idempotentAuthorized(ctx, s, "run.history."+target, req.IdempotencyKey, req, 200, func(ctx context.Context, tx sqlx.Session) (types.RunHistoryOperationData, error) {
-		actor, run, err := historyCurrentTx(ctx, s, tx, req.RunId, true)
-		if err != nil {
-			return types.RunHistoryOperationData{}, err
-		}
-		if observationErr != nil {
-			return types.RunHistoryOperationData{}, observationErr
-		}
-		if !lifecycle.Agent.Available {
-			return types.RunHistoryOperationData{}, failure(409, "RUN_HISTORY_PROTECTED", "执行历史尚未建立可信绑定")
-		}
-		if run.Version != req.ExpectedVersion {
-			return types.RunHistoryOperationData{}, failure(409, "VERSION_CONFLICT", "任务状态已变化")
-		}
-		latest, err := s.RunHistoryOperationsModel.FindLatestTx(ctx, tx, actor.TenantId, run.Id)
-		generation := int64(0)
-		state := "live"
-		if err == nil {
-			generation = latest.Generation
-			state = latest.Target
-			if latest.Status == "pending" {
-				return types.RunHistoryOperationData{}, failure(409, "RUN_HISTORY_PENDING", "请继续已有的历史维护操作")
-			}
-		} else if !errors.Is(err, model.ErrNotFound) {
-			return types.RunHistoryOperationData{}, err
-		}
-		if req.ExpectedGeneration != generation || state == target {
-			return types.RunHistoryOperationData{}, failure(409, "RUN_HISTORY_CHANGED", "历史存储状态已变化，请刷新")
-		}
-		if target == "archived" {
-			if lifecycle.Agent.CheckpointCount+lifecycle.Agent.CheckpointBlobCount+lifecycle.Agent.CheckpointWriteCount > maximumHistoryCheckpoints {
-				return types.RunHistoryOperationData{}, failure(409, "RUN_HISTORY_LIMIT", "任务检查点超过单次维护上限")
-			}
-			if err = historyBusinessProtected(ctx, s, tx, run); err != nil {
-				return types.RunHistoryOperationData{}, err
-			}
-			if len(lifecycle.Agent.ProtectionReasons) > 0 {
-				return types.RunHistoryOperationData{}, failure(409, "RUN_HISTORY_PROTECTED", "执行历史仍受恢复保护")
-			}
-		}
-		operation := &model.RunHistoryOperations{Id: orderedID(), TenantId: actor.TenantId, RunId: run.Id, ActorUserId: actor.Id, Generation: generation + 1, Target: target, Status: "pending"}
-		if err = s.RunHistoryOperationsModel.InsertTx(ctx, tx, operation); err != nil {
-			return types.RunHistoryOperationData{}, err
-		}
-		if err = s.AuditEventsModel.InsertTx(ctx, tx, &model.AuditEvents{Id: orderedID(), TenantId: actor.TenantId, ActorUserId: actor.Id, Operation: "run.history.request", ObjectType: "run", ObjectId: run.Id, Source: "manual", Summary: fmt.Sprintf("Requested %s history generation %d", target, operation.Generation)}); err != nil {
-			return types.RunHistoryOperationData{}, err
-		}
-		return historyOperation(operation), nil
+		return prepareRunHistoryTx(ctx, s, tx, req, target, lifecycle, observationErr)
 	}, func(ctx context.Context, tx sqlx.Session, receipt *types.RunHistoryOperationData) error {
 		_, _, err := historyCurrentTx(ctx, s, tx, req.RunId, true)
 		if receipt.RunId != req.RunId || receipt.Target != target {
@@ -255,4 +209,54 @@ func ResumeRunHistory(ctx context.Context, s *svc.ServiceContext, id, operationI
 		return types.RunHistoryOperationData{}, err
 	}
 	return result, nil
+}
+
+func prepareRunHistoryTx(ctx context.Context, s *svc.ServiceContext, tx sqlx.Session, req *types.RunHistoryChangeReq, target string, lifecycle types.RunLifecycleData, observationErr error) (types.RunHistoryOperationData, error) {
+	actor, run, err := historyCurrentTx(ctx, s, tx, req.RunId, true)
+	if err != nil {
+		return types.RunHistoryOperationData{}, err
+	}
+	if observationErr != nil {
+		return types.RunHistoryOperationData{}, observationErr
+	}
+	if !lifecycle.Agent.Available {
+		return types.RunHistoryOperationData{}, failure(409, "RUN_HISTORY_PROTECTED", "执行历史尚未建立可信绑定")
+	}
+	if run.Version != req.ExpectedVersion {
+		return types.RunHistoryOperationData{}, failure(409, "VERSION_CONFLICT", "任务状态已变化")
+	}
+	latest, err := s.RunHistoryOperationsModel.FindLatestTx(ctx, tx, actor.TenantId, run.Id)
+	generation := int64(0)
+	state := "live"
+	if err == nil {
+		generation = latest.Generation
+		state = latest.Target
+		if latest.Status == "pending" {
+			return types.RunHistoryOperationData{}, failure(409, "RUN_HISTORY_PENDING", "请继续已有的历史维护操作")
+		}
+	} else if !errors.Is(err, model.ErrNotFound) {
+		return types.RunHistoryOperationData{}, err
+	}
+	if req.ExpectedGeneration != generation || state == target {
+		return types.RunHistoryOperationData{}, failure(409, "RUN_HISTORY_CHANGED", "历史存储状态已变化，请刷新")
+	}
+	if target == "archived" {
+		if lifecycle.Agent.CheckpointCount+lifecycle.Agent.CheckpointBlobCount+lifecycle.Agent.CheckpointWriteCount > maximumHistoryCheckpoints {
+			return types.RunHistoryOperationData{}, failure(409, "RUN_HISTORY_LIMIT", "任务检查点超过单次维护上限")
+		}
+		if err = historyBusinessProtected(ctx, s, tx, run); err != nil {
+			return types.RunHistoryOperationData{}, err
+		}
+		if len(lifecycle.Agent.ProtectionReasons) > 0 {
+			return types.RunHistoryOperationData{}, failure(409, "RUN_HISTORY_PROTECTED", "执行历史仍受恢复保护")
+		}
+	}
+	operation := &model.RunHistoryOperations{Id: orderedID(), TenantId: actor.TenantId, RunId: run.Id, ActorUserId: actor.Id, Generation: generation + 1, Target: target, Status: "pending"}
+	if err = s.RunHistoryOperationsModel.InsertTx(ctx, tx, operation); err != nil {
+		return types.RunHistoryOperationData{}, err
+	}
+	if err = s.AuditEventsModel.InsertTx(ctx, tx, &model.AuditEvents{Id: orderedID(), TenantId: actor.TenantId, ActorUserId: actor.Id, Operation: "run.history.request", ObjectType: "run", ObjectId: run.Id, Source: "manual", Summary: fmt.Sprintf("Requested %s history generation %d", target, operation.Generation)}); err != nil {
+		return types.RunHistoryOperationData{}, err
+	}
+	return historyOperation(operation), nil
 }
