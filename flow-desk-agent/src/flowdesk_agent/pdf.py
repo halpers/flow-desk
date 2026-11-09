@@ -17,8 +17,10 @@ from flowdesk_agent.pdf_limits import (
     MAX_PDF_PAGES,
     MAX_TEXT_BYTES,
     MAX_TEXT_CHARACTERS,
+    OCR_COLUMNS_PARSER_VERSION,
     OCR_MODES,
     OCR_PARSER_VERSION,
+    OCR_TABLE_PARSER_VERSION,
     OCR_TIMEOUT_SECONDS,
     PARSE_TIMEOUT_SECONDS,
     PARSER_VERSION,
@@ -58,7 +60,12 @@ class PDFPage(BaseModel):
 class PDFManifest(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
     parser_version: Literal[
-        PARSER_VERSION, OCR_PARSER_VERSION, "pypdf-6.21.4-columns-v1", "pypdf-6.21.4-table-v1"
+        PARSER_VERSION,
+        OCR_PARSER_VERSION,
+        OCR_COLUMNS_PARSER_VERSION,
+        OCR_TABLE_PARSER_VERSION,
+        "pypdf-6.21.4-columns-v1",
+        "pypdf-6.21.4-table-v1",
     ]
     pages: list[PDFPage] = Field(min_length=1, max_length=MAX_PDF_PAGES)
 
@@ -74,7 +81,11 @@ class PDFManifest(BaseModel):
             or len(content.encode()) > MAX_TEXT_BYTES
         ):
             raise ValueError("invalid extracted text")
-        if self.parser_version == OCR_PARSER_VERSION:
+        if self.parser_version in (
+            OCR_PARSER_VERSION,
+            OCR_COLUMNS_PARSER_VERSION,
+            OCR_TABLE_PARSER_VERSION,
+        ):
             ocr_count = sum(page.extraction_method == "ocr" for page in self.pages)
             attempted = sum(page.extraction_method in ("ocr", "empty") for page in self.pages)
             if not 1 <= ocr_count <= MAX_OCR_PAGES or attempted > MAX_OCR_PAGES:
@@ -119,11 +130,7 @@ def stop_worker(process):
 
 
 async def extract_pdf(raw: bytes, ocr_mode: str = "off", pdf_layout: str = "plain") -> PDFManifest:
-    if (
-        ocr_mode not in OCR_MODES
-        or pdf_layout not in PDF_LAYOUTS
-        or (pdf_layout != "plain" and ocr_mode != "off")
-    ):
+    if ocr_mode not in OCR_MODES or pdf_layout not in PDF_LAYOUTS:
         raise PDFError("PDF_INVALID")
     if len(raw) > MAX_PDF_BYTES:
         raise PDFError("PDF_LIMIT_EXCEEDED")

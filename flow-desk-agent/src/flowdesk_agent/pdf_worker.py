@@ -19,6 +19,7 @@ from flowdesk_agent.pdf_limits import (
     OCR_ADDRESS_SPACE_BYTES,
     OCR_CPU_SECONDS,
     OCR_FILE_BYTES,
+    OCR_LAYOUT_PARSERS,
     OCR_MODES,
     OCR_PARSER_VERSION,
     PARSER_VERSION,
@@ -29,7 +30,7 @@ from flowdesk_agent.pdf_limits import (
 def main():
     mode = sys.argv[1] if len(sys.argv) >= 2 else "off"
     layout = sys.argv[2] if len(sys.argv) >= 3 else "plain"
-    if mode not in OCR_MODES or layout not in PDF_LAYOUTS or (layout != "plain" and mode != "off"):
+    if mode not in OCR_MODES or layout not in PDF_LAYOUTS:
         return fail("PDF_INVALID")
     if sys.platform == "linux":
         import resource
@@ -60,6 +61,8 @@ def main():
         characters = 0
         byte_count = 0
         for number, page in enumerate(reader.pages, 1):
+            if layout != "plain" and page.rotation % 360:
+                return fail("PDF_LAYOUT_UNSUPPORTED")
             try:
                 extracted = (
                     ""
@@ -93,7 +96,7 @@ def main():
                 for page in pages:
                     page["extraction_method"] = "text" if page["text"].strip() else "empty"
                 for page in needed:
-                    text = unicodedata.normalize("NFC", recognize_page(page["page_number"]))
+                    text = unicodedata.normalize("NFC", recognize_page(page["page_number"], layout))
                     text = "".join(
                         char
                         for char in text
@@ -103,7 +106,7 @@ def main():
                     content = "\n".join(item["text"] for item in pages)
                     if len(content) > MAX_TEXT_CHARACTERS or len(content.encode()) > MAX_TEXT_BYTES:
                         return fail("PDF_LIMIT_EXCEEDED")
-            except RecognitionError as exc:
+            except (RecognitionError, LayoutError) as exc:
                 return fail(str(exc))
         if not any(page["text"].strip() for page in pages):
             return fail("PDF_OCR_REQUIRED" if mode == "off" else "PDF_OCR_EMPTY")
@@ -114,7 +117,7 @@ def main():
         sys.stdout.buffer.write(
             json.dumps(
                 {
-                    "parser_version": OCR_PARSER_VERSION
+                    "parser_version": OCR_LAYOUT_PARSERS.get(layout, OCR_PARSER_VERSION)
                     if used_ocr
                     else LAYOUT_PARSERS.get(layout, PARSER_VERSION),
                     "pages": pages,

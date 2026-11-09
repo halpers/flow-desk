@@ -46,7 +46,9 @@ def check_available():
         raise RecognitionError("PDF_OCR_UNAVAILABLE") from None
 
 
-def recognize_page(number):
+def recognize_page(number, layout="plain"):
+    if layout not in ("plain", "columns", "table"):
+        raise RecognitionError("PDF_LAYOUT_UNSUPPORTED")
     try:
         subprocess.run(
             [
@@ -79,17 +81,25 @@ def recognize_page(number):
                 "--oem",
                 "1",
                 "--psm",
-                "3",
+                "3" if layout == "plain" else "11",
                 "--dpi",
                 "300",
+                *([] if layout == "plain" else ["tsv"]),
             ],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             check=True,
             timeout=RECOGNIZE_TIMEOUT_SECONDS,
         )
-        with Path("result.txt").open("rb") as source:
-            raw = source.read(MAX_TEXT_BYTES + 1)
+        limit = MAX_TEXT_BYTES
+        if layout != "plain":
+            from flowdesk_agent.ocr_layout import MAX_TSV_BYTES, reconstruct
+
+            limit = MAX_TSV_BYTES
+        with Path("result.txt" if layout == "plain" else "result.tsv").open("rb") as source:
+            raw = source.read(limit + 1)
+        if layout != "plain":
+            return reconstruct(raw, layout)
         if len(raw) > MAX_TEXT_BYTES:
             raise RecognitionError("PDF_LIMIT_EXCEEDED")
         text = raw.decode("utf-8")
@@ -101,5 +111,5 @@ def recognize_page(number):
     except (OSError, UnicodeError, subprocess.CalledProcessError):
         raise RecognitionError("PDF_OCR_FAILED") from None
     finally:
-        for filename in ("page.pgm", "result.txt"):
+        for filename in ("page.pgm", "result.txt", "result.tsv"):
             Path(filename).unlink(missing_ok=True)

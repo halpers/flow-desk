@@ -66,7 +66,7 @@ def test_unsupported_layout_fails_without_plain_fallback(filename, mode):
 
 def test_layout_rejects_invalid_combinations_and_unbounded_width():
     raw = (FIXTURES / "layout-columns.pdf").read_bytes()
-    for ocr, layout in [("off", "guess"), ("auto", "columns"), ("force", "table")]:
+    for ocr, layout in [("off", "guess"), ("untrusted", "columns")]:
         with pytest.raises(PDFError, match="PDF_INVALID"):
             asyncio.run(extract_pdf(raw, ocr, layout))
     writer = PdfWriter()

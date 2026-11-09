@@ -95,7 +95,8 @@ def test_ocr_manifest_rejects_forged_or_missing_provenance():
 
 @pytest.mark.skipif(sys.platform != "linux", reason="Linux process groups")
 @pytest.mark.parametrize("cancel", [False, True])
-def test_ocr_timeout_and_cancellation_reap_group_and_remove_directory(monkeypatch, cancel):
+@pytest.mark.parametrize("layout", ["plain", "columns", "table"])
+def test_ocr_timeout_and_cancellation_reap_group_and_remove_directory(monkeypatch, cancel, layout):
     create = subprocess.Popen
     children, directories = [], []
     monkeypatch.setattr(pdf, "OCR_TIMEOUT_SECONDS", 0.5)
@@ -118,7 +119,7 @@ def test_ocr_timeout_and_cancellation_reap_group_and_remove_directory(monkeypatc
 
     async def scenario():
         nonlocal descendant
-        task = asyncio.create_task(pdf.extract_pdf(b"%PDF-1.7", "auto"))
+        task = asyncio.create_task(pdf.extract_pdf(b"%PDF-1.7", "auto", layout))
         for _ in range(100):
             if directories and (directories[0] / "descendant.pid").exists():
                 descendant = int((directories[0] / "descendant.pid").read_text())

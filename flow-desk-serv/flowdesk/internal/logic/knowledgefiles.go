@@ -23,6 +23,8 @@ const pdfParserVersion = "pypdf-6.21.4-text-v1"
 const columnsParserVersion = "pypdf-6.21.4-columns-v1"
 const tableParserVersion = "pypdf-6.21.4-table-v1"
 const ocrParserVersion = "pypdf-6.21.4-tesseract-5.5.0-ocr-v1"
+const ocrColumnsParserVersion = "pypdf-6.21.4-tesseract-5.5.0-columns-v1"
+const ocrTableParserVersion = "pypdf-6.21.4-tesseract-5.5.0-table-v1"
 const maxOCRPages = 10
 
 type knowledgeFile struct {
@@ -53,7 +55,7 @@ func knowledgeUploadWithLayout(filename, content, encoded, mode, layout string) 
 	if layout == "" {
 		layout = "plain"
 	}
-	if !slices.Contains([]string{"plain", "columns", "table"}, layout) || (layout != "plain" && (file.format != "pdf" || file.ocrMode != "off")) {
+	if !slices.Contains([]string{"plain", "columns", "table"}, layout) || (layout != "plain" && file.format != "pdf") {
 		return knowledgeFile{}, errArgument
 	}
 	file.pdfLayout = layout
@@ -73,15 +75,19 @@ func ocrPageCount(pages []types.KnowledgePageText) int64 {
 func validPDFProvenance(row *model.DocumentVersions, req *types.IndexCompleteReq) bool {
 	if row.PdfLayout != "" && row.PdfLayout != "plain" {
 		expected := map[string]string{"columns": columnsParserVersion, "table": tableParserVersion}[row.PdfLayout]
-		if expected == "" || req.ParserVersion != expected || row.OcrMode != "off" {
+		if expected == "" {
 			return false
 		}
-		for _, page := range req.PageTexts {
-			if page.ExtractionMethod != "" {
-				return false
+		if req.ParserVersion == expected && row.OcrMode != "force" {
+			for _, page := range req.PageTexts {
+				if page.ExtractionMethod != "" {
+					return false
+				}
 			}
+			return true
 		}
-		return true
+		jointParser := map[string]string{"columns": ocrColumnsParserVersion, "table": ocrTableParserVersion}[row.PdfLayout]
+		return req.ParserVersion == jointParser && validOCRProvenance(row, req)
 	}
 	if req.ParserVersion == pdfParserVersion {
 		if row.OcrMode == "force" {
@@ -94,7 +100,11 @@ func validPDFProvenance(row *model.DocumentVersions, req *types.IndexCompleteReq
 		}
 		return true
 	}
-	if req.ParserVersion != ocrParserVersion || (row.OcrMode != "auto" && row.OcrMode != "force") || ocrPageCount(req.PageTexts) == 0 {
+	return req.ParserVersion == ocrParserVersion && validOCRProvenance(row, req)
+}
+
+func validOCRProvenance(row *model.DocumentVersions, req *types.IndexCompleteReq) bool {
+	if (row.OcrMode != "auto" && row.OcrMode != "force") || ocrPageCount(req.PageTexts) == 0 {
 		return false
 	}
 	attempted := 0

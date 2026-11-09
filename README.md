@@ -1,5 +1,7 @@
 # FlowDesk（智办台）
 
+[OCR与版面联合处理](docs/m7-ocr-layout.md)支持扫描双栏先左后右、简单表格保持同行及原生/扫描混合页，激活同时要求核对OCR和阅读顺序。支持范围和已知误识别见专项说明；配套版本升级与回退见[服务器手册§35](deploy/server.md#35-ocr与版面联合处理)。
+
 [Agent 独立迁移](docs/m7-agent-migration.md)将建表、checkpointer 升级和 HNSW 维护交给一次性迁移服务；运行 Agent 只保留必要读写权限。已有数据卷首次升级须先执行[服务器手册§33](deploy/server.md#33-agent-独立迁移与运行权限收紧)的所有权升级。
 
 [语义检索规模优化](docs/m7-retrieval-scale.md)支持显式维护租户隔离的HNSW索引；默认精确检索，未就绪或候选不足时回退。合成规模基准及召回差异见专项文档。
@@ -81,7 +83,7 @@ M1–M4 已交付：登录与租户权限、持久化任务/SSE、版本化知�
 
 M6.1 增加独立语义 embedding、全文 RRF 与可选重排，保留字符基线及配置回退；配置和索引升级见[语义 RAG](docs/m6-semantic-rag.md)。M6.2 提供官方 SDK 的[MCP 工具发现与调用](docs/m6-mcp.md)，保持 Go 授权与审批事务。M6.3 提供[固定镜像发布/回滚、TLS 与本地监控](docs/m6-deployment-monitoring.md)。实测见[M6 报告](reports/m6/summary.md)。团队共享权限已在 M6.4 交付。
 
-M7.1 增加[文本 PDF 上传、提取文本预览与物理页码引用](docs/m7-knowledge-files.md)，保留版本激活、权限及撤回校验。M7.3 增加[中英文扫描 PDF OCR](docs/m7-ocr.md)，识别后由管理员核对并确认激活。M7.4 增加[可选 S3 原文件归档、授权下载与恢复](docs/m7-object-storage.md)，默认仍存 PostgreSQL，运维步骤见[文件存储部署](deploy/source-storage.md)。M7.5 增加[规则双栏阅读顺序和表格文本行列对齐](docs/m7-pdf-layout.md)，需要选择方式并核对后激活。任意复杂版面还原和正式服务器上线仍待后续实施。性能数字仅适用于报告中的本机合成环境。
+M7.1 增加[文本 PDF 上传、提取文本预览与物理页码引用](docs/m7-knowledge-files.md)，保留版本激活、权限及撤回校验。M7.3 增加[中英文扫描 PDF OCR](docs/m7-ocr.md)，识别后由管理员核对并确认激活。M7.4 增加[可选 S3 原文件归档、授权下载与恢复](docs/m7-object-storage.md)，默认仍存 PostgreSQL，运维步骤见[文件存储部署](deploy/source-storage.md)。M7.5 增加[规则双栏阅读顺序和表格文本行列对齐](docs/m7-pdf-layout.md)，M7.24扩展为可与auto/force OCR联合使用，需要核对文字和版面后激活。任意复杂版面、跨页合并表格、手写和正式服务器上线仍待后续实施。性能数字仅适用于报告中的本机合成环境。
 
 M7.2 增加[任务运营台](docs/m7-run-operations.md)：任务筛选、脱敏节点/工具/模型用量记录，以及没有准备过业务动作的失败任务重试。主管可查看当前授权范围内的租户任务元数据，原会话和办理权限仍归所有者。
 

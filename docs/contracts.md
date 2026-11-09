@@ -385,7 +385,14 @@ POST 同一前缀的 `/archive` 返回 202，`/restore-source` 返回 200；均�
 
 ## M7.5 PDF 阅读方式
 
-上传可选 pdf_layout（plain/columns/table，缺省 plain），版本元数据与内部 source 返回该不可变选择。非 plain 只接受 PDF 与 ocr_mode=off，不合法组合返回 INVALID_ARGUMENT（400）；新 parser 分别为 pypdf-6.21.4-columns-v1、pypdf-6.21.4-table-v1，回调必须与版本选择一致且无 OCR 来源。非 plain 激活必须有 confirm_layout=true，否则 PDF_LAYOUT_REVIEW_REQUIRED（409）；审核及激活同事务审计。PDF_LAYOUT_UNSUPPORTED 为已持久化索引失败码，禁止自动降级。旧 plain/OCR manifest 与物理页码引用保持兼容，默认上传保留历史幂等摘要形状。预览仍只返回分页文本，不返回结构化单元格；详见[M7.5](m7-pdf-layout.md)。
+上传可选 pdf_layout（plain/columns/table，缺省 plain），版本元数据与内部 source 返回该不可变选择。非 plain 只接受 PDF，不合法组合返回 INVALID_ARGUMENT（400）。原生 parser 分别为 pypdf-6.21.4-columns-v1、pypdf-6.21.4-table-v1，回调必须与版本选择一致且无 OCR 来源；M7.24扩展auto/force联合行为见下节。非 plain 激活必须有 confirm_layout=true，否则 PDF_LAYOUT_REVIEW_REQUIRED（409）；审核及激活同事务审计。PDF_LAYOUT_UNSUPPORTED 为已持久化索引失败码，禁止自动降级。旧 plain/OCR manifest 与物理页码引用保持兼容，默认上传保留历史幂等摘要形状。预览仍只返回分页文本，不返回结构化单元格；详见[M7.5](m7-pdf-layout.md)。
+
+## M7.24 OCR与版面联合契约
+
+两个PDF上传端点的既有ocr_mode和pdf_layout可组合为auto/force与columns/table；没有新增HTTP字段或SSE类型。两个选择均参与不可变版本及幂等摘要，同键更改任何选择仍返回IDEMPOTENCY_CONFLICT。auto只对无文字页OCR，有文本页保留原生版面；force必须识别全部物理页，仍受10个OCR页限制。实际联合OCR manifest使用pypdf-6.21.4-tesseract-5.5.0-columns-v1或pypdf-6.21.4-tesseract-5.5.0-table-v1，必须含至少一页ocr及完整text/ocr/empty来源，页号连续且与原物理页一致。force不得包含text页；auto没有实际OCR时继续接受原生版面parser，不伪造OCR标记。
+
+Go回调复核模式、对应parser、完整来源、页数及内容上限；首次结果冻结后只允许一致重放，持久错误与成功结果都复用原索引恢复路径。联合OCR版本激活同时要求当前管理员提交confirm_ocr=true及confirm_layout=true，两条审核审计与激活同事务。缺少OCR确认返回OCR_REVIEW_REQUIRED，缺少版面确认返回PDF_LAYOUT_REVIEW_REQUIRED（均409），任何一个确认不能代替另一个。引用和历史消息继续使用Go验证的物理页及extraction_method，撤回沿用EVIDENCE_REVOKED。仅支持有界规则双栏和简单表格行文本，不保证字符准确率、语义单元格或跨页表格关联；限制和固定原生样本见[M7.24](m7-ocr-layout.md)。
+
 ## M7.6 账号与角色管理
 
 机器源为 api/accounts.api。/admin/users 支持有界游标列表与创建；PUT /admin/users/:user_id 同时更新名称/启停/多角色，POST 其 reset-password 子路由重置密码；写需 Idempotency-Key，更新需 expected_revision。/admin/roles 返回内置/自定义角色和增量权限目录，POST 创建自定义角色，PUT /admin/roles/:role_id 修改/禁用自定义角色。内置角色只读，自定义权限从目录取并集，账号至少一个内置基础角色。管理读取与重放复核当前授权；版本冲突 409、内置/自身保护及最后管理员保护 409、重复账号名 409，不暴露另一租户的账号信息。账号响应不含凭据，密码 12–72 UTF-8 字节且至少一个字母和数字；HTTP 登录仍兼容历史密码。详见[设计](m7-accounts.md)。

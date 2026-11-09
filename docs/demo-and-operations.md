@@ -20,7 +20,7 @@
 
 ## 配置、升级与恢复
 
-环境配置、数据库密码、JWT/服务令牌和模型 key 均保留在忽略的 `.env`。运行角色分别限制在 business 与 agent/knowledge；备份及迁移使用 owner，不能把 owner 连接串作为应用配置。当前本地 Agent 运行角色还承担自身 schema 迁移，生产需独立迁移作业，这是部署改造项。
+环境配置、数据库密码、JWT/服务令牌和模型 key 均保留在忽略的 `.env`。Go运行角色限制在business；Agent运行角色只有必要DML/schema USAGE，由独立fd_agent_migrator在一次性agent-migrate作业中完成应用及checkpointer迁移。owner仅用于初始化、备份及明确维护，运行容器不接收owner或迁移凭据。新旧卷升级、只读门禁及回退限制见[独立迁移手册](m7-agent-migration.md)。
 
 升级前先备份，记录代码/镜像和迁移版本；先部署兼容旧字段的程序，再开放新接口。禁止自动执行 destructive Down。当前保留 `read-v1`/`ticket-v1`/`ticket-v2` 命令兼容，但没有提供任意图版本迁移器；变更图结构或模型 profile 前先处理活跃/待确认任务，不能假定旧检查点可跨任意版本恢复。Linux 运维的 IP 入口、固定镜像和备份命令见[服务器部署手册](../deploy/server.md)。
 

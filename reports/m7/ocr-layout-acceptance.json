@@ -1,0 +1,31 @@
+{
+  "phase": "M7.24",
+  "profile": "mock",
+  "checks": [
+    "native column/table and mixed text/OCR pages with immutable upload replay",
+    "both server-enforced reviews and operator denial",
+    "physical page-2 OCR citation and withdrawal revocation",
+    "ambiguous three-column scan fails durably without plain fallback"
+  ],
+  "fixtures": [
+    {
+      "filename": "ocr-layout-columns.pdf",
+      "sha256": "20baa50224fd7b10deec814388381b5784cc45414135950a7ed3e39bfdb30193",
+      "pages": 2,
+      "parser": "pypdf-6.21.4-tesseract-5.5.0-columns-v1"
+    },
+    {
+      "filename": "ocr-layout-table.pdf",
+      "sha256": "56dab211595e97286a6d95f8d0af3a1944bbc6a1ce52e3688130ee1b8533d4d4",
+      "pages": 1,
+      "parser": "pypdf-6.21.4-tesseract-5.5.0-table-v1"
+    },
+    {
+      "filename": "ocr-layout-mixed.pdf",
+      "sha256": "678f2b919782058ace7973b270a7150eecbc23fb5063d0ceda48a2178cbc2359",
+      "pages": 2,
+      "parser": "pypdf-6.21.4-tesseract-5.5.0-columns-v1"
+    }
+  ],
+  "completed_at": "2026-11-09T05:36:41.754038+00:00"
+}

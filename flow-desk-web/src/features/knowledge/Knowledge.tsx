@@ -80,7 +80,7 @@ function DocumentVersions({
   const [review, setReview] = useState<{
     id: string;
     expected: number;
-    kind: "ocr" | "layout";
+    kind: "ocr" | "layout" | "ocr_layout";
   } | null>(null);
   const [confirmed, setConfirmed] = useState(false);
   const [preview, setPreview] = useState<Models["VersionPagesData"] | null>(
@@ -292,7 +292,12 @@ function DocumentVersions({
                 setReview({
                   id: version.id,
                   expected: document.version,
-                  kind: version.ocr_page_count > 0 ? "ocr" : "layout",
+                  kind:
+                    version.ocr_page_count > 0
+                      ? version.pdf_layout && version.pdf_layout !== "plain"
+                        ? "ocr_layout"
+                        : "ocr"
+                      : "layout",
                 });
                 return;
               }
@@ -313,10 +318,7 @@ function DocumentVersions({
           aria-label={`${document.title} PDF 识别方式`}
           value={ocrMode}
           options={ocrOptions}
-          onChange={(value) => {
-            setOcrMode(value);
-            if (value !== "off") setPdfLayout("plain");
-          }}
+          onChange={setOcrMode}
           disabled={busy}
           style={{ width: 200 }}
         />
@@ -325,7 +327,7 @@ function DocumentVersions({
           value={pdfLayout}
           options={layoutOptions}
           onChange={setPdfLayout}
-          disabled={busy || ocrMode !== "off"}
+          disabled={busy}
           style={{ width: 180 }}
         />
         <label>
@@ -517,7 +519,11 @@ function DocumentVersions({
       </Modal>
       <Modal
         title={
-          review?.kind === "layout" ? "核对 PDF 阅读顺序" : "核对 OCR 文本"
+          review?.kind === "ocr_layout"
+            ? "核对 OCR 文本和阅读顺序"
+            : review?.kind === "layout"
+              ? "核对 PDF 阅读顺序"
+              : "核对 OCR 文本"
         }
         open={review !== null}
         confirmLoading={busy}
@@ -534,25 +540,31 @@ function DocumentVersions({
             (await change(`/documents/${document.id}/activate`, {
               version_id: review.id,
               expected_version: review.expected,
-              confirm_ocr: review.kind === "ocr",
-              confirm_layout: review.kind === "layout",
+              confirm_ocr:
+                review.kind === "ocr" || review.kind === "ocr_layout",
+              confirm_layout:
+                review.kind === "layout" || review.kind === "ocr_layout",
             }))
           )
             setReview(null);
         }}
       >
         <p>
-          {review?.kind === "layout"
-            ? "请对照原文件检查双栏先后顺序及表格行列对应关系，再确认发布。复杂跨栏、合并单元格和扫描表格可能无法正确还原。"
-            : "OCR 可能误识别数字和条款。请先使用“预览提取文本”核对，再确认发布。"}
+          {review?.kind === "ocr_layout"
+            ? "请对照原文件核对 OCR 字词、数字和条款，并检查双栏顺序或表格行列。规则版面可能不适合跨栏、合并单元格或手写。"
+            : review?.kind === "layout"
+              ? "请对照原文件检查双栏先后顺序及表格行列对应关系，再确认发布。复杂跨栏、合并单元格和扫描表格可能无法正确还原。"
+              : "OCR 可能误识别数字和条款。请先使用“预览提取文本”核对，再确认发布。"}
         </p>
         <Checkbox
           checked={confirmed}
           onChange={(event) => setConfirmed(event.target.checked)}
         >
-          {review?.kind === "layout"
-            ? "我已核对双栏顺序和表格行列"
-            : "我已核对 OCR 提取文本"}
+          {review?.kind === "ocr_layout"
+            ? "我已核对 OCR 文本、双栏顺序和表格行列"
+            : review?.kind === "layout"
+              ? "我已核对双栏顺序和表格行列"
+              : "我已核对 OCR 提取文本"}
         </Checkbox>
         {error && <Alert type="error" title={error} />}
       </Modal>
@@ -763,7 +775,6 @@ export function Knowledge({ user }: { user: User }) {
               style={{ width: 220, marginRight: 8 }}
               onChange={(value) => {
                 setOcrMode(value);
-                if (value !== "off") setPdfLayout("plain");
                 key.current = newId();
               }}
             />
@@ -771,7 +782,7 @@ export function Knowledge({ user }: { user: User }) {
               aria-label="PDF 阅读方式"
               value={pdfLayout}
               options={layoutOptions}
-              disabled={busy || ocrMode !== "off"}
+              disabled={busy}
               style={{ width: 180, marginRight: 8 }}
               onChange={(value) => {
                 setPdfLayout(value);

@@ -1,10 +1,10 @@
 # M7.5 PDF 阅读顺序与表格文本
 
-已增加版本级 `pdf_layout`：`plain`（缺省，既有解析）、`columns`（规则双栏，先左后右）、`table`（按物理行保留表格水平对齐）。只支持有文本层的水平文字 PDF；非 plain 暂不与 OCR 合用。每个版本固定同一种方式，不做自动模式猜测。复杂合并单元格、任意多栏、跨页表格语义和手写仍不属于本阶段范围。
+已增加版本级 `pdf_layout`：`plain`（缺省，既有解析）、`columns`（规则双栏，先左后右）、`table`（按物理行保留表格水平对齐）。本节记录M7.5的原生文本层实现；M7.24进一步支持与auto/force OCR联合使用，见[联合处理](m7-ocr-layout.md)及[服务器手册§35](../deploy/server.md#35-ocr与版面联合处理)。每个版本固定同一种方式，不做自动模式猜测。复杂合并单元格、任意多栏、跨页表格语义和手写仍不属于当前范围。
 
 使用已固定 pypdf 6.21.4 的 layout 提取模式生成按物理行排列的等宽文本。table 保留水平空白和行序；columns 只在存在唯一稳定栏间空白、足够成对正文行时重排，保留页眉/页脚与段内全宽分隔行。双栏每页至少三组成对行，且不少于有文字行的一半；栏间至少三个空格。每行最多 240 个字符、每页最多 20,000 次非空文字片段回调。页旋转、倾斜/镜像文字、栏间歧义或超宽返回 PDF_LAYOUT_UNSUPPORTED，超资源返回 PDF_LIMIT_EXCEEDED；不自动降级。沿用 2 MiB/50 页/100,000 字符、8 秒总墙钟、Linux 384 MiB 地址空间和 5 秒 CPU 限制。原理及限制参考 [pypdf 官方文本提取文档](https://pypdf.readthedocs.io/en/stable/user/extract-text.html)。
 
-Go 迁移 `2026110502_pdf_layout.sql` 保存不可变选择，非 plain 与非 PDF/OCR 的组合同时受应用和数据库约束。选择纳入上传幂等摘要，默认 plain 保留新增字段之前的摘要形状；内部 source 传给 Python。解析器版本为 pypdf-6.21.4-columns-v1 或 pypdf-6.21.4-table-v1，Go 回调复核选择、parser 与空 OCR 来源一致。manifest、页码、索引代次隔离、S3 原件读取和回调恢复沿用现有机制，重试复用已持久化结果。默认旧版本及旧 parser 继续可读，不重建已有索引。
+Go 迁移 `2026110502_pdf_layout.sql` 保存不可变选择；非PDF继续禁止非plain，初期OCR互斥由M7.24的`2026110902_ocr_layout.sql`放开。选择纳入上传幂等摘要，默认 plain 保留新增字段之前的摘要形状；内部 source 传给 Python。原生解析器版本为 pypdf-6.21.4-columns-v1 或 pypdf-6.21.4-table-v1，Go 回调复核选择、parser 与空 OCR 来源一致；联合OCR使用独立parser和完整逐页来源。manifest、页码、索引代次隔离、S3 原件读取和回调恢复沿用现有机制，重试复用已持久化结果。默认旧版本及旧 parser 继续可读，不重建已有索引。
 
 非 plain 版本需管理员预览核对并提交 `confirm_layout=true` 后激活，缺少确认返回 PDF_LAYOUT_REVIEW_REQUIRED（409），确认 OCR 不能代替确认版面。服务端强制确认字段，无法证明人实际阅读过原件；审核与激活同事务记录 knowledge.layout_review。预览保留等宽空白且横向滚动；引用继续绑定不可变物理页，不由模型生成页码或改变提取文本。撤回照常限制引用与历史消息。
 

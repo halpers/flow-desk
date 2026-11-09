@@ -285,7 +285,14 @@ Go 迁移 2026110406_knowledge_ocr.sql 为 document_versions 增加 ocr_mode（�
 上传事务同时保存原文件、索引任务及可选归档任务；网络操作在事务外进行。切换定位时先锁版本，再校验并锁 outbox 当前 attempt/有效 lease，CAS 更新同 epoch 的数据库行。恢复只在原对象长度/hash 正确且当前授权有效时写回字节、递增 epoch；旧归档 payload 自动失效。死信再投递保留递增 attempt_count，每 8 次失败进入死信，禁止重置隔离代次。归档和恢复不改内容 hash、提取 manifest、激活指针或引用。无自动对象删除/GC；Down 保留全部原文件定位和审计。
 ## M7.5 不可变 PDF 阅读方式
 
-Go 迁移 `2026110502_pdf_layout.sql` 为 document_versions 增加 pdf_layout，默认 plain，数据库约束仅允许 plain/columns/table；非 plain 必须为 PDF 且 ocr_mode=off。选择通过上传幂等摘要和内部 source 传递，改变方式须另建版本；旧 INSERT 采用数据库默认值，现有 Go InsertTx 对空值归一化。原件 hash、存储定位和物理页号不变，首次索引冻结新 parser 与分页文本。Python 复用既有 manifest、错误及租约代次表，不直接访问 Go 表。激活事务记录 knowledge.layout_review，绑定当前管理员/租户/版本；回退保留模式及审计，不执行 Down。
+Go 迁移 `2026110502_pdf_layout.sql` 为 document_versions 增加 pdf_layout，默认 plain，数据库约束仅允许 plain/columns/table；非 plain 必须为 PDF，初期OCR互斥约束由M7.24后续迁移放开。选择通过上传幂等摘要和内部 source 传递，改变方式须另建版本；旧 INSERT 采用数据库默认值，现有 Go InsertTx 对空值归一化。原件 hash、存储定位和物理页号不变，首次索引冻结新 parser 与分页文本。Python 复用既有 manifest、错误及租约代次表，不直接访问 Go 表。激活事务记录 knowledge.layout_review，绑定当前管理员/租户/版本；回退保留模式及审计，不执行 Down。
+
+## M7.24 联合OCR版本与审核
+
+Go迁移 `2026110902_ocr_layout.sql` 仅调整document_versions_layout_source约束：非plain仍须为PDF，可与既有auto/force组合；OCR枚举、非PDF限制、源文件hash和存储约束保持。没有新增表字段、跨服务表访问或原件存储格式。两个上传选择、联合parser及完整逐页text/ocr/empty来源仍保存在不可变版本和Python manifest内；引用来源继续由Go从分页内容派生，不能由模型提供。
+
+发生实际联合OCR时冻结两种新parser，未发生OCR的auto版本保留原生parser，旧版本不重算或改写。当前管理员的knowledge.ocr_review与knowledge.layout_review审计和文档激活共用一个事务，任何后续失败均回滚两条审核。索引回调代次、成功/错误重放、撤回引用和知识保留保护沿用原有机制。迁移Down保留已保存联合选择、manifest和审计；有联合版本后不能回退到不理解对应parser/双审核的配套镜像，见[服务器手册§35](../deploy/server.md#35-ocr与版面联合处理)。
+
 ## M7.6 账号与角色投影
 
 迁移 2026110503_accounts_roles.sql 新增 roles/user_roles，使用租户复合外键、角色名大小写不敏感唯一索引和内置角色部分唯一索引。用户新增 revision/auth_version/extra_permissions；users.role 保留有效基础角色投影，extra_permissions 为启用自定义角色的权限并集。旧账号回填关联，新租户及新账号 INSERT 由触发器初始化基础角色。

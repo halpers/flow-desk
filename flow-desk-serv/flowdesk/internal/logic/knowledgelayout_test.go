@@ -122,7 +122,7 @@ func TestLayoutUploadReviewAndImmutableParser(t *testing.T) {
 func TestLayoutValidationAndPlainUploadFingerprint(t *testing.T) {
 	raw := base64.StdEncoding.EncodeToString([]byte("%PDF-synthetic"))
 	for _, input := range []struct{ filename, content, encoded, ocr, layout string }{
-		{"policy.txt", "text", "", "off", "table"}, {"a.pdf", "", raw, "auto", "columns"}, {"a.pdf", "", raw, "force", "table"}, {"a.pdf", "", raw, "off", "guess"},
+		{"policy.txt", "text", "", "off", "table"}, {"policy.txt", "text", "", "auto", "columns"}, {"a.pdf", "", raw, "untrusted", "table"}, {"a.pdf", "", raw, "off", "guess"},
 	} {
 		if _, err := knowledgeUploadWithLayout(input.filename, input.content, input.encoded, input.ocr, input.layout); err == nil {
 			t.Fatal("invalid layout accepted", input)

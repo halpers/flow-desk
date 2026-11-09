@@ -223,3 +223,7 @@ M7.8 的对象登记和清理见[归档副本清理](../../../docs/m7-source-cle
 后续 M7.7 清理流程见[版本保留与清理](../../../docs/m7-retention.md)：文档排他锁串行化激活/上传/清理，事务内复核当前授权与保护条件，原子写入 cleanup_pending、审计及 knowledge.cleanup outbox。Agent 调用在事务外；索引删除确认且投递租约有效后，清除数据库原文并置 purged。失败持续退避重试，间隔上限 30 秒。归档历史版本不可清理。
 
 Go 保存不可变 pdf_layout，验证文件/OCR 组合、上传幂等及索引 parser/来源绑定，不在业务服务中解析 PDF。只有当前租户管理员显式提交 confirm_layout 后才可激活非 plain 版本，knowledge.layout_review 与文档更新同事务。预览与物理页码证据、撤回、S3 归档沿用现有授权边界。迁移、回调和旧请求兼容见[M7.5](../../../docs/m7-pdf-layout.md)。
+
+## M7.24 联合OCR的可信来源与审核
+
+PDF的auto/force可与columns/table联合，迁移2026110902只放开对应CHECK约束。两个选择参与上传幂等，内部source传递原选择；Go不接受浏览器或模型提供parser/页内容。回调必须匹配联合parser和完整text/ocr/empty来源，force不得混入text页，实际OCR/空白处理不超过10页；原生auto和旧parser继续接受既有形状。首次成功/错误冻结、索引代次与一致重放保持。实际联合OCR版本同时要求当前管理员confirm_ocr与confirm_layout，两项审计和激活同事务，失败全部回滚；引用仍由当前ACL和不可变物理页复核，撤回后拒绝。完整有限支持与回退边界见[M7.24](../../../docs/m7-ocr-layout.md)。

@@ -160,7 +160,11 @@ M1 创建 pyproject、锁文件、格式/静态检查和 Pytest 配置；M2 使�
 
 后续 M7.7 清理命令通过服务认证并绑定版本、租户、job/hash。永久墓碑与索引删除同事务提交；接受任务、解析提交及独立语义重建共享按版本事务锁并检查墓碑。解析和 embedding 在事务外，最终提交前再次隔离。Go 的保留准入不能由 Python 或模型决定，见[版本清理](../../docs/m7-retention.md)。
 
-内部 source 的 pdf_layout 缺省 plain；columns/table 只接受 off OCR。使用固定 pypdf 的 layout 输出，table 保留物理行和水平空白，columns 对唯一稳定双栏间隔先左后右读取。旋转/歧义/超宽明确失败；沿用无凭据、时间/内存/文件资源受限的单文件子进程。每个模式使用独立 parser 标识，结果和固定错误先持久化，回调恢复不重复解析；旧文本/OCR manifest 继续可读。范围、限制与验收见[M7.5](../../docs/m7-pdf-layout.md)。
+内部 source 的 pdf_layout 缺省 plain。原生文本页使用固定 pypdf 的 layout 输出，table 保留物理行和水平空白，columns 对唯一稳定双栏间隔先左后右读取。旋转/歧义/超宽明确失败；沿用无凭据、时间/内存/文件资源受限的单文件子进程。每个模式使用独立 parser 标识，结果和固定错误先持久化，回调恢复不重复解析；旧文本/OCR manifest 继续可读。范围、限制与验收见[M7.5](../../docs/m7-pdf-layout.md)。
+
+## M7.24 OCR与版面联合提取
+
+auto/force可与columns/table组合：auto只OCR空文本页，force不绕过原生文本页；混合manifest保留连续物理页和text/ocr/empty来源。固定Poppler与Tesseract 5.5.0 chi_sim+eng、PSM11输出有界TSV，按词框基线和唯一稳定栏间空白重排，表格仅保留物理行与水平间距。严格验证记录/坐标/置信度，中文包含式词框只在同源行、单调和内含条件下截短边框，不修正文字；多栏歧义和显著交叉拒绝。新parser、2MiB/10个OCR页/45秒及原生CPU/内存/文件限制见[专项说明](../../docs/m7-ocr-layout.md)。成功或错误仍先持久化后回调，取消和超时清理整个进程组；没有新增依赖、云OCR、运行DDL或业务表写入。
 
 ## M7.22 可选HNSW候选路径
 

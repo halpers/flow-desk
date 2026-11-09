@@ -30,7 +30,7 @@ business计数：消息、事件、动作、审批/未完成审批、待输入�
 
 agent计数：所有命令及queued/running/waiting/有效租约、callback及未acked/有效租约、模型调用及reserved、checkpoint/blobs/writes、工具缓存、执行span、检索尝试和该run查询embedding及reserved。保护原因为COMMAND_QUEUED/RUNNING/WAITING/LEASE_ACTIVE、CALLBACK_UNACKNOWLEDGED/LEASE_ACTIVE、MODEL_RESERVED、MODEL_STATE_UNKNOWN、EMBEDDING_RESERVED、AGENT_SCOPE_UNAVAILABLE。permanent_failure callback仍算未确认；未知模型状态仍受保护。
 
-只有当前观测中所有保护均为空且Agent available时，archive_candidate才为true。它仅用于后续归档方案的候选盘点，不是删除许可或持续资格凭证；未来实现归档还需独立的授权、恢复隔离、防重放墓碑与一致备份协议。幂等、审计和关联业务保留不能由该标志豁免。
+只有当前观测中所有保护均为空且Agent available时，archive_candidate才为true。它仅用于后续归档方案的候选盘点，不是删除许可或持续资格凭证；[M7.23归档维护](m7-run-history.md)已另行实现独立授权、恢复隔离、永久执行围栏与一致备份协议，提交时仍重新核对全部保护。幂等、审计和关联业务保留不能由该标志豁免。
 
 ## 界面、验收与操作
 

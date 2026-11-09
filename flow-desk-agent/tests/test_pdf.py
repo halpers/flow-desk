@@ -106,6 +106,24 @@ def test_parser_deadline_kills_child_and_excludes_service_credentials(monkeypatc
                 reason="Pinned native OCR image",
             ),
         ),
+        pytest.param(
+            "ocr-layout-columns.pdf",
+            "",
+            "auto",
+            "columns",
+            marks=pytest.mark.skipif(
+                os.environ.get("FLOWDESK_NATIVE_OCR_TESTS") != "1", reason="Pinned native OCR image"
+            ),
+        ),
+        pytest.param(
+            "ocr-layout-ambiguous.pdf",
+            "PDF_LAYOUT_UNSUPPORTED",
+            "auto",
+            "columns",
+            marks=pytest.mark.skipif(
+                os.environ.get("FLOWDESK_NATIVE_OCR_TESTS") != "1", reason="Pinned native OCR image"
+            ),
+        ),
         ("scan.pdf", "PDF_OCR_PAGE_LIMIT", "force_limit", "plain"),
     ],
 )
@@ -189,11 +207,12 @@ def test_pdf_index_callback_crash_replays_manifest_or_durable_error(
                 else:
                     assert [row["page_number"] for row in rows] == (
                         [1, 2]
-                        if filename in ("ocr-policy.pdf", "layout-columns.pdf")
+                        if filename
+                        in ("ocr-policy.pdf", "layout-columns.pdf", "ocr-layout-columns.pdf")
                         else [1, 2, 3]
                     )
                     assert callbacks[1]["page_texts"][1]["page_number"] == 2
-                    if filename == "ocr-policy.pdf":
+                    if filename in ("ocr-policy.pdf", "ocr-layout-columns.pdf"):
                         assert callbacks[1]["page_texts"][1]["extraction_method"] == "ocr"
                     retriever = Retriever(pool, None, profile="baseline")
                     query = "四十八个月" if pdf_layout == "columns" else "三十六个月"
