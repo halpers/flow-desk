@@ -1,0 +1,12 @@
+{
+  "phase": "M7.30",
+  "profile": "isolated-tenant-disposable-mock",
+  "checks": [
+    "default-off isolated tenant policy requires current administrator and explicit confirmation",
+    "real worker losslessly archives original messages events and checkpoints through durable operation",
+    "manual restoration preserves execution fence and is excluded from automatic re-archival",
+    "disable persists and old save receipt replay cannot re-enable or overwrite current policy",
+    "credential-version revocation stops background authorization and explicit current save can disable it"
+  ],
+  "completed_at": "2026-11-10T05:52:13.614717+00:00"
+}

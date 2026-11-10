@@ -29,6 +29,7 @@ type (
 		FindOne(ctx context.Context, id string) (*RunHistoryOperations, error)
 		FindOneByTenantIdId(ctx context.Context, tenantId string, id string) (*RunHistoryOperations, error)
 		FindOneByTenantIdRunIdGeneration(ctx context.Context, tenantId string, runId string, generation int64) (*RunHistoryOperations, error)
+		FindOneByTenantIdRunIdId(ctx context.Context, tenantId string, runId string, id string) (*RunHistoryOperations, error)
 		FindOneByTenantIdRunId(ctx context.Context, tenantId string, runId string) (*RunHistoryOperations, error)
 		Update(ctx context.Context, data *RunHistoryOperations) error
 		Delete(ctx context.Context, id string) error
@@ -100,6 +101,20 @@ func (m *defaultRunHistoryOperationsModel) FindOneByTenantIdRunIdGeneration(ctx 
 	var resp RunHistoryOperations
 	query := fmt.Sprintf("select %s from %s where tenant_id = $1 and run_id = $2 and generation = $3 limit 1", runHistoryOperationsRows, m.table)
 	err := m.conn.QueryRowCtx(ctx, &resp, query, tenantId, runId, generation)
+	switch err {
+	case nil:
+		return &resp, nil
+	case sqlx.ErrNotFound:
+		return nil, ErrNotFound
+	default:
+		return nil, err
+	}
+}
+
+func (m *defaultRunHistoryOperationsModel) FindOneByTenantIdRunIdId(ctx context.Context, tenantId string, runId string, id string) (*RunHistoryOperations, error) {
+	var resp RunHistoryOperations
+	query := fmt.Sprintf("select %s from %s where tenant_id = $1 and run_id = $2 and id = $3 limit 1", runHistoryOperationsRows, m.table)
+	err := m.conn.QueryRowCtx(ctx, &resp, query, tenantId, runId, id)
 	switch err {
 	case nil:
 		return &resp, nil

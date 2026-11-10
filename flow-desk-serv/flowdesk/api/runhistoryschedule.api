@@ -1,0 +1,36 @@
+type RunHistoryScheduleData {
+    RuntimeEnabled bool `json:"runtime_enabled"`
+    Enabled bool `json:"enabled"`
+    Revision int64 `json:"revision"`
+    MinimumAgeDays int64 `json:"minimum_age_days"`
+    IntervalMinutes int64 `json:"interval_minutes"`
+    OwnerUserId string `json:"owner_user_id"`
+    NextRunAt string `json:"next_run_at"`
+    LastCheckedAt string `json:"last_checked_at"`
+    LastOutcome string `json:"last_outcome"`
+    LastRunId string `json:"last_run_id"`
+    Operation RunHistoryOperationData `json:"operation"`
+    AuthorizationValid bool `json:"authorization_valid"`
+}
+type UpdateRunHistoryScheduleReq {
+    Enabled bool `json:"enabled"`
+    MinimumAgeDays int64 `json:"minimum_age_days"`
+    IntervalMinutes int64 `json:"interval_minutes"`
+    ExpectedRevision int64 `json:"expected_revision"`
+    Confirm bool `json:"confirm"`
+    IdempotencyKey string `header:"Idempotency-Key"`
+}
+type RunHistoryScheduleResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data RunHistoryScheduleData `json:"data"`
+}
+@server(prefix: /api/v1 middleware: SessionAuth)
+service flowdesk-api {
+    @doc "Read current tenant scheduled history archival policy | permission=admin/run:observe | auth=required"
+    @handler GetRunHistorySchedule
+    get /run-history-schedule returns (RunHistoryScheduleResp)
+    @doc "Confirm durable tenant history archival authorization or disable it | permission=admin/run:observe | auth=required"
+    @handler UpdateRunHistorySchedule
+    put /run-history-schedule (UpdateRunHistoryScheduleReq) returns (RunHistoryScheduleResp)
+}

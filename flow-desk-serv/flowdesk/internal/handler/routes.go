@@ -14,36 +14,59 @@ import (
 
 func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 	server.AddRoutes(
+		[]rest.Route{
+			{
+				// Liveness | permission=- | auth=public
+				Method:  http.MethodGet,
+				Path:    "/health/live",
+				Handler: LiveHandler(serverCtx),
+			},
+			{
+				// Readiness | permission=- | auth=public
+				Method:  http.MethodGet,
+				Path:    "/health/ready",
+				Handler: ReadyHandler(serverCtx),
+			},
+		},
+	)
+
+	server.AddRoutes(
+		[]rest.Route{
+			{
+				// Login | permission=- | auth=public
+				Method:  http.MethodPost,
+				Path:    "/login",
+				Handler: LoginHandler(serverCtx),
+			},
+			{
+				// Logout | permission=- | auth=refresh_cookie
+				Method:  http.MethodPost,
+				Path:    "/logout",
+				Handler: LogoutHandler(serverCtx),
+			},
+			{
+				// Refresh | permission=- | auth=refresh_cookie
+				Method:  http.MethodPost,
+				Path:    "/refresh",
+				Handler: RefreshHandler(serverCtx),
+			},
+		},
+		rest.WithPrefix("/api/v1/auth"),
+	)
+
+	server.AddRoutes(
 		rest.WithMiddlewares(
 			[]rest.Middleware{serverCtx.SessionAuth},
 			[]rest.Route{
 				{
-					// List authorized run metadata | permission=conversation:use/run:observe | auth=required
+					// Current user | permission=- | auth=required
 					Method:  http.MethodGet,
-					Path:    "/runs",
-					Handler: ListRunsHandler(serverCtx),
-				},
-				{
-					// Preview authorized run lifecycle metadata only | permission=conversation:use/run:observe | auth=required
-					Method:  http.MethodGet,
-					Path:    "/runs/:run_id/lifecycle",
-					Handler: GetRunLifecycleHandler(serverCtx),
-				},
-				{
-					// Retry own failed run without prepared actions | permission=conversation:use | auth=required
-					Method:  http.MethodPost,
-					Path:    "/runs/:run_id/retry",
-					Handler: RetryRunHandler(serverCtx),
-				},
-				{
-					// Read authorized sanitized trace | permission=conversation:use/run:observe | auth=required
-					Method:  http.MethodGet,
-					Path:    "/runs/:run_id/trace",
-					Handler: GetRunTraceHandler(serverCtx),
+					Path:    "/me",
+					Handler: MeHandler(serverCtx),
 				},
 			}...,
 		),
-		rest.WithPrefix("/api/v1"),
+		rest.WithPrefix("/api/v1/auth"),
 	)
 
 	server.AddRoutes(
@@ -354,6 +377,57 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 			[]rest.Middleware{serverCtx.SessionAuth},
 			[]rest.Route{
 				{
+					// Tenant roles and permission catalog | permission=account:manage or role:manage | auth=required
+					Method:  http.MethodGet,
+					Path:    "/admin/roles",
+					Handler: ListManagedRolesHandler(serverCtx),
+				},
+				{
+					// Create additive role | permission=role:manage | auth=required
+					Method:  http.MethodPost,
+					Path:    "/admin/roles",
+					Handler: CreateManagedRoleHandler(serverCtx),
+				},
+				{
+					// Update additive role | permission=role:manage | auth=required
+					Method:  http.MethodPut,
+					Path:    "/admin/roles/:role_id",
+					Handler: UpdateManagedRoleHandler(serverCtx),
+				},
+				{
+					// Tenant account directory | permission=account:manage | auth=required
+					Method:  http.MethodGet,
+					Path:    "/admin/users",
+					Handler: ListManagedUsersHandler(serverCtx),
+				},
+				{
+					// Create tenant account | permission=account:manage | auth=required
+					Method:  http.MethodPost,
+					Path:    "/admin/users",
+					Handler: CreateManagedUserHandler(serverCtx),
+				},
+				{
+					// Update account and roles | permission=account:manage | auth=required
+					Method:  http.MethodPut,
+					Path:    "/admin/users/:user_id",
+					Handler: UpdateManagedUserHandler(serverCtx),
+				},
+				{
+					// Reset account password | permission=account:manage | auth=required
+					Method:  http.MethodPost,
+					Path:    "/admin/users/:user_id/reset-password",
+					Handler: ResetManagedPasswordHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithPrefix("/api/v1"),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.SessionAuth},
+			[]rest.Route{
+				{
 					// Read authorized run history storage preview | permission=conversation:use/run:observe | auth=required
 					Method:  http.MethodGet,
 					Path:    "/runs/:run_id/history",
@@ -387,70 +461,20 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 			[]rest.Middleware{serverCtx.SessionAuth},
 			[]rest.Route{
 				{
-					// Change own password and revoke all sessions | permission=- | auth=required
-					Method:  http.MethodPost,
-					Path:    "/password",
-					Handler: ChangeOwnPasswordHandler(serverCtx),
-				},
-			}...,
-		),
-		rest.WithPrefix("/api/v1/auth"),
-	)
-
-	server.AddRoutes(
-		[]rest.Route{
-			{
-				// Liveness | permission=- | auth=public
-				Method:  http.MethodGet,
-				Path:    "/health/live",
-				Handler: LiveHandler(serverCtx),
-			},
-			{
-				// Readiness | permission=- | auth=public
-				Method:  http.MethodGet,
-				Path:    "/health/ready",
-				Handler: ReadyHandler(serverCtx),
-			},
-		},
-	)
-
-	server.AddRoutes(
-		[]rest.Route{
-			{
-				// Login | permission=- | auth=public
-				Method:  http.MethodPost,
-				Path:    "/login",
-				Handler: LoginHandler(serverCtx),
-			},
-			{
-				// Logout | permission=- | auth=refresh_cookie
-				Method:  http.MethodPost,
-				Path:    "/logout",
-				Handler: LogoutHandler(serverCtx),
-			},
-			{
-				// Refresh | permission=- | auth=refresh_cookie
-				Method:  http.MethodPost,
-				Path:    "/refresh",
-				Handler: RefreshHandler(serverCtx),
-			},
-		},
-		rest.WithPrefix("/api/v1/auth"),
-	)
-
-	server.AddRoutes(
-		rest.WithMiddlewares(
-			[]rest.Middleware{serverCtx.SessionAuth},
-			[]rest.Route{
-				{
-					// Current user | permission=- | auth=required
+					// Read current tenant scheduled history archival policy | permission=admin/run:observe | auth=required
 					Method:  http.MethodGet,
-					Path:    "/me",
-					Handler: MeHandler(serverCtx),
+					Path:    "/run-history-schedule",
+					Handler: GetRunHistoryScheduleHandler(serverCtx),
+				},
+				{
+					// Confirm durable tenant history archival authorization or disable it | permission=admin/run:observe | auth=required
+					Method:  http.MethodPut,
+					Path:    "/run-history-schedule",
+					Handler: UpdateRunHistoryScheduleHandler(serverCtx),
 				},
 			}...,
 		),
-		rest.WithPrefix("/api/v1/auth"),
+		rest.WithPrefix("/api/v1"),
 	)
 
 	server.AddRoutes(
@@ -558,6 +582,39 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 			}...,
 		),
 		rest.WithPrefix("/internal/v1"),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.SessionAuth},
+			[]rest.Route{
+				{
+					// List authorized run metadata | permission=conversation:use/run:observe | auth=required
+					Method:  http.MethodGet,
+					Path:    "/runs",
+					Handler: ListRunsHandler(serverCtx),
+				},
+				{
+					// Preview authorized run lifecycle metadata only | permission=conversation:use/run:observe | auth=required
+					Method:  http.MethodGet,
+					Path:    "/runs/:run_id/lifecycle",
+					Handler: GetRunLifecycleHandler(serverCtx),
+				},
+				{
+					// Retry own failed run without prepared actions | permission=conversation:use | auth=required
+					Method:  http.MethodPost,
+					Path:    "/runs/:run_id/retry",
+					Handler: RetryRunHandler(serverCtx),
+				},
+				{
+					// Read authorized sanitized trace | permission=conversation:use/run:observe | auth=required
+					Method:  http.MethodGet,
+					Path:    "/runs/:run_id/trace",
+					Handler: GetRunTraceHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithPrefix("/api/v1"),
 	)
 
 	server.AddRoutes(
@@ -673,57 +730,6 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 			[]rest.Middleware{serverCtx.SessionAuth},
 			[]rest.Route{
 				{
-					// Tenant roles and permission catalog | permission=account:manage or role:manage | auth=required
-					Method:  http.MethodGet,
-					Path:    "/admin/roles",
-					Handler: ListManagedRolesHandler(serverCtx),
-				},
-				{
-					// Create additive role | permission=role:manage | auth=required
-					Method:  http.MethodPost,
-					Path:    "/admin/roles",
-					Handler: CreateManagedRoleHandler(serverCtx),
-				},
-				{
-					// Update additive role | permission=role:manage | auth=required
-					Method:  http.MethodPut,
-					Path:    "/admin/roles/:role_id",
-					Handler: UpdateManagedRoleHandler(serverCtx),
-				},
-				{
-					// Tenant account directory | permission=account:manage | auth=required
-					Method:  http.MethodGet,
-					Path:    "/admin/users",
-					Handler: ListManagedUsersHandler(serverCtx),
-				},
-				{
-					// Create tenant account | permission=account:manage | auth=required
-					Method:  http.MethodPost,
-					Path:    "/admin/users",
-					Handler: CreateManagedUserHandler(serverCtx),
-				},
-				{
-					// Update account and roles | permission=account:manage | auth=required
-					Method:  http.MethodPut,
-					Path:    "/admin/users/:user_id",
-					Handler: UpdateManagedUserHandler(serverCtx),
-				},
-				{
-					// Reset account password | permission=account:manage | auth=required
-					Method:  http.MethodPost,
-					Path:    "/admin/users/:user_id/reset-password",
-					Handler: ResetManagedPasswordHandler(serverCtx),
-				},
-			}...,
-		),
-		rest.WithPrefix("/api/v1"),
-	)
-
-	server.AddRoutes(
-		rest.WithMiddlewares(
-			[]rest.Middleware{serverCtx.SessionAuth},
-			[]rest.Route{
-				{
 					// Atomically register confirmed durable run history batch | permission=admin/run:observe | auth=required
 					Method:  http.MethodPost,
 					Path:    "/run-history-batches",
@@ -768,5 +774,20 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 			}...,
 		),
 		rest.WithPrefix("/api/v1"),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.SessionAuth},
+			[]rest.Route{
+				{
+					// Change own password and revoke all sessions | permission=- | auth=required
+					Method:  http.MethodPost,
+					Path:    "/password",
+					Handler: ChangeOwnPasswordHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithPrefix("/api/v1/auth"),
 	)
 }

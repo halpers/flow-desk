@@ -5837,6 +5837,284 @@
         }
       }
     },
+    "/api/v1/run-history-schedule": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "Read current tenant scheduled history archival policy | permission=admin/run:observe | auth=required",
+        "operationId": "getRunHistorySchedule",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "runtime_enabled",
+                    "enabled",
+                    "revision",
+                    "minimum_age_days",
+                    "interval_minutes",
+                    "owner_user_id",
+                    "next_run_at",
+                    "last_checked_at",
+                    "last_outcome",
+                    "last_run_id",
+                    "operation",
+                    "authorization_valid"
+                  ],
+                  "properties": {
+                    "authorization_valid": {
+                      "type": "boolean"
+                    },
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "interval_minutes": {
+                      "type": "integer"
+                    },
+                    "last_checked_at": {
+                      "type": "string"
+                    },
+                    "last_outcome": {
+                      "type": "string"
+                    },
+                    "last_run_id": {
+                      "type": "string"
+                    },
+                    "minimum_age_days": {
+                      "type": "integer"
+                    },
+                    "next_run_at": {
+                      "type": "string"
+                    },
+                    "operation": {
+                      "type": "object",
+                      "required": [
+                        "operation_id",
+                        "run_id",
+                        "generation",
+                        "target",
+                        "status",
+                        "checkpoint_count",
+                        "checkpoint_blob_count",
+                        "checkpoint_write_count"
+                      ],
+                      "properties": {
+                        "checkpoint_blob_count": {
+                          "type": "integer"
+                        },
+                        "checkpoint_count": {
+                          "type": "integer"
+                        },
+                        "checkpoint_write_count": {
+                          "type": "integer"
+                        },
+                        "generation": {
+                          "type": "integer"
+                        },
+                        "operation_id": {
+                          "type": "string"
+                        },
+                        "run_id": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string"
+                        },
+                        "target": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "owner_user_id": {
+                      "type": "string"
+                    },
+                    "revision": {
+                      "type": "integer"
+                    },
+                    "runtime_enabled": {
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "schemes": [
+          "https"
+        ],
+        "summary": "Confirm durable tenant history archival authorization or disable it | permission=admin/run:observe | auth=required",
+        "operationId": "updateRunHistorySchedule",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "Idempotency-Key",
+            "in": "header"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": [
+                "enabled",
+                "minimum_age_days",
+                "interval_minutes",
+                "expected_revision",
+                "confirm"
+              ],
+              "properties": {
+                "confirm": {
+                  "type": "boolean"
+                },
+                "enabled": {
+                  "type": "boolean"
+                },
+                "expected_revision": {
+                  "type": "integer"
+                },
+                "interval_minutes": {
+                  "type": "integer"
+                },
+                "minimum_age_days": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "data": {
+                  "type": "object",
+                  "required": [
+                    "runtime_enabled",
+                    "enabled",
+                    "revision",
+                    "minimum_age_days",
+                    "interval_minutes",
+                    "owner_user_id",
+                    "next_run_at",
+                    "last_checked_at",
+                    "last_outcome",
+                    "last_run_id",
+                    "operation",
+                    "authorization_valid"
+                  ],
+                  "properties": {
+                    "authorization_valid": {
+                      "type": "boolean"
+                    },
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "interval_minutes": {
+                      "type": "integer"
+                    },
+                    "last_checked_at": {
+                      "type": "string"
+                    },
+                    "last_outcome": {
+                      "type": "string"
+                    },
+                    "last_run_id": {
+                      "type": "string"
+                    },
+                    "minimum_age_days": {
+                      "type": "integer"
+                    },
+                    "next_run_at": {
+                      "type": "string"
+                    },
+                    "operation": {
+                      "type": "object",
+                      "required": [
+                        "operation_id",
+                        "run_id",
+                        "generation",
+                        "target",
+                        "status",
+                        "checkpoint_count",
+                        "checkpoint_blob_count",
+                        "checkpoint_write_count"
+                      ],
+                      "properties": {
+                        "checkpoint_blob_count": {
+                          "type": "integer"
+                        },
+                        "checkpoint_count": {
+                          "type": "integer"
+                        },
+                        "checkpoint_write_count": {
+                          "type": "integer"
+                        },
+                        "generation": {
+                          "type": "integer"
+                        },
+                        "operation_id": {
+                          "type": "string"
+                        },
+                        "run_id": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string"
+                        },
+                        "target": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "owner_user_id": {
+                      "type": "string"
+                    },
+                    "revision": {
+                      "type": "integer"
+                    },
+                    "runtime_enabled": {
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/runs": {
       "get": {
         "produces": [

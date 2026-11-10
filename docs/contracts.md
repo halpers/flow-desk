@@ -420,3 +420,8 @@ PUT 必须有 Idempotency-Key，正文 expected_revision、status、note、confi
 ## M7.28 用户自助修改密码
 
 新增SessionAuth的POST /api/v1/auth/password，输入current_password/new_password/confirm=true；可信调用者仅可修改本人密码。当前密码验证、当前密码摘要/授权版本与精确会话复核后，密码/版本更新、全部会话撤销和固定脱敏审计同一事务提交。响应不含凭据、成功清除refresh cookie；不保存密码相关幂等摘要或回执，不自动重试结果不确定的请求。新密码遵守现有12–72 UTF-8字节且含字母数字规则，并拒绝与当前密码相同。独立可信账号限流及全局限流，不消耗登录额度；成功或响应不确定时浏览器清除密码、认证和查询缓存，退出并提示重登。认证失败和业务响应均no-store。浏览器提交前仅保存会话存储布尔重登标记，存储不可用时不发请求；成功、不确定或401后刷新页面也不自动恢复Cookie会话，须明确登录，已知未提交错误可清标记。详见[自助改密](m7-self-password.md)，实际验收状态见[实施记录](progress.md)。
+
+
+## M7.30 定时任务历史归档
+
+[定时归档契约](m7-run-history-schedule.md)定义默认关闭的租户策略、持续授权、版本保护、有界扫描、租约围栏和原操作恢复。HTTP源为api/runhistoryschedule.api；机器契约随源生成。实际验收以[实施记录](progress.md)为准；默认关闭的运行总开关通过响应runtime_enabled反映，明确授权不依赖浏览器会话。

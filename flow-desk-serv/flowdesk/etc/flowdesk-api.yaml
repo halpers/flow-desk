@@ -21,6 +21,7 @@ InternalToken: ${INTERNAL_TOKEN}
 AgentUrl: ${AGENT_URL}
 AllowedOrigins: ${ALLOWED_ORIGINS}
 CookieSecure: ${COOKIE_SECURE}
+RunHistorySchedulerEnabled: ${RUN_HISTORY_SCHEDULER_ENABLED}
 FileStoreProvider: ${FILE_STORE_PROVIDER}
 FileStoreCleanupEnabled: ${FILE_STORE_CLEANUP_ENABLED}
 FileStoreTenantInventoryEnabled: ${FILE_STORE_TENANT_INVENTORY_ENABLED}

@@ -114,13 +114,20 @@ func ChangeRunHistory(ctx context.Context, s *svc.ServiceContext, req *types.Run
 	}
 	return ResumeRunHistory(ctx, s, req.RunId, result.OperationId)
 }
+
+type historyAuthorization func(context.Context, *svc.ServiceContext, sqlx.Session, string, bool) (*model.Users, *model.Runs, error)
+type historyValidation func(context.Context, *svc.ServiceContext, sqlx.Session) error
+
 func ResumeRunHistory(ctx context.Context, s *svc.ServiceContext, id, operationID string) (types.RunHistoryOperationData, error) {
+	return resumeRunHistory(ctx, s, id, operationID, historyCurrentTx, validateCurrentIdentityTx, "manual")
+}
+func resumeRunHistory(ctx context.Context, s *svc.ServiceContext, id, operationID string, authorize historyAuthorization, validate historyValidation, source string) (types.RunHistoryOperationData, error) {
 	if !validID(id) || !validID(operationID) {
 		return types.RunHistoryOperationData{}, errArgument
 	}
 	var operation *model.RunHistoryOperations
 	err := s.Conn.TransactCtx(ctx, func(ctx context.Context, tx sqlx.Session) error {
-		actor, _, err := historyCurrentTx(ctx, s, tx, id, true)
+		actor, _, err := authorize(ctx, s, tx, id, true)
 		if err != nil {
 			return err
 		}
@@ -128,7 +135,7 @@ func ResumeRunHistory(ctx context.Context, s *svc.ServiceContext, id, operationI
 		if err != nil {
 			return err
 		}
-		return validateCurrentIdentityTx(ctx, s, tx)
+		return validate(ctx, s, tx)
 	})
 	if err != nil {
 		return types.RunHistoryOperationData{}, err
@@ -139,7 +146,7 @@ func ResumeRunHistory(ctx context.Context, s *svc.ServiceContext, id, operationI
 	receipt, callErr := s.AgentClient.History(ctx, operation.TenantId, historyOperation(operation))
 	var result types.RunHistoryOperationData
 	err = s.Conn.TransactCtx(ctx, func(ctx context.Context, tx sqlx.Session) error {
-		actor, run, err := historyCurrentTx(ctx, s, tx, id, true)
+		actor, run, err := authorize(ctx, s, tx, id, true)
 		if err != nil {
 			return err
 		}
@@ -149,7 +156,7 @@ func ResumeRunHistory(ctx context.Context, s *svc.ServiceContext, id, operationI
 		}
 		if current.Status == "completed" {
 			result = historyOperation(current)
-			return validateCurrentIdentityTx(ctx, s, tx)
+			return validate(ctx, s, tx)
 		}
 		if callErr != nil {
 			return failure(503, "RUN_HISTORY_UNAVAILABLE", "执行历史维护未确认；请从历史窗口继续原操作")
@@ -192,10 +199,10 @@ func ResumeRunHistory(ctx context.Context, s *svc.ServiceContext, id, operationI
 		current.CheckpointCount = receipt.CheckpointCount
 		current.CheckpointBlobCount = receipt.CheckpointBlobCount
 		current.CheckpointWriteCount = receipt.CheckpointWriteCount
-		if err = s.AuditEventsModel.InsertTx(ctx, tx, &model.AuditEvents{Id: orderedID(), TenantId: actor.TenantId, ActorUserId: actor.Id, Operation: "run.history.complete", ObjectType: "run", ObjectId: id, Source: "manual", Summary: fmt.Sprintf("Completed %s history generation %d", current.Target, current.Generation)}); err != nil {
+		if err = s.AuditEventsModel.InsertTx(ctx, tx, &model.AuditEvents{Id: orderedID(), TenantId: actor.TenantId, ActorUserId: actor.Id, Operation: "run.history.complete", ObjectType: "run", ObjectId: id, Source: source, Summary: fmt.Sprintf("Completed %s history generation %d", current.Target, current.Generation)}); err != nil {
 			return err
 		}
-		if err = validateCurrentIdentityTx(ctx, s, tx); err != nil {
+		if err = validate(ctx, s, tx); err != nil {
 			return err
 		}
 		if err = s.RunHistoryOperationsModel.UpdateCompletedTx(ctx, tx, current); err != nil {
@@ -216,6 +223,9 @@ func prepareRunHistoryTx(ctx context.Context, s *svc.ServiceContext, tx sqlx.Ses
 	if err != nil {
 		return types.RunHistoryOperationData{}, err
 	}
+	return prepareHistoryAuthorizedTx(ctx, s, tx, req, target, lifecycle, observationErr, actor, run, "manual")
+}
+func prepareHistoryAuthorizedTx(ctx context.Context, s *svc.ServiceContext, tx sqlx.Session, req *types.RunHistoryChangeReq, target string, lifecycle types.RunLifecycleData, observationErr error, actor *model.Users, run *model.Runs, source string) (types.RunHistoryOperationData, error) {
 	if observationErr != nil {
 		return types.RunHistoryOperationData{}, observationErr
 	}
@@ -255,7 +265,7 @@ func prepareRunHistoryTx(ctx context.Context, s *svc.ServiceContext, tx sqlx.Ses
 	if err = s.RunHistoryOperationsModel.InsertTx(ctx, tx, operation); err != nil {
 		return types.RunHistoryOperationData{}, err
 	}
-	if err = s.AuditEventsModel.InsertTx(ctx, tx, &model.AuditEvents{Id: orderedID(), TenantId: actor.TenantId, ActorUserId: actor.Id, Operation: "run.history.request", ObjectType: "run", ObjectId: run.Id, Source: "manual", Summary: fmt.Sprintf("Requested %s history generation %d", target, operation.Generation)}); err != nil {
+	if err = s.AuditEventsModel.InsertTx(ctx, tx, &model.AuditEvents{Id: orderedID(), TenantId: actor.TenantId, ActorUserId: actor.Id, Operation: "run.history.request", ObjectType: "run", ObjectId: run.Id, Source: source, Summary: fmt.Sprintf("Requested %s history generation %d", target, operation.Generation)}); err != nil {
 		return types.RunHistoryOperationData{}, err
 	}
 	return historyOperation(operation), nil

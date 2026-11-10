@@ -84,10 +84,12 @@ M7.1 的 PDF 解析器随 Agent 镜像安装，无需额外解析服务或 API k
 
 ## M7.26 任务历史批次
 
-运行时新增五项Go公开批次操作，仍只有浏览器→Go→Agent。Go迁移2026110903在现有一次性迁移作业执行；Agent没有新DDL或版本。批次统一登记、页面逐项推进，关闭后通过最近批次继续；没有后台定时归档器。只在可丢弃mock栈运行`python scripts/check-run-history-batch.py --env-file work/retention-ci.env --output work/run-history-batch.json`，该脚本会调整自身新建合成任务的时间，不能连接业务服务器。流程及回退见[服务器手册§36](../deploy/server.md#36-任务历史批量归档)。
+运行时新增五项Go公开批次操作，仍只有浏览器→Go→Agent。Go迁移2026110903在现有一次性迁移作业执行；Agent没有新DDL或版本。批次统一登记、页面逐项推进，关闭后通过最近批次继续；M7.26本身没有后台调度，M7.30另行提供默认关闭的定时归档策略。只在可丢弃mock栈运行`python scripts/check-run-history-batch.py --env-file work/retention-ci.env --output work/run-history-batch.json`，该脚本会调整自身新建合成任务的时间，不能连接业务服务器。流程及回退见[服务器手册§36](../deploy/server.md#36-任务历史批量归档)。
 
 M7.27[批量恢复](m7-run-history-batch-restore.md)沿用M7.26批次读取与逐项核对，新增两项恢复POST入口。Go按顺序迁移至2026110904，Agent应用版本仍为11。仅一次性mock环境运行`scripts/check-run-history-batch-restore.py`，不能在业务库运行合成任务验收；生产升级及IP:port操作见[服务器手册§37](../deploy/server.md#37-任务历史批量恢复)。
 
 M7.28[自助改密](m7-self-password.md)无新端口、模型依赖或数据库迁移。配套发布API/Web，固定关闭会记录请求正文的原生HTTP日志；保留原metadata tracing。成功或不确定结果需显式重新登录，浏览器只保存非敏感重新认证标记。公开验收`scripts/check-self-password.py`仅运行在`work/`可丢弃mock配置，创建独立合成账号；运维见[服务器手册§38](../deploy/server.md#38-用户自助修改密码)。
 
 M7.29[共享持久认证限流](m7-auth-rate-limits.md)由Go迁移2026111001提供，无新增环境变量、端口或Agent迁移。所有API实例须连接同一业务库并升级到支持该策略的版本；混用旧API不能获得全局一致额度。只在work/可丢弃mock环境执行双API和重启验收，服务器操作见[部署手册§39](../deploy/server.md#39-共享持久认证限流)。
+
+M7.30[定时归档](m7-run-history-schedule.md)新增Go迁移2026111002及可选RUN_HISTORY_SCHEDULER_ENABLED=false；开启总开关并重建全部API后，仍需管理员明确保存当前租户策略。运行Agent不增加DDL。合成脚本scripts/check-run-history-schedule.py仅在work/可丢弃mock栈的独立新租户运行，CI显式开启该测试栈开关；运维按[服务器手册§40](../deploy/server.md#40-定时任务历史归档)。

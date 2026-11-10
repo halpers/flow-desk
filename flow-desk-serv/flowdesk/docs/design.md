@@ -235,3 +235,5 @@ M7.27[批量恢复](../../../docs/m7-run-history-batch-restore.md)复用现有�
 M7.28[自助改密](../../../docs/m7-self-password.md)新增SessionAuth本人认证端点。可信会话/原密码预检查后，bcrypt在事务外完成，提交按租户授权排他锁和用户锁复核原凭据、auth_version及精确活跃session；密码/版本、全会话撤销及固定审计同事务。不存密码指纹或幂等摘要；独立可信账号和全局内存限流，固定禁用原生请求正文日志。
 
 M7.29以AuthRateLimitsModel的自有表方法和logic事务实现共享认证GCRA：固定全局桶→可信账号桶锁序、DB时间、原子双桶消耗、有界回收及2秒期限。登录handler调用逻辑后才认证；本人改密验证当前可信身份后、bcrypt前消耗。ServiceContext只初始化模型；删除原内存limiter。详见[专项设计](../../../docs/m7-auth-rate-limits.md)。
+
+M7.30[定时归档](../../../docs/m7-run-history-schedule.md)以RunHistorySchedulesModel持有策略、领取及CAS SQL，RunsModel持有单候选/保留期查询。独立5秒调度循环不阻塞既有业务outbox；默认总开关false，每轮30秒上限且只领一个策略。后台专用grant由数据库策略/租约构造，不修改通用HTTP身份校验；每次Agent调用前后复核启用、修订、token/期限、当前owner权限/auth_version和任务/团队。复用prepareHistoryAuthorizedTx/resumeRunHistory的原保护与原子载荷迁移，意图及策略绑定同事务，失败只继续原操作。

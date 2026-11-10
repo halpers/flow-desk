@@ -22,6 +22,7 @@ import { api, type User } from "../../shared/api/client";
 import type { Models } from "../../shared/api/models";
 import { RunLifecycle } from "./RunLifecycle";
 import { RunHistory } from "./RunHistory";
+import { RunHistorySchedule } from "./RunHistorySchedule";
 import { RunHistoryBatch } from "./RunHistoryBatch";
 import { newId } from "../../shared/id";
 
@@ -187,6 +188,21 @@ export function Operations({
             user.permissions.includes("run:observe") &&
             !accessError && (
               <Space>
+                <RunHistorySchedule
+                  key={`schedule:${user.tenant_id}:${user.id}`}
+                  onDenied={(message) => {
+                    setHistorySelection([]);
+                    setSelected(null);
+                    setConfirm(null);
+                    setAccessError(message);
+                    queryClient.removeQueries({
+                      queryKey: ["run-trace", user.tenant_id, user.id],
+                    });
+                    queryClient.removeQueries({
+                      queryKey: ["operations", user.tenant_id, user.id],
+                    });
+                  }}
+                />
                 <span>已选择 {historySelection.length} / 10 项</span>
                 <RunHistoryBatch
                   key={`${user.tenant_id}:${user.id}`}

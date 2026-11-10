@@ -7,6 +7,7 @@ import "github.com/zeromicro/go-zero/rest"
 
 type Config struct {
 	rest.RestConf
+	RunHistorySchedulerEnabled      bool `json:",optional"`
 	DatabaseUrl                     string
 	JwtSecret                       string
 	InternalToken                   string

@@ -1062,6 +1062,27 @@ type RunHistoryResumeReq struct {
 	OperationId string `path:"operation_id"`
 }
 
+type RunHistoryScheduleData struct {
+	RuntimeEnabled     bool                    `json:"runtime_enabled"`
+	Enabled            bool                    `json:"enabled"`
+	Revision           int64                   `json:"revision"`
+	MinimumAgeDays     int64                   `json:"minimum_age_days"`
+	IntervalMinutes    int64                   `json:"interval_minutes"`
+	OwnerUserId        string                  `json:"owner_user_id"`
+	NextRunAt          string                  `json:"next_run_at"`
+	LastCheckedAt      string                  `json:"last_checked_at"`
+	LastOutcome        string                  `json:"last_outcome"`
+	LastRunId          string                  `json:"last_run_id"`
+	Operation          RunHistoryOperationData `json:"operation"`
+	AuthorizationValid bool                    `json:"authorization_valid"`
+}
+
+type RunHistoryScheduleResp struct {
+	Code      string                 `json:"code"`
+	RequestId string                 `json:"request_id"`
+	Data      RunHistoryScheduleData `json:"data"`
+}
+
 type RunLifecycleData struct {
 	Run               RunOperationData      `json:"run"`
 	ObservedAt        string                `json:"observed_at"`
@@ -1570,6 +1591,15 @@ type UpdateRetentionPolicyReq struct {
 	KeepLatest       int64  `json:"keep_latest"`
 	MinimumAgeDays   int64  `json:"minimum_age_days"`
 	ExpectedRevision int64  `json:"expected_revision"`
+	IdempotencyKey   string `header:"Idempotency-Key"`
+}
+
+type UpdateRunHistoryScheduleReq struct {
+	Enabled          bool   `json:"enabled"`
+	MinimumAgeDays   int64  `json:"minimum_age_days"`
+	IntervalMinutes  int64  `json:"interval_minutes"`
+	ExpectedRevision int64  `json:"expected_revision"`
+	Confirm          bool   `json:"confirm"`
 	IdempotencyKey   string `header:"Idempotency-Key"`
 }
 

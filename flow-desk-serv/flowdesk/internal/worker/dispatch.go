@@ -12,6 +12,7 @@ const pollInterval = 500 * time.Millisecond
 const batchSize = 10
 
 func Run(ctx context.Context, s *svc.ServiceContext) {
+	go runHistorySchedules(ctx, s)
 	ticker := time.NewTicker(pollInterval)
 	defer ticker.Stop()
 	ticks := 0
@@ -36,6 +37,23 @@ func Run(ctx context.Context, s *svc.ServiceContext) {
 			if err := logic.ExpireOverdueRuns(ctx, s); err != nil {
 				logx.Error("run expiry scan failed")
 			}
+		}
+	}
+}
+
+const historySchedulePollInterval = 5 * time.Second
+
+func runHistorySchedules(ctx context.Context, s *svc.ServiceContext) {
+	ticker := time.NewTicker(historySchedulePollInterval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+		}
+		if _, err := logic.DispatchHistorySchedule(ctx, s); err != nil {
+			logx.Error("scheduled history maintenance not confirmed")
 		}
 	}
 }

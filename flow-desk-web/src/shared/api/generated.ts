@@ -808,6 +808,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/run-history-schedule": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read current tenant scheduled history archival policy | permission=admin/run:observe | auth=required */
+        get: operations["getRunHistorySchedule"];
+        /** Confirm durable tenant history archival authorization or disable it | permission=admin/run:observe | auth=required */
+        put: operations["updateRunHistorySchedule"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/runs": {
         parameters: {
             query?: never;
@@ -3890,6 +3908,108 @@ export interface operations {
                                 run_id: string;
                             }[];
                             maximum_items: number;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    getRunHistorySchedule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            authorization_valid: boolean;
+                            enabled: boolean;
+                            interval_minutes: number;
+                            last_checked_at: string;
+                            last_outcome: string;
+                            last_run_id: string;
+                            minimum_age_days: number;
+                            next_run_at: string;
+                            operation: {
+                                checkpoint_blob_count: number;
+                                checkpoint_count: number;
+                                checkpoint_write_count: number;
+                                generation: number;
+                                operation_id: string;
+                                run_id: string;
+                                status: string;
+                                target: string;
+                            };
+                            owner_user_id: string;
+                            revision: number;
+                            runtime_enabled: boolean;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    updateRunHistorySchedule: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    confirm: boolean;
+                    enabled: boolean;
+                    expected_revision: number;
+                    interval_minutes: number;
+                    minimum_age_days: number;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            authorization_valid: boolean;
+                            enabled: boolean;
+                            interval_minutes: number;
+                            last_checked_at: string;
+                            last_outcome: string;
+                            last_run_id: string;
+                            minimum_age_days: number;
+                            next_run_at: string;
+                            operation: {
+                                checkpoint_blob_count: number;
+                                checkpoint_count: number;
+                                checkpoint_write_count: number;
+                                generation: number;
+                                operation_id: string;
+                                run_id: string;
+                                status: string;
+                                target: string;
+                            };
+                            owner_user_id: string;
+                            revision: number;
+                            runtime_enabled: boolean;
                         };
                         request_id?: string;
                     };

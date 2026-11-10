@@ -9,6 +9,8 @@ import (
 )
 
 type RunsModel interface {
+	FindHistoryScheduleCandidateTx(context.Context, sqlx.Session, string, string, int64) (*Runs, error)
+	ExistsHistoryScheduleAgeTx(context.Context, sqlx.Session, string, string, int64) (bool, error)
 	FindLifecycleInventoryTx(context.Context, sqlx.Session, string, string) (RunLifecycleInventory, error)
 	FindOneForShareTx(context.Context, sqlx.Session, string, string) (*Runs, error)
 	ListOperationsTx(context.Context, sqlx.Session, RunOperationFilter) ([]Runs, error)
@@ -177,4 +179,15 @@ func (m *customRunsModel) FindLifecycleInventoryTx(ctx context.Context, tx sqlx.
         r.updated_at<=now()-interval '30 days' old_enough, now() observed_at
         from business.runs r where r.tenant_id=$1 and r.id=$2`, tenant, run)
 	return data, err
+}
+
+func (m *customRunsModel) FindHistoryScheduleCandidateTx(ctx context.Context, tx sqlx.Session, tenant, after string, days int64) (*Runs, error) {
+	var row Runs
+	err := tx.QueryRowCtx(ctx, &row, fmt.Sprintf(`select r.%s from %s r where r.tenant_id=$1 and ($2='' or r.id>nullif($2,'')::uuid) and r.status in ('succeeded','failed','expired','cancelled') and r.updated_at<=clock_timestamp()-$3::bigint*interval '1 day' and not exists(select 1 from business.run_history_operations h where h.tenant_id=r.tenant_id and h.run_id=r.id) order by r.id limit 1`, strings.ReplaceAll(runsRows, ",", ",r."), m.table), tenant, after, days)
+	return &row, err
+}
+func (m *customRunsModel) ExistsHistoryScheduleAgeTx(ctx context.Context, tx sqlx.Session, tenant, id string, days int64) (bool, error) {
+	var found bool
+	err := tx.QueryRowCtx(ctx, &found, fmt.Sprintf(`select exists(select 1 from %s where tenant_id=$1 and id=$2 and updated_at<=clock_timestamp()-$3::bigint*interval '1 day')`, m.table), tenant, id, days)
+	return found, err
 }
