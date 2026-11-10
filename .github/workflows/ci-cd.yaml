@@ -127,6 +127,11 @@ jobs:
         run: python scripts/smoke.py
       - name: Check account roles, password recovery and session revocation
         run: python scripts/check-accounts.py --output work/accounts-ci.json
+      - name: Check owner password changes and complete session revocation
+        run: |
+          mkdir -p work
+          install -m 600 .env work/password-ci.env
+          python scripts/check-self-password.py --env-file work/password-ci.env --output work/self-password-ci.json
       - name: Check knowledge retention and durable index cleanup
         run: |
           mkdir -p work

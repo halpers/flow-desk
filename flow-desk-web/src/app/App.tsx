@@ -1,18 +1,34 @@
 import { useEffect, useState } from "react";
 import { Alert, Button, Card, Form, Input, Space, Spin, Tag } from "antd";
 import { api, login, logout, refresh, type User } from "../shared/api/client";
-import { clearSession } from "../shared/api/client";
+import {
+  clearSession,
+  passwordReauthenticationRequired,
+} from "../shared/api/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { Workspace } from "../features/workspace/Workspace";
 import { Knowledge } from "../features/knowledge/Knowledge";
 import { Teams } from "../features/teams/Teams";
 import { Accounts } from "../features/accounts/Accounts";
+import { SelfPassword } from "../features/accounts/SelfPassword";
 
 export function App() {
   const cache = useQueryClient();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [sessionNotice, setSessionNotice] = useState(() =>
+    passwordReauthenticationRequired()
+      ? "修改密码结果需要重新核对。请先使用新密码登录；如未成功，再尝试原密码或联系管理员。"
+      : "",
+  );
+  const signedOut = (notice: string) => {
+    clearSession();
+    void cache.cancelQueries();
+    cache.clear();
+    setSessionNotice(notice);
+    setUser(null);
+  };
   const load = async () => setUser(await api<User>("/auth/me"));
   useEffect(() => {
     const expired = () => {
@@ -25,6 +41,11 @@ export function App() {
       window.removeEventListener("flowdesk:session-expired", expired);
   }, [cache]);
   useEffect(() => {
+    if (passwordReauthenticationRequired()) {
+      clearSession();
+      setLoading(false);
+      return;
+    }
     refresh()
       .then(load)
       .catch(() => {})
@@ -73,6 +94,7 @@ export function App() {
             >
               <Input.Password autoComplete="current-password" />
             </Form.Item>
+            {sessionNotice && <Alert title={sessionNotice} type="info" />}
             {error && <Alert title={error} type="error" />}
             <Button type="primary" htmlType="submit" block>
               登录工作台
@@ -91,6 +113,10 @@ export function App() {
           <p className="subtitle">从问题到解决，让流程清晰可见。</p>
         </div>
         <Space>
+          <SelfPassword
+            key={`password:${user.tenant_id}:${user.id}`}
+            onSignedOut={signedOut}
+          />
           <Accounts key={`accounts:${user.tenant_id}:${user.id}`} user={user} />
           <Teams key={`teams:${user.tenant_id}:${user.id}`} user={user} />
           <Knowledge key={`${user.tenant_id}:${user.id}`} user={user} />

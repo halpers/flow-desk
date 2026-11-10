@@ -44,6 +44,9 @@ func main() {
 		panic("JWT_SECRET and INTERNAL_TOKEN must contain at least 32 characters")
 	}
 
+	// Authentication bodies contain credentials. Native error/slow-request
+	// logging can dump them; metadata tracing and metrics remain enabled.
+	c.Middlewares.Log = false
 	server := rest.MustNewServer(c.RestConf)
 	defer server.Stop()
 

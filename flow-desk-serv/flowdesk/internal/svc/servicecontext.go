@@ -50,6 +50,7 @@ type ServiceContext struct {
 	TenantsModel          model.TenantsModel
 	SessionsModel         model.SessionsModel
 	LoginLimiter          *rate.Limiter
+	PasswordChangeLimiter *PasswordChangeGuard
 	SessionAuth           rest.Middleware
 	ServiceAuth           rest.Middleware
 	ConversationsModel    model.ConversationsModel
@@ -128,5 +129,6 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		DocumentVersionsModel: model.NewDocumentVersionsModel(conn),
 		RunEvidenceModel:      model.NewRunEvidenceModel(conn),
 		LoginLimiter:          rate.NewLimiter(rate.Limit(loginRequestsPerSecond), loginBurst),
+		PasswordChangeLimiter: NewPasswordChangeGuard(),
 	}
 }

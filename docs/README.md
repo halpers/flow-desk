@@ -70,3 +70,5 @@ M7.25 [Agent独立迁移](m7-agent-migration.md)提供一次性迁移、checkpoi
 M7.26 [任务历史批量归档](m7-run-history-batch.md)提供至多10项统一预览、全部原维护意图原子登记、逐项进度和刷新后按批次继续；升级、日常操作及回退见[服务器手册§36](../deploy/server.md#36-任务历史批量归档)。
 
 - [M7.27 任务历史批量恢复](m7-run-history-batch-restore.md)：独立恢复入口、同方向批次、原操作逐项核对和永久执行封存。
+
+- [M7.28 用户自助修改密码](m7-self-password.md)：本人凭据验证、全会话撤销、独立限流和不确定结果重新认证。

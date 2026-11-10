@@ -17,6 +17,11 @@ func NewSessionAuthMiddleware(s *svc.ServiceContext) *SessionAuthMiddleware {
 }
 func (m *SessionAuthMiddleware) Handle(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// Set this before authentication so missing, expired and revoked credentials
+		// receive the same non-cacheable response as the password handler.
+		if r.URL.Path == "/api/v1/auth/password" {
+			w.Header().Set("Cache-Control", "no-store")
+		}
 		header := r.Header.Get("Authorization")
 		if !strings.HasPrefix(header, "Bearer ") {
 			httpx.WriteJson(w, 401, map[string]string{"code": "UNAUTHENTICATED"})

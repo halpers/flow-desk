@@ -184,6 +184,12 @@ type CancelRunReq struct {
 	ExpectedVersion int64  `json:"expected_version"`
 }
 
+type ChangeOwnPasswordReq struct {
+	CurrentPassword string `json:"current_password"`
+	NewPassword     string `json:"new_password"`
+	Confirm         bool   `json:"confirm"`
+}
+
 type CitationReq struct {
 	EvidenceId string `path:"evidence_id"`
 }

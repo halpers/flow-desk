@@ -87,3 +87,5 @@ M7.1 的 PDF 解析器随 Agent 镜像安装，无需额外解析服务或 API k
 运行时新增五项Go公开批次操作，仍只有浏览器→Go→Agent。Go迁移2026110903在现有一次性迁移作业执行；Agent没有新DDL或版本。批次统一登记、页面逐项推进，关闭后通过最近批次继续；没有后台定时归档器。只在可丢弃mock栈运行`python scripts/check-run-history-batch.py --env-file work/retention-ci.env --output work/run-history-batch.json`，该脚本会调整自身新建合成任务的时间，不能连接业务服务器。流程及回退见[服务器手册§36](../deploy/server.md#36-任务历史批量归档)。
 
 M7.27[批量恢复](m7-run-history-batch-restore.md)沿用M7.26批次读取与逐项核对，新增两项恢复POST入口。Go按顺序迁移至2026110904，Agent应用版本仍为11。仅一次性mock环境运行`scripts/check-run-history-batch-restore.py`，不能在业务库运行合成任务验收；生产升级及IP:port操作见[服务器手册§37](../deploy/server.md#37-任务历史批量恢复)。
+
+M7.28[自助改密](m7-self-password.md)无新端口、模型依赖或数据库迁移。配套发布API/Web，固定关闭会记录请求正文的原生HTTP日志；保留原metadata tracing。成功或不确定结果需显式重新登录，浏览器只保存非敏感重新认证标记。公开验收`scripts/check-self-password.py`仅运行在`work/`可丢弃mock配置，创建独立合成账号；运维见[服务器手册§38](../deploy/server.md#38-用户自助修改密码)。
