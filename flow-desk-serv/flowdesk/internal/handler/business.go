@@ -7,6 +7,7 @@ import (
 	"github.com/lib/pq"
 	"github.com/zeromicro/go-zero/rest/httpx"
 	"net/http"
+	"strconv"
 )
 
 func writeBusiness(w http.ResponseWriter, r *http.Request, status int, data any, err error) {
@@ -31,6 +32,9 @@ func writeBusiness(w http.ResponseWriter, r *http.Request, status int, data any,
 		problem = &logic.BusinessError{Status: 409, Code: "AUTHORIZATION_BUSY", Message: "团队权限正在更新，请稍后重试", Data: map[string]any{"retryable": true}}
 	case errors.As(err, &postgresError) && postgresError.Code == "23505":
 		problem = &logic.BusinessError{Status: 409, Code: "VERSION_CONFLICT", Message: "请求与现有记录冲突"}
+	}
+	if problem.RetryAfterSeconds > 0 {
+		w.Header().Set("Retry-After", strconv.FormatInt(problem.RetryAfterSeconds, 10))
 	}
 	httpx.WriteJsonCtx(r.Context(), w, problem.Status, map[string]any{"code": problem.Code, "message": problem.Message, "request_id": requestID, "data": problem.Data})
 }

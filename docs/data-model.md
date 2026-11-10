@@ -308,3 +308,5 @@ Agent有序迁移10增加semantic_ann_indexes，以tenant_id/profile/dimension�
 M7.27迁移`2026110904_run_history_batch_direction.sql`增强Go自有批次延迟完整性约束，成员必须全部指向同一archived/live目标。目标由不可变原操作派生，不增加表/列；热冷载荷、围栏与原回执保持。见[批量恢复](m7-run-history-batch-restore.md)。
 
 M7.28[自助改密](m7-self-password.md)复用Go用户/会话/审计表，无新迁移。密码bcrypt、revision/auth_version递增、全部会话撤销和固定审计同事务；不保存密码相关请求摘要、幂等映射或凭据回执，角色和业务数据保持。
+
+M7.29由Go新增auth_rate_limits认证基础设施表：两个固定全局桶和可信tenant/user改密桶，保存理论到达时间及更新时间；租户/用户复合外键、键格式约束和有界安全回收。不存储密码、账号输入、IP或认证凭据；限流消耗独立事务提交，不与后续认证业务回滚联动。详见[共享限流](m7-auth-rate-limits.md)。

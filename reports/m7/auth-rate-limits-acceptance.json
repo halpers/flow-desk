@@ -1,0 +1,12 @@
+{
+  "phase": "M7.29",
+  "profile": "disposable-mock-two-api",
+  "checks": [
+    "two independent APIs share the same trusted-account password budget",
+    "login budget and Retry-After are shared regardless of account input or forwarded IP",
+    "unauthenticated account strings and IPs create no per-input buckets",
+    "actual API restart preserves persisted debt; both APIs enforce it and debit legitimate database-time refill",
+    "limiter database failures fail closed on both APIs without password, version or session effects"
+  ],
+  "completed_at": "2026-11-10T03:20:13.636634+00:00"
+}

@@ -38,8 +38,8 @@ func ChangeOwnPassword(ctx context.Context, s *svc.ServiceContext, req *types.Ch
 	if err != nil {
 		return err
 	}
-	if !s.PasswordChangeLimiter.Allow(observed.TenantId, observed.Id) {
-		return failure(429, "PASSWORD_CHANGE_RATE_LIMITED", "修改密码尝试过于频繁，请稍后再试")
+	if err := checkPasswordChangeRateLimit(ctx, s, observed.TenantId, observed.Id); err != nil {
+		return err
 	}
 	// CPU work runs without database locks. The original credential and exact
 	// live session are checked again after taking the authorization write lock.

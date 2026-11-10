@@ -39,6 +39,7 @@ func trustedOrigin(s *svc.ServiceContext, r *http.Request) bool {
 
 func loginHandler(s *svc.ServiceContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "no-store")
 		if !trustedOrigin(s, r) {
 			httpx.WriteJson(w, 403, map[string]string{"code": "ORIGIN_REJECTED"})
 			return
@@ -48,8 +49,8 @@ func loginHandler(s *svc.ServiceContext) http.HandlerFunc {
 			authError(w, r)
 			return
 		}
-		if !s.LoginLimiter.Allow() {
-			httpx.WriteJson(w, 429, map[string]string{"code": "RATE_LIMITED"})
+		if err := logic.CheckLoginRateLimit(r.Context(), s); err != nil {
+			writeBusiness(w, r, 200, nil, err)
 			return
 		}
 		resp, raw, err := logic.Login(r.Context(), s, &req)

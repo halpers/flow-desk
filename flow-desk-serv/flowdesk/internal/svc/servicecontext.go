@@ -11,13 +11,10 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 	"github.com/zeromicro/go-zero/rest"
-	"golang.org/x/time/rate"
 )
 
-const loginRequestsPerSecond = 2
-const loginBurst = 10
-
 type ServiceContext struct {
+	AuthRateLimitsModel                      model.AuthRateLimitsModel
 	RunHistoryBatchesModel                   model.RunHistoryBatchesModel
 	RunHistoryBatchItemsModel                model.RunHistoryBatchItemsModel
 	RunHistoryOperationsModel                model.RunHistoryOperationsModel
@@ -49,8 +46,6 @@ type ServiceContext struct {
 	UsersModel            model.UsersModel
 	TenantsModel          model.TenantsModel
 	SessionsModel         model.SessionsModel
-	LoginLimiter          *rate.Limiter
-	PasswordChangeLimiter *PasswordChangeGuard
 	SessionAuth           rest.Middleware
 	ServiceAuth           rest.Middleware
 	ConversationsModel    model.ConversationsModel
@@ -84,6 +79,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		panic("invalid file store provider")
 	}
 	return &ServiceContext{
+		AuthRateLimitsModel:                      model.NewAuthRateLimitsModel(conn),
 		RunHistoryBatchesModel:                   model.NewRunHistoryBatchesModel(conn),
 		RunHistoryBatchItemsModel:                model.NewRunHistoryBatchItemsModel(conn),
 		RunHistoryOperationsModel:                model.NewRunHistoryOperationsModel(conn),
@@ -128,7 +124,5 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		DocumentsModel:        model.NewDocumentsModel(conn),
 		DocumentVersionsModel: model.NewDocumentVersionsModel(conn),
 		RunEvidenceModel:      model.NewRunEvidenceModel(conn),
-		LoginLimiter:          rate.NewLimiter(rate.Limit(loginRequestsPerSecond), loginBurst),
-		PasswordChangeLimiter: NewPasswordChangeGuard(),
 	}
 }

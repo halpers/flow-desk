@@ -39,3 +39,5 @@ python scripts/check-accounts.py --env-file /path/to/disposable/.env --output wo
 ```
 
 实际结果见[公开 API 报告](../reports/m7/accounts-acceptance.json)和[实施记录](progress.md)。数据库测试覆盖跨租户/分页、权限并集、会话及已批准动作撤销、并发管理员保护、登录/刷新竞争、晚期审计失败回滚、知识资源范围及重放；浏览器覆盖新增角色/账号、丢失响应同键重试、重置密码和停用。未实施远程部署、自助注册/改密、SSO、MFA、密码邮件、角色继承或任意权限表达式。
+
+M7.29将原登录全局额度和本人改密额度升级为[共享持久限流](m7-auth-rate-limits.md)，多个API实例共用PostgreSQL状态，重启不重置；不增加按登录账号或IP的附加策略。

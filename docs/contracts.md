@@ -413,6 +413,10 @@ PUT 必须有 Idempotency-Key，正文 expected_revision、status、note、confi
 
 新增独立的POST /api/v1/run-history-restore-batches/preview及POST /api/v1/run-history-restore-batches；输入结构沿用原批次预览/确认请求，使用独立run.history.restore_batch幂等作用域，不改变M7.26归档请求摘要。统一GET/list/逐项resume支持两种同方向批次，响应增加target=archived/live；不能提交混合方向成员。恢复仍需当前管理员、可信会话、完整成员当前授权及原版本/代次，全部原意图在一个Go事务登记，跨服务逐项核对原操作。只恢复存储，不解除永久执行封存；旧批次重放不覆盖后来单项操作。详见[批量恢复](m7-run-history-batch-restore.md)，实际验收状态见[实施记录](progress.md)。
 
+## M7.29 共享持久认证限流
+
+登录和本人改密沿用原路径/请求/成功响应；原429错误码保持，增加整数Retry-After及no-store。额度由Go业务库auth_rate_limits记录，所有API实例共享、重启不重置；只使用固定全局键和可信tenant/user键。数据库/限流事务不可用返回503 AUTH_RATE_LIMIT_UNAVAILABLE，拒绝后续认证业务，不退回内存放行。详细并发、回收和升级边界见[共享限流](m7-auth-rate-limits.md)，实际验收状态见[实施记录](progress.md)。
+
 ## M7.28 用户自助修改密码
 
 新增SessionAuth的POST /api/v1/auth/password，输入current_password/new_password/confirm=true；可信调用者仅可修改本人密码。当前密码验证、当前密码摘要/授权版本与精确会话复核后，密码/版本更新、全部会话撤销和固定脱敏审计同一事务提交。响应不含凭据、成功清除refresh cookie；不保存密码相关幂等摘要或回执，不自动重试结果不确定的请求。新密码遵守现有12–72 UTF-8字节且含字母数字规则，并拒绝与当前密码相同。独立可信账号限流及全局限流，不消耗登录额度；成功或响应不确定时浏览器清除密码、认证和查询缓存，退出并提示重登。认证失败和业务响应均no-store。浏览器提交前仅保存会话存储布尔重登标记，存储不可用时不发请求；成功、不确定或401后刷新页面也不自动恢复Cookie会话，须明确登录，已知未提交错误可清标记。详见[自助改密](m7-self-password.md)，实际验收状态见[实施记录](progress.md)。

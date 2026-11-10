@@ -132,6 +132,22 @@ jobs:
           mkdir -p work
           install -m 600 .env work/password-ci.env
           python scripts/check-self-password.py --env-file work/password-ci.env --output work/self-password-ci.json
+      - name: Check persistent shared authentication budgets across two APIs and restart
+        run: |
+          install -m 600 .env work/auth-rate-ci.env
+          trap 'docker rm --force flowdesk-rate-ci-api2 >/dev/null 2>&1 || true' EXIT
+          docker compose --file docker-compose.yaml run --detach --no-deps --publish 127.0.0.1:18081:8080 --name flowdesk-rate-ci-api2 api
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:18081/health/ready >/dev/null; then break; fi
+            sleep 1
+          done
+          python scripts/check-auth-rate-limits.py --env-file work/auth-rate-ci.env --api-two http://localhost:18081/api/v1 --fixture work/auth-rate-fixture.json --output work/auth-rate-ci.json --phase prepare
+          docker restart flowdesk-rate-ci-api2
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:18081/health/ready >/dev/null; then break; fi
+            sleep 1
+          done
+          python scripts/check-auth-rate-limits.py --env-file work/auth-rate-ci.env --api-two http://localhost:18081/api/v1 --fixture work/auth-rate-fixture.json --output work/auth-rate-ci.json --phase verify
       - name: Check knowledge retention and durable index cleanup
         run: |
           mkdir -p work

@@ -24,9 +24,10 @@ const idempotencyLifetime = 30 * 24 * time.Hour
 var idempotencyKeyPattern = regexp.MustCompile(`^[A-Za-z0-9._:-]{12,128}$`)
 
 type BusinessError struct {
-	Status        int
-	Code, Message string
-	Data          map[string]any
+	Status            int
+	Code, Message     string
+	Data              map[string]any
+	RetryAfterSeconds int64
 }
 
 func (e *BusinessError) Error() string { return e.Code }
