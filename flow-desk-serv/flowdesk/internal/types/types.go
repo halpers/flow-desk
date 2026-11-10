@@ -478,6 +478,27 @@ type InvestigationArchiveResp struct {
 	Data      InvestigationArchiveData `json:"data"`
 }
 
+type InvestigationAutomationData struct {
+	RuntimeEnabled     bool   `json:"runtime_enabled"`
+	Enabled            bool   `json:"enabled"`
+	Revision           int64  `json:"revision"`
+	IdleDays           int64  `json:"idle_days"`
+	IntervalMinutes    int64  `json:"interval_minutes"`
+	OwnerUserId        string `json:"owner_user_id"`
+	AuthorizationValid bool   `json:"authorization_valid"`
+	NextRunAt          string `json:"next_run_at"`
+	LastCheckedAt      string `json:"last_checked_at"`
+	LastOutcome        string `json:"last_outcome"`
+	LastObjectRef      string `json:"last_object_ref"`
+	LastRevision       int64  `json:"last_revision"`
+}
+
+type InvestigationAutomationResp struct {
+	Code      string                      `json:"code"`
+	RequestId string                      `json:"request_id"`
+	Data      InvestigationAutomationData `json:"data"`
+}
+
 type InvestigationHistoryPage struct {
 	ObjectRef             string                      `json:"object_ref"`
 	CurrentRevision       int64                       `json:"current_revision"`
@@ -1566,6 +1587,15 @@ type ToolResult struct {
 	Order     OrderData       `json:"order,optional"`
 	Logistics []LogisticsData `json:"logistics,optional"`
 	Tickets   []TicketData    `json:"tickets,optional"`
+}
+
+type UpdateInvestigationAutomationReq struct {
+	Enabled          bool   `json:"enabled"`
+	IdleDays         int64  `json:"idle_days"`
+	IntervalMinutes  int64  `json:"interval_minutes"`
+	ExpectedRevision int64  `json:"expected_revision"`
+	Confirm          bool   `json:"confirm"`
+	IdempotencyKey   string `header:"Idempotency-Key"`
 }
 
 type UpdateManagedRoleReq struct {

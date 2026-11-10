@@ -76,3 +76,5 @@ M7.26 [任务历史批量归档](m7-run-history-batch.md)提供至多10项统一
 - [M7.29 共享持久认证限流](m7-auth-rate-limits.md)：数据库额度、双桶事务、容量回收、故障拒绝与配套升级。
 
 M7.30[定时任务历史归档](m7-run-history-schedule.md)提供默认关闭的持续授权、持久租约、原操作恢复和运行状态；IP:port部署、全局暂停及备份恢复见[服务器手册§40](../deploy/server.md#40-定时任务历史归档)。
+
+M7.31[超时调查自动回待办](m7-investigation-automation.md)提供当前授权、原子历史/审计、人工更新保护和有界后台扫描；运维见[服务器手册§41](../deploy/server.md#41-超时调查自动回待办)。

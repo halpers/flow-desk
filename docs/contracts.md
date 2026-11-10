@@ -425,3 +425,8 @@ PUT 必须有 Idempotency-Key，正文 expected_revision、status、note、confi
 ## M7.30 定时任务历史归档
 
 [定时归档契约](m7-run-history-schedule.md)定义默认关闭的租户策略、持续授权、版本保护、有界扫描、租约围栏和原操作恢复。HTTP源为api/runhistoryschedule.api；机器契约随源生成。实际验收以[实施记录](progress.md)为准；默认关闭的运行总开关通过响应runtime_enabled反映，明确授权不依赖浏览器会话。
+
+
+## M7.31 超时调查自动回待办
+
+[调查自动流转契约](m7-investigation-automation.md)定义默认关闭的持续授权、当前资源ACL、保留说明及完整快照的原子状态流转。HTTP源为api/investigationautomation.api；实际验收以实施记录为准。

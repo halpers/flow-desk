@@ -175,6 +175,12 @@ jobs:
           echo 'RUN_HISTORY_SCHEDULER_ENABLED=true' >> work/schedule-ci.env
           docker compose --env-file work/schedule-ci.env up --detach --no-deps --wait api
           python scripts/check-run-history-schedule.py --env-file work/schedule-ci.env --output work/run-history-schedule-ci.json --browser-fixture work/run-history-schedule-ci-fixture.json
+      - name: Check real overdue investigation automation and persistent authorization
+        run: |
+          cp work/retention-ci.env work/automation-ci.env
+          echo 'INVESTIGATION_AUTOMATION_ENABLED=true' >> work/automation-ci.env
+          docker compose --env-file work/automation-ci.env up --detach --no-deps --wait api
+          python scripts/check-investigation-automation.py --env-file work/automation-ci.env --output work/investigation-automation-ci.json
       - name: Check real native OCR in pinned Agent image
         run: |
           docker compose run --rm --no-deps --volume "$PWD/flow-desk-agent/tests:/app/tests:ro" --env FLOWDESK_NATIVE_OCR_TESTS=1 agent python -m pytest -q tests/test_ocr.py tests/test_ocr_layout.py -p no:cacheprovider

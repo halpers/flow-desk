@@ -1,0 +1,12 @@
+{
+  "phase": "M7.31",
+  "profile": "isolated-tenant-disposable-mock",
+  "checks": [
+    "default-off policy requires current tenant administrator and explicit bounded confirmation",
+    "real background worker atomically returns overdue investigation with original note history and scheduled audit",
+    "newly updated open and closed investigations are excluded and repeated scans do not create duplicate revisions",
+    "disable persists while old receipt replay preserves original result without re-enabling current policy",
+    "credential-version change invalidates persistent authorization until explicit current administrator reconfirmation"
+  ],
+  "completed_at": "2026-11-10T06:29:16.131783+00:00"
+}

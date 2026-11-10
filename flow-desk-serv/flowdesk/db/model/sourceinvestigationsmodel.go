@@ -10,6 +10,9 @@ import (
 
 type SourceInvestigationsModel interface {
 	sourceInvestigationsModel
+	FindOneByTenantIdIdTx(context.Context, sqlx.Session, string, string) (*SourceInvestigations, error)
+	FindAutomationCandidateTx(context.Context, sqlx.Session, string, string, int64) (*SourceInvestigations, error)
+	ExistsAutomationEligibleTx(context.Context, sqlx.Session, string, string, int64, int64) (bool, error)
 	withSession(sqlx.Session) SourceInvestigationsModel
 	FindOneForUpdateTx(context.Context, sqlx.Session, string, string) (*SourceInvestigations, error)
 	FindOneForShareTx(context.Context, sqlx.Session, string, string) (*SourceInvestigations, error)
@@ -84,4 +87,18 @@ func (m *customSourceInvestigationsModel) FindOneForUpdateTx(ctx context.Context
 	var row SourceInvestigations
 	err := tx.QueryRowCtx(ctx, &row, fmt.Sprintf("select %s from %s where tenant_id=$1 and object_ref=$2 for update", sourceInvestigationsRows, m.table), tenant, ref)
 	return &row, err
+}
+
+func (m *customSourceInvestigationsModel) FindOneByTenantIdIdTx(ctx context.Context, tx sqlx.Session, tenant, id string) (*SourceInvestigations, error) {
+	return m.withSession(tx).FindOneByTenantIdId(ctx, tenant, id)
+}
+func (m *customSourceInvestigationsModel) FindAutomationCandidateTx(ctx context.Context, tx sqlx.Session, tenant, after string, days int64) (*SourceInvestigations, error) {
+	var row SourceInvestigations
+	err := tx.QueryRowCtx(ctx, &row, fmt.Sprintf(`select %s from %s where tenant_id=$1 and ($2='' or id>nullif($2,'')::uuid) and status='investigating' and updated_at<=clock_timestamp()-$3::bigint*interval '1 day' order by id limit 1`, sourceInvestigationsRows, m.table), tenant, after, days)
+	return &row, err
+}
+func (m *customSourceInvestigationsModel) ExistsAutomationEligibleTx(ctx context.Context, tx sqlx.Session, tenant, id string, revision, days int64) (bool, error) {
+	var found bool
+	err := tx.QueryRowCtx(ctx, &found, fmt.Sprintf(`select exists(select 1 from %s where tenant_id=$1 and id=$2 and revision=$3 and status='investigating' and updated_at<=clock_timestamp()-$4::bigint*interval '1 day')`, m.table), tenant, id, revision, days)
+	return found, err
 }

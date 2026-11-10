@@ -14,6 +14,7 @@ import (
 )
 
 type ServiceContext struct {
+	InvestigationAutomationPoliciesModel     model.InvestigationAutomationPoliciesModel
 	RunHistorySchedulesModel                 model.RunHistorySchedulesModel
 	AuthRateLimitsModel                      model.AuthRateLimitsModel
 	RunHistoryBatchesModel                   model.RunHistoryBatchesModel
@@ -80,6 +81,7 @@ func NewServiceContext(c config.Config) *ServiceContext {
 		panic("invalid file store provider")
 	}
 	return &ServiceContext{
+		InvestigationAutomationPoliciesModel:     model.NewInvestigationAutomationPoliciesModel(conn),
 		RunHistorySchedulesModel:                 model.NewRunHistorySchedulesModel(conn),
 		AuthRateLimitsModel:                      model.NewAuthRateLimitsModel(conn),
 		RunHistoryBatchesModel:                   model.NewRunHistoryBatchesModel(conn),

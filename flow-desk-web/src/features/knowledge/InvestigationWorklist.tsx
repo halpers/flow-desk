@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Alert, Button, Drawer, Empty, Select, Space, Tag } from "antd";
 import { api } from "../../shared/api/client";
 import type { Models } from "../../shared/api/models";
 import { SourceInvestigation } from "./SourceInvestigation";
+
+import { InvestigationAutomation } from "./InvestigationAutomation";
 
 const labels: Record<string, string> = {
   open: "待跟进",
@@ -12,6 +14,8 @@ const labels: Record<string, string> = {
 };
 
 export function InvestigationWorklist({ scope }: { scope: string[] }) {
+  const queryClient = useQueryClient();
+  const [denied, setDenied] = useState("");
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState("");
   const [cursors, setCursors] = useState([""]);
@@ -36,6 +40,7 @@ export function InvestigationWorklist({ scope }: { scope: string[] }) {
   }
   return (
     <>
+      {denied && <Alert type="error" title={denied} />}
       <Button
         onClick={() => {
           setOpen(true);
@@ -54,6 +59,15 @@ export function InvestigationWorklist({ scope }: { scope: string[] }) {
         <p>
           按创建时间从新到旧查看当前可访问的调查。可在存储离线或巡检暂停后继续跟进；跟进状态不代表对象归属或删除权限。
         </p>
+        <InvestigationAutomation
+          onDenied={(message) => {
+            setDenied(message);
+            setSelected(null);
+            setOpen(false);
+            void queryClient.cancelQueries({ queryKey: scope });
+            queryClient.removeQueries({ queryKey: scope });
+          }}
+        />
         <Space wrap>
           <Select
             aria-label="筛选跟进状态"

@@ -14,6 +14,27 @@ import (
 
 func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.SessionAuth},
+			[]rest.Route{
+				{
+					// Read current tenant overdue investigation automation policy | permission=admin/knowledge:manage | auth=required
+					Method:  http.MethodGet,
+					Path:    "/investigation-automation",
+					Handler: GetInvestigationAutomationHandler(serverCtx),
+				},
+				{
+					// Explicitly authorize or disable overdue investigation return to open | permission=admin/knowledge:manage | auth=required
+					Method:  http.MethodPut,
+					Path:    "/investigation-automation",
+					Handler: UpdateInvestigationAutomationHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithPrefix("/api/v1"),
+	)
+
+	server.AddRoutes(
 		[]rest.Route{
 			{
 				// Liveness | permission=- | auth=public
@@ -67,6 +88,39 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 			}...,
 		),
 		rest.WithPrefix("/api/v1/auth"),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.SessionAuth},
+			[]rest.Route{
+				{
+					// List authorized run metadata | permission=conversation:use/run:observe | auth=required
+					Method:  http.MethodGet,
+					Path:    "/runs",
+					Handler: ListRunsHandler(serverCtx),
+				},
+				{
+					// Preview authorized run lifecycle metadata only | permission=conversation:use/run:observe | auth=required
+					Method:  http.MethodGet,
+					Path:    "/runs/:run_id/lifecycle",
+					Handler: GetRunLifecycleHandler(serverCtx),
+				},
+				{
+					// Retry own failed run without prepared actions | permission=conversation:use | auth=required
+					Method:  http.MethodPost,
+					Path:    "/runs/:run_id/retry",
+					Handler: RetryRunHandler(serverCtx),
+				},
+				{
+					// Read authorized sanitized trace | permission=conversation:use/run:observe | auth=required
+					Method:  http.MethodGet,
+					Path:    "/runs/:run_id/trace",
+					Handler: GetRunTraceHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithPrefix("/api/v1"),
 	)
 
 	server.AddRoutes(
@@ -326,302 +380,6 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 			[]rest.Middleware{serverCtx.SessionAuth},
 			[]rest.Route{
 				{
-					// Set knowledge resource scope | permission=team:manage | auth=required
-					Method:  http.MethodPatch,
-					Path:    "/knowledge-bases/:knowledge_base_id/team",
-					Handler: SetKnowledgeTeamHandler(serverCtx),
-				},
-				{
-					// Tenant member directory | permission=team:manage | auth=required
-					Method:  http.MethodGet,
-					Path:    "/team-users",
-					Handler: ListTeamUsersHandler(serverCtx),
-				},
-				{
-					// List accessible teams | permission=authenticated | auth=required
-					Method:  http.MethodGet,
-					Path:    "/teams",
-					Handler: ListTeamsHandler(serverCtx),
-				},
-				{
-					// Create team | permission=team:manage | auth=required
-					Method:  http.MethodPost,
-					Path:    "/teams",
-					Handler: CreateTeamHandler(serverCtx),
-				},
-				{
-					// Team members | permission=team:manage | auth=required
-					Method:  http.MethodGet,
-					Path:    "/teams/:team_id/members",
-					Handler: ListTeamMembersHandler(serverCtx),
-				},
-				{
-					// Update membership | permission=team:manage | auth=required
-					Method:  http.MethodPut,
-					Path:    "/teams/:team_id/members/:user_id",
-					Handler: UpdateTeamMembershipHandler(serverCtx),
-				},
-				{
-					// Set ticket resource scope | permission=team:manage | auth=required
-					Method:  http.MethodPatch,
-					Path:    "/tickets/:ticket_id/team",
-					Handler: SetTicketTeamHandler(serverCtx),
-				},
-			}...,
-		),
-		rest.WithPrefix("/api/v1"),
-	)
-
-	server.AddRoutes(
-		rest.WithMiddlewares(
-			[]rest.Middleware{serverCtx.SessionAuth},
-			[]rest.Route{
-				{
-					// Tenant roles and permission catalog | permission=account:manage or role:manage | auth=required
-					Method:  http.MethodGet,
-					Path:    "/admin/roles",
-					Handler: ListManagedRolesHandler(serverCtx),
-				},
-				{
-					// Create additive role | permission=role:manage | auth=required
-					Method:  http.MethodPost,
-					Path:    "/admin/roles",
-					Handler: CreateManagedRoleHandler(serverCtx),
-				},
-				{
-					// Update additive role | permission=role:manage | auth=required
-					Method:  http.MethodPut,
-					Path:    "/admin/roles/:role_id",
-					Handler: UpdateManagedRoleHandler(serverCtx),
-				},
-				{
-					// Tenant account directory | permission=account:manage | auth=required
-					Method:  http.MethodGet,
-					Path:    "/admin/users",
-					Handler: ListManagedUsersHandler(serverCtx),
-				},
-				{
-					// Create tenant account | permission=account:manage | auth=required
-					Method:  http.MethodPost,
-					Path:    "/admin/users",
-					Handler: CreateManagedUserHandler(serverCtx),
-				},
-				{
-					// Update account and roles | permission=account:manage | auth=required
-					Method:  http.MethodPut,
-					Path:    "/admin/users/:user_id",
-					Handler: UpdateManagedUserHandler(serverCtx),
-				},
-				{
-					// Reset account password | permission=account:manage | auth=required
-					Method:  http.MethodPost,
-					Path:    "/admin/users/:user_id/reset-password",
-					Handler: ResetManagedPasswordHandler(serverCtx),
-				},
-			}...,
-		),
-		rest.WithPrefix("/api/v1"),
-	)
-
-	server.AddRoutes(
-		rest.WithMiddlewares(
-			[]rest.Middleware{serverCtx.SessionAuth},
-			[]rest.Route{
-				{
-					// Read authorized run history storage preview | permission=conversation:use/run:observe | auth=required
-					Method:  http.MethodGet,
-					Path:    "/runs/:run_id/history",
-					Handler: GetRunHistoryHandler(serverCtx),
-				},
-				{
-					// Archive eligible read-only run payload and checkpoints | permission=admin/run:observe | auth=required
-					Method:  http.MethodPost,
-					Path:    "/runs/:run_id/history/archive",
-					Handler: ArchiveRunHistoryHandler(serverCtx),
-				},
-				{
-					// Reconcile durable pending history operation | permission=admin/run:observe | auth=required
-					Method:  http.MethodPost,
-					Path:    "/runs/:run_id/history/operations/:operation_id/resume",
-					Handler: ResumeRunHistoryHandler(serverCtx),
-				},
-				{
-					// Restore archived run payload and checkpoints without executing it | permission=admin/run:observe | auth=required
-					Method:  http.MethodPost,
-					Path:    "/runs/:run_id/history/restore",
-					Handler: RestoreRunHistoryHandler(serverCtx),
-				},
-			}...,
-		),
-		rest.WithPrefix("/api/v1"),
-	)
-
-	server.AddRoutes(
-		rest.WithMiddlewares(
-			[]rest.Middleware{serverCtx.SessionAuth},
-			[]rest.Route{
-				{
-					// Read current tenant scheduled history archival policy | permission=admin/run:observe | auth=required
-					Method:  http.MethodGet,
-					Path:    "/run-history-schedule",
-					Handler: GetRunHistoryScheduleHandler(serverCtx),
-				},
-				{
-					// Confirm durable tenant history archival authorization or disable it | permission=admin/run:observe | auth=required
-					Method:  http.MethodPut,
-					Path:    "/run-history-schedule",
-					Handler: UpdateRunHistoryScheduleHandler(serverCtx),
-				},
-			}...,
-		),
-		rest.WithPrefix("/api/v1"),
-	)
-
-	server.AddRoutes(
-		rest.WithMiddlewares(
-			[]rest.Middleware{serverCtx.SessionAuth},
-			[]rest.Route{
-				{
-					// Create conversation | permission=conversation:use | auth=required
-					Method:  http.MethodPost,
-					Path:    "/conversations",
-					Handler: CreateConversationHandler(serverCtx),
-				},
-				{
-					// List own conversations | permission=conversation:use | auth=required
-					Method:  http.MethodGet,
-					Path:    "/conversations",
-					Handler: ListConversationsHandler(serverCtx),
-				},
-				{
-					// Get own conversation | permission=conversation:use | auth=required
-					Method:  http.MethodGet,
-					Path:    "/conversations/:conversation_id",
-					Handler: GetConversationHandler(serverCtx),
-				},
-				{
-					// List messages | permission=conversation:use | auth=required
-					Method:  http.MethodGet,
-					Path:    "/conversations/:conversation_id/messages",
-					Handler: ListMessagesHandler(serverCtx),
-				},
-				{
-					// Send message | permission=conversation:use | auth=required
-					Method:  http.MethodPost,
-					Path:    "/conversations/:conversation_id/messages",
-					Handler: SendMessageHandler(serverCtx),
-				},
-				{
-					// List orders | permission=order:read | auth=required
-					Method:  http.MethodGet,
-					Path:    "/orders",
-					Handler: ListOrdersHandler(serverCtx),
-				},
-				{
-					// Get order | permission=order:read | auth=required
-					Method:  http.MethodGet,
-					Path:    "/orders/:order_id",
-					Handler: GetOrderHandler(serverCtx),
-				},
-				{
-					// Get logistics | permission=order:read | auth=required
-					Method:  http.MethodGet,
-					Path:    "/orders/:order_id/logistics",
-					Handler: GetLogisticsHandler(serverCtx),
-				},
-				{
-					// Run snapshot | permission=conversation:use | auth=required
-					Method:  http.MethodGet,
-					Path:    "/runs/:run_id",
-					Handler: GetRunHandler(serverCtx),
-				},
-			}...,
-		),
-		rest.WithPrefix("/api/v1"),
-	)
-
-	server.AddRoutes(
-		rest.WithMiddlewares(
-			[]rest.Middleware{serverCtx.SessionAuth},
-			[]rest.Route{
-				{
-					// Persisted event stream | permission=conversation:use | auth=required
-					Method:  http.MethodGet,
-					Path:    "/runs/:run_id/events",
-					Handler: StreamEventsHandler(serverCtx),
-				},
-			}...,
-		),
-		rest.WithPrefix("/api/v1"),
-		rest.WithTimeout(0*time.Nanosecond),
-		rest.WithSSE(),
-	)
-
-	server.AddRoutes(
-		rest.WithMiddlewares(
-			[]rest.Middleware{serverCtx.ServiceAuth},
-			[]rest.Route{
-				{
-					// Persist agent event | permission=- | auth=run_capability
-					Method:  http.MethodPost,
-					Path:    "/runs/:run_id/events",
-					Handler: IngestEventHandler(serverCtx),
-				},
-				{
-					// Renew run capability | permission=- | auth=service
-					Method:  http.MethodPost,
-					Path:    "/runs/:run_id/lease",
-					Handler: RenewLeaseHandler(serverCtx),
-				},
-				{
-					// Read business tool | permission=order:read | auth=run_capability
-					Method:  http.MethodPost,
-					Path:    "/tools/:tool_name",
-					Handler: CallToolHandler(serverCtx),
-				},
-			}...,
-		),
-		rest.WithPrefix("/internal/v1"),
-	)
-
-	server.AddRoutes(
-		rest.WithMiddlewares(
-			[]rest.Middleware{serverCtx.SessionAuth},
-			[]rest.Route{
-				{
-					// List authorized run metadata | permission=conversation:use/run:observe | auth=required
-					Method:  http.MethodGet,
-					Path:    "/runs",
-					Handler: ListRunsHandler(serverCtx),
-				},
-				{
-					// Preview authorized run lifecycle metadata only | permission=conversation:use/run:observe | auth=required
-					Method:  http.MethodGet,
-					Path:    "/runs/:run_id/lifecycle",
-					Handler: GetRunLifecycleHandler(serverCtx),
-				},
-				{
-					// Retry own failed run without prepared actions | permission=conversation:use | auth=required
-					Method:  http.MethodPost,
-					Path:    "/runs/:run_id/retry",
-					Handler: RetryRunHandler(serverCtx),
-				},
-				{
-					// Read authorized sanitized trace | permission=conversation:use/run:observe | auth=required
-					Method:  http.MethodGet,
-					Path:    "/runs/:run_id/trace",
-					Handler: GetRunTraceHandler(serverCtx),
-				},
-			}...,
-		),
-		rest.WithPrefix("/api/v1"),
-	)
-
-	server.AddRoutes(
-		rest.WithMiddlewares(
-			[]rest.Middleware{serverCtx.SessionAuth},
-			[]rest.Route{
-				{
 					// Decide immutable action | permission=conversation:use | auth=required
 					Method:  http.MethodPost,
 					Path:    "/approvals/:approval_id/decision",
@@ -781,6 +539,248 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 			[]rest.Middleware{serverCtx.SessionAuth},
 			[]rest.Route{
 				{
+					// Create conversation | permission=conversation:use | auth=required
+					Method:  http.MethodPost,
+					Path:    "/conversations",
+					Handler: CreateConversationHandler(serverCtx),
+				},
+				{
+					// List own conversations | permission=conversation:use | auth=required
+					Method:  http.MethodGet,
+					Path:    "/conversations",
+					Handler: ListConversationsHandler(serverCtx),
+				},
+				{
+					// Get own conversation | permission=conversation:use | auth=required
+					Method:  http.MethodGet,
+					Path:    "/conversations/:conversation_id",
+					Handler: GetConversationHandler(serverCtx),
+				},
+				{
+					// List messages | permission=conversation:use | auth=required
+					Method:  http.MethodGet,
+					Path:    "/conversations/:conversation_id/messages",
+					Handler: ListMessagesHandler(serverCtx),
+				},
+				{
+					// Send message | permission=conversation:use | auth=required
+					Method:  http.MethodPost,
+					Path:    "/conversations/:conversation_id/messages",
+					Handler: SendMessageHandler(serverCtx),
+				},
+				{
+					// List orders | permission=order:read | auth=required
+					Method:  http.MethodGet,
+					Path:    "/orders",
+					Handler: ListOrdersHandler(serverCtx),
+				},
+				{
+					// Get order | permission=order:read | auth=required
+					Method:  http.MethodGet,
+					Path:    "/orders/:order_id",
+					Handler: GetOrderHandler(serverCtx),
+				},
+				{
+					// Get logistics | permission=order:read | auth=required
+					Method:  http.MethodGet,
+					Path:    "/orders/:order_id/logistics",
+					Handler: GetLogisticsHandler(serverCtx),
+				},
+				{
+					// Run snapshot | permission=conversation:use | auth=required
+					Method:  http.MethodGet,
+					Path:    "/runs/:run_id",
+					Handler: GetRunHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithPrefix("/api/v1"),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.SessionAuth},
+			[]rest.Route{
+				{
+					// Persisted event stream | permission=conversation:use | auth=required
+					Method:  http.MethodGet,
+					Path:    "/runs/:run_id/events",
+					Handler: StreamEventsHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithPrefix("/api/v1"),
+		rest.WithTimeout(0*time.Nanosecond),
+		rest.WithSSE(),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.ServiceAuth},
+			[]rest.Route{
+				{
+					// Persist agent event | permission=- | auth=run_capability
+					Method:  http.MethodPost,
+					Path:    "/runs/:run_id/events",
+					Handler: IngestEventHandler(serverCtx),
+				},
+				{
+					// Renew run capability | permission=- | auth=service
+					Method:  http.MethodPost,
+					Path:    "/runs/:run_id/lease",
+					Handler: RenewLeaseHandler(serverCtx),
+				},
+				{
+					// Read business tool | permission=order:read | auth=run_capability
+					Method:  http.MethodPost,
+					Path:    "/tools/:tool_name",
+					Handler: CallToolHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithPrefix("/internal/v1"),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.SessionAuth},
+			[]rest.Route{
+				{
+					// Set knowledge resource scope | permission=team:manage | auth=required
+					Method:  http.MethodPatch,
+					Path:    "/knowledge-bases/:knowledge_base_id/team",
+					Handler: SetKnowledgeTeamHandler(serverCtx),
+				},
+				{
+					// Tenant member directory | permission=team:manage | auth=required
+					Method:  http.MethodGet,
+					Path:    "/team-users",
+					Handler: ListTeamUsersHandler(serverCtx),
+				},
+				{
+					// List accessible teams | permission=authenticated | auth=required
+					Method:  http.MethodGet,
+					Path:    "/teams",
+					Handler: ListTeamsHandler(serverCtx),
+				},
+				{
+					// Create team | permission=team:manage | auth=required
+					Method:  http.MethodPost,
+					Path:    "/teams",
+					Handler: CreateTeamHandler(serverCtx),
+				},
+				{
+					// Team members | permission=team:manage | auth=required
+					Method:  http.MethodGet,
+					Path:    "/teams/:team_id/members",
+					Handler: ListTeamMembersHandler(serverCtx),
+				},
+				{
+					// Update membership | permission=team:manage | auth=required
+					Method:  http.MethodPut,
+					Path:    "/teams/:team_id/members/:user_id",
+					Handler: UpdateTeamMembershipHandler(serverCtx),
+				},
+				{
+					// Set ticket resource scope | permission=team:manage | auth=required
+					Method:  http.MethodPatch,
+					Path:    "/tickets/:ticket_id/team",
+					Handler: SetTicketTeamHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithPrefix("/api/v1"),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.SessionAuth},
+			[]rest.Route{
+				{
+					// Tenant roles and permission catalog | permission=account:manage or role:manage | auth=required
+					Method:  http.MethodGet,
+					Path:    "/admin/roles",
+					Handler: ListManagedRolesHandler(serverCtx),
+				},
+				{
+					// Create additive role | permission=role:manage | auth=required
+					Method:  http.MethodPost,
+					Path:    "/admin/roles",
+					Handler: CreateManagedRoleHandler(serverCtx),
+				},
+				{
+					// Update additive role | permission=role:manage | auth=required
+					Method:  http.MethodPut,
+					Path:    "/admin/roles/:role_id",
+					Handler: UpdateManagedRoleHandler(serverCtx),
+				},
+				{
+					// Tenant account directory | permission=account:manage | auth=required
+					Method:  http.MethodGet,
+					Path:    "/admin/users",
+					Handler: ListManagedUsersHandler(serverCtx),
+				},
+				{
+					// Create tenant account | permission=account:manage | auth=required
+					Method:  http.MethodPost,
+					Path:    "/admin/users",
+					Handler: CreateManagedUserHandler(serverCtx),
+				},
+				{
+					// Update account and roles | permission=account:manage | auth=required
+					Method:  http.MethodPut,
+					Path:    "/admin/users/:user_id",
+					Handler: UpdateManagedUserHandler(serverCtx),
+				},
+				{
+					// Reset account password | permission=account:manage | auth=required
+					Method:  http.MethodPost,
+					Path:    "/admin/users/:user_id/reset-password",
+					Handler: ResetManagedPasswordHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithPrefix("/api/v1"),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.SessionAuth},
+			[]rest.Route{
+				{
+					// Read authorized run history storage preview | permission=conversation:use/run:observe | auth=required
+					Method:  http.MethodGet,
+					Path:    "/runs/:run_id/history",
+					Handler: GetRunHistoryHandler(serverCtx),
+				},
+				{
+					// Archive eligible read-only run payload and checkpoints | permission=admin/run:observe | auth=required
+					Method:  http.MethodPost,
+					Path:    "/runs/:run_id/history/archive",
+					Handler: ArchiveRunHistoryHandler(serverCtx),
+				},
+				{
+					// Reconcile durable pending history operation | permission=admin/run:observe | auth=required
+					Method:  http.MethodPost,
+					Path:    "/runs/:run_id/history/operations/:operation_id/resume",
+					Handler: ResumeRunHistoryHandler(serverCtx),
+				},
+				{
+					// Restore archived run payload and checkpoints without executing it | permission=admin/run:observe | auth=required
+					Method:  http.MethodPost,
+					Path:    "/runs/:run_id/history/restore",
+					Handler: RestoreRunHistoryHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithPrefix("/api/v1"),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.SessionAuth},
+			[]rest.Route{
+				{
 					// Change own password and revoke all sessions | permission=- | auth=required
 					Method:  http.MethodPost,
 					Path:    "/password",
@@ -789,5 +789,26 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 			}...,
 		),
 		rest.WithPrefix("/api/v1/auth"),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares(
+			[]rest.Middleware{serverCtx.SessionAuth},
+			[]rest.Route{
+				{
+					// Read current tenant scheduled history archival policy | permission=admin/run:observe | auth=required
+					Method:  http.MethodGet,
+					Path:    "/run-history-schedule",
+					Handler: GetRunHistoryScheduleHandler(serverCtx),
+				},
+				{
+					// Confirm durable tenant history archival authorization or disable it | permission=admin/run:observe | auth=required
+					Method:  http.MethodPut,
+					Path:    "/run-history-schedule",
+					Handler: UpdateRunHistoryScheduleHandler(serverCtx),
+				},
+			}...,
+		),
+		rest.WithPrefix("/api/v1"),
 	)
 }

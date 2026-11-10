@@ -1,0 +1,36 @@
+type InvestigationAutomationData {
+    RuntimeEnabled bool `json:"runtime_enabled"`
+    Enabled bool `json:"enabled"`
+    Revision int64 `json:"revision"`
+    IdleDays int64 `json:"idle_days"`
+    IntervalMinutes int64 `json:"interval_minutes"`
+    OwnerUserId string `json:"owner_user_id"`
+    AuthorizationValid bool `json:"authorization_valid"`
+    NextRunAt string `json:"next_run_at"`
+    LastCheckedAt string `json:"last_checked_at"`
+    LastOutcome string `json:"last_outcome"`
+    LastObjectRef string `json:"last_object_ref"`
+    LastRevision int64 `json:"last_revision"`
+}
+type UpdateInvestigationAutomationReq {
+    Enabled bool `json:"enabled"`
+    IdleDays int64 `json:"idle_days"`
+    IntervalMinutes int64 `json:"interval_minutes"`
+    ExpectedRevision int64 `json:"expected_revision"`
+    Confirm bool `json:"confirm"`
+    IdempotencyKey string `header:"Idempotency-Key"`
+}
+type InvestigationAutomationResp {
+    Code string `json:"code"`
+    RequestId string `json:"request_id"`
+    Data InvestigationAutomationData `json:"data"`
+}
+@server(prefix: /api/v1 middleware: SessionAuth)
+service flowdesk-api {
+    @doc "Read current tenant overdue investigation automation policy | permission=admin/knowledge:manage | auth=required"
+    @handler GetInvestigationAutomation
+    get /investigation-automation returns (InvestigationAutomationResp)
+    @doc "Explicitly authorize or disable overdue investigation return to open | permission=admin/knowledge:manage | auth=required"
+    @handler UpdateInvestigationAutomation
+    put /investigation-automation (UpdateInvestigationAutomationReq) returns (InvestigationAutomationResp)
+}

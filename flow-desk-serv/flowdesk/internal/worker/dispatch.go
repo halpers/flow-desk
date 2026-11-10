@@ -13,6 +13,7 @@ const batchSize = 10
 
 func Run(ctx context.Context, s *svc.ServiceContext) {
 	go runHistorySchedules(ctx, s)
+	go runInvestigationAutomation(ctx, s)
 	ticker := time.NewTicker(pollInterval)
 	defer ticker.Stop()
 	ticks := 0
@@ -54,6 +55,23 @@ func runHistorySchedules(ctx context.Context, s *svc.ServiceContext) {
 		}
 		if _, err := logic.DispatchHistorySchedule(ctx, s); err != nil {
 			logx.Error("scheduled history maintenance not confirmed")
+		}
+	}
+}
+
+const investigationAutomationPollInterval = 5 * time.Second
+
+func runInvestigationAutomation(ctx context.Context, s *svc.ServiceContext) {
+	ticker := time.NewTicker(investigationAutomationPollInterval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+		}
+		if _, err := logic.DispatchInvestigationAutomation(ctx, s); err != nil {
+			logx.Error("investigation automation transaction not confirmed")
 		}
 	}
 }

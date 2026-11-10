@@ -4095,6 +4095,209 @@
         }
       }
     },
+    "/api/v1/investigation-automation": {
+      "get": {
+        "summary": "Read current tenant overdue investigation automation policy | permission=admin/knowledge:manage | auth=required",
+        "operationId": "getInvestigationAutomation",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "runtime_enabled",
+                        "enabled",
+                        "revision",
+                        "idle_days",
+                        "interval_minutes",
+                        "owner_user_id",
+                        "authorization_valid",
+                        "next_run_at",
+                        "last_checked_at",
+                        "last_outcome",
+                        "last_object_ref",
+                        "last_revision"
+                      ],
+                      "properties": {
+                        "authorization_valid": {
+                          "type": "boolean"
+                        },
+                        "enabled": {
+                          "type": "boolean"
+                        },
+                        "idle_days": {
+                          "type": "integer"
+                        },
+                        "interval_minutes": {
+                          "type": "integer"
+                        },
+                        "last_checked_at": {
+                          "type": "string"
+                        },
+                        "last_object_ref": {
+                          "type": "string"
+                        },
+                        "last_outcome": {
+                          "type": "string"
+                        },
+                        "last_revision": {
+                          "type": "integer"
+                        },
+                        "next_run_at": {
+                          "type": "string"
+                        },
+                        "owner_user_id": {
+                          "type": "string"
+                        },
+                        "revision": {
+                          "type": "integer"
+                        },
+                        "runtime_enabled": {
+                          "type": "boolean"
+                        }
+                      }
+                    },
+                    "request_id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Explicitly authorize or disable overdue investigation return to open | permission=admin/knowledge:manage | auth=required",
+        "operationId": "updateInvestigationAutomation",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "enabled",
+                  "idle_days",
+                  "interval_minutes",
+                  "expected_revision",
+                  "confirm"
+                ],
+                "properties": {
+                  "confirm": {
+                    "type": "boolean"
+                  },
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "expected_revision": {
+                    "type": "integer"
+                  },
+                  "idle_days": {
+                    "type": "integer"
+                  },
+                  "interval_minutes": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "runtime_enabled",
+                        "enabled",
+                        "revision",
+                        "idle_days",
+                        "interval_minutes",
+                        "owner_user_id",
+                        "authorization_valid",
+                        "next_run_at",
+                        "last_checked_at",
+                        "last_outcome",
+                        "last_object_ref",
+                        "last_revision"
+                      ],
+                      "properties": {
+                        "authorization_valid": {
+                          "type": "boolean"
+                        },
+                        "enabled": {
+                          "type": "boolean"
+                        },
+                        "idle_days": {
+                          "type": "integer"
+                        },
+                        "interval_minutes": {
+                          "type": "integer"
+                        },
+                        "last_checked_at": {
+                          "type": "string"
+                        },
+                        "last_object_ref": {
+                          "type": "string"
+                        },
+                        "last_outcome": {
+                          "type": "string"
+                        },
+                        "last_revision": {
+                          "type": "integer"
+                        },
+                        "next_run_at": {
+                          "type": "string"
+                        },
+                        "owner_user_id": {
+                          "type": "string"
+                        },
+                        "revision": {
+                          "type": "integer"
+                        },
+                        "runtime_enabled": {
+                          "type": "boolean"
+                        }
+                      }
+                    },
+                    "request_id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/knowledge-bases": {
       "get": {
         "summary": "ListKnowledgeBases | permission=conversation:use | auth=required",

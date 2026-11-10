@@ -566,6 +566,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/investigation-automation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read current tenant overdue investigation automation policy | permission=admin/knowledge:manage | auth=required */
+        get: operations["getInvestigationAutomation"];
+        /** Explicitly authorize or disable overdue investigation return to open | permission=admin/knowledge:manage | auth=required */
+        put: operations["updateInvestigationAutomation"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/knowledge-bases": {
         parameters: {
             query?: never;
@@ -3241,6 +3259,90 @@ export interface operations {
                             status: string;
                             title: string;
                             version: number;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    getInvestigationAutomation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            authorization_valid: boolean;
+                            enabled: boolean;
+                            idle_days: number;
+                            interval_minutes: number;
+                            last_checked_at: string;
+                            last_object_ref: string;
+                            last_outcome: string;
+                            last_revision: number;
+                            next_run_at: string;
+                            owner_user_id: string;
+                            revision: number;
+                            runtime_enabled: boolean;
+                        };
+                        request_id?: string;
+                    };
+                };
+            };
+        };
+    };
+    updateInvestigationAutomation: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    confirm: boolean;
+                    enabled: boolean;
+                    expected_revision: number;
+                    idle_days: number;
+                    interval_minutes: number;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        code?: string;
+                        data?: {
+                            authorization_valid: boolean;
+                            enabled: boolean;
+                            idle_days: number;
+                            interval_minutes: number;
+                            last_checked_at: string;
+                            last_object_ref: string;
+                            last_outcome: string;
+                            last_revision: number;
+                            next_run_at: string;
+                            owner_user_id: string;
+                            revision: number;
+                            runtime_enabled: boolean;
                         };
                         request_id?: string;
                     };

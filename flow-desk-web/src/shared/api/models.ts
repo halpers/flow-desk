@@ -8,6 +8,9 @@ type JsonResponse<T> = T extends {
 type Data<T> =
   JsonResponse<T> extends { data?: infer Body } ? NonNullable<Body> : never;
 export type Models = {
+  InvestigationAutomationData: Data<
+    paths["/api/v1/investigation-automation"]["get"]
+  >;
   RunHistoryScheduleData: Data<paths["/api/v1/run-history-schedule"]["get"]>;
   RunHistoryRestoreBatchPreviewData: Data<
     paths["/api/v1/run-history-restore-batches/preview"]["post"]

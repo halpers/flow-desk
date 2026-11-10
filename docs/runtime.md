@@ -93,3 +93,5 @@ M7.28[自助改密](m7-self-password.md)无新端口、模型依赖或数据库�
 M7.29[共享持久认证限流](m7-auth-rate-limits.md)由Go迁移2026111001提供，无新增环境变量、端口或Agent迁移。所有API实例须连接同一业务库并升级到支持该策略的版本；混用旧API不能获得全局一致额度。只在work/可丢弃mock环境执行双API和重启验收，服务器操作见[部署手册§39](../deploy/server.md#39-共享持久认证限流)。
 
 M7.30[定时归档](m7-run-history-schedule.md)新增Go迁移2026111002及可选RUN_HISTORY_SCHEDULER_ENABLED=false；开启总开关并重建全部API后，仍需管理员明确保存当前租户策略。运行Agent不增加DDL。合成脚本scripts/check-run-history-schedule.py仅在work/可丢弃mock栈的独立新租户运行，CI显式开启该测试栈开关；运维按[服务器手册§40](../deploy/server.md#40-定时任务历史归档)。
+
+M7.31[超时调查自动回待办](m7-investigation-automation.md)另由INVESTIGATION_AUTOMATION_ENABLED（默认false）控制。每API独立5秒循环、每轮5秒deadline，单一数据库事务以FOR UPDATE SKIP LOCKED处理一个到期策略和至多一条investigating候选。没有外部I/O或跨服务意图，事务锁结束即释放；提交与否决定持久恢复，owner最终共享锁及资源ACL保护并发撤权，人工修订/状态/更新时间改变则跳过。
