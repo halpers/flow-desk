@@ -6,8 +6,6 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
-	"net/http"
 	"os"
 
 	"flowdesk/internal/config"
@@ -16,8 +14,8 @@ import (
 	"flowdesk/internal/svc"
 	"flowdesk/internal/worker"
 
-	"github.com/google/uuid"
 	"github.com/zeromicro/go-zero/core/conf"
+	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/proc"
 	"github.com/zeromicro/go-zero/rest"
 )
@@ -47,7 +45,10 @@ func main() {
 	// Authentication bodies contain credentials. Native error/slow-request
 	// logging can dump them; metadata tracing and metrics remain enabled.
 	c.Middlewares.Log = false
-	server := rest.MustNewServer(c.RestConf)
+	server := rest.MustNewServer(c.RestConf,
+		rest.WithRouter(middleware.NewRequestLogRouter()),
+		rest.WithNotFoundHandler(nil),
+	)
 	defer server.Stop()
 
 	ctx := svc.NewServiceContext(c)
@@ -58,15 +59,9 @@ func main() {
 	proc.AddShutdownListener(cancelWorker)
 	go func() { defer close(workerDone); worker.Run(workerContext, ctx) }()
 	defer func() { cancelWorker(); <-workerDone }()
-	server.Use(func(next http.HandlerFunc) http.HandlerFunc {
-		return func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("X-Request-ID", uuid.NewString())
-			w.Header().Set("X-Content-Type-Options", "nosniff")
-			next(w, r)
-		}
-	})
+	server.Use(middleware.RequestLogHeaders)
 	handler.RegisterHandlers(server, ctx)
 
-	fmt.Printf("Starting server at %s:%d...\n", c.Host, c.Port)
+	logx.Infow("api.starting", logx.Field("port", c.Port), logx.Field("mode", c.Mode))
 	server.Start()
 }

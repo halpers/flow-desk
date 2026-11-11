@@ -13,6 +13,7 @@ import (
 	"flowdesk/internal/types"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
+	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
 
@@ -458,19 +459,30 @@ func DispatchNext(ctx context.Context, s *svc.ServiceContext) (bool, error) {
 	} else {
 		err = s.AgentClient.Dispatch(ctx, event.Payload)
 	}
-	if err != nil {
-		if event.Topic == "knowledge.archive" {
-			return true, s.OutboxEventsModel.UpdateRetry(ctx, event.Id, event.AttemptCount, "SOURCE_ARCHIVE_UNAVAILABLE")
-		}
-		if event.Topic == "knowledge.source_cleanup" {
-			return true, s.OutboxEventsModel.UpdateRetry(ctx, event.Id, event.AttemptCount, "SOURCE_CLEANUP_UNAVAILABLE")
-		}
-		if event.Topic == "knowledge.cleanup" {
-			return true, s.OutboxEventsModel.UpdateRetry(ctx, event.Id, event.AttemptCount, "KNOWLEDGE_CLEANUP_UNAVAILABLE")
-		}
-		return true, s.OutboxEventsModel.UpdateRetry(ctx, event.Id, event.AttemptCount, "AGENT_UNAVAILABLE")
+	fields := []logx.LogField{
+		logx.Field("outbox_id", event.Id),
+		logx.Field("aggregate_id", event.AggregateId),
+		logx.Field("topic", event.Topic),
+		logx.Field("attempt", event.AttemptCount),
 	}
-	return true, s.OutboxEventsModel.UpdateDelivered(ctx, event.Id, event.AttemptCount)
+	if err != nil {
+		code := "AGENT_UNAVAILABLE"
+		switch event.Topic {
+		case "knowledge.archive":
+			code = "SOURCE_ARCHIVE_UNAVAILABLE"
+		case "knowledge.source_cleanup":
+			code = "SOURCE_CLEANUP_UNAVAILABLE"
+		case "knowledge.cleanup":
+			code = "KNOWLEDGE_CLEANUP_UNAVAILABLE"
+		}
+		logx.WithContext(ctx).Errorw("outbox.delivery.failed", append(fields, logx.Field("error_code", code))...)
+		return true, s.OutboxEventsModel.UpdateRetry(ctx, event.Id, event.AttemptCount, code)
+	}
+	if err = s.OutboxEventsModel.UpdateDelivered(ctx, event.Id, event.AttemptCount); err != nil {
+		return true, err
+	}
+	logx.WithContext(ctx).Infow("outbox.delivery.completed", fields...)
+	return true, nil
 }
 
 func ExpireOverdueRuns(ctx context.Context, s *svc.ServiceContext) error {

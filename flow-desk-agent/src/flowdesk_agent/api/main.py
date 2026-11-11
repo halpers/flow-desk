@@ -2,6 +2,7 @@
 
 import asyncio
 import hmac
+import logging
 import os
 from contextlib import asynccontextmanager
 from uuid import UUID
@@ -33,6 +34,8 @@ from flowdesk_agent.storage.lifecycle import read_lifecycle
 from flowdesk_agent.storage.permissions import verify_runtime
 from flowdesk_agent.tools.go_client import ToolError
 
+logger = logging.getLogger(__name__)
+
 
 class Health(BaseModel):
     status: str
@@ -41,6 +44,10 @@ class Health(BaseModel):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    logging.basicConfig(
+        level=logging.WARNING, format="%(asctime)s %(levelname)s %(name)s %(message)s"
+    )
+    logging.getLogger("flowdesk_agent").setLevel(logging.INFO)
     token = os.environ["INTERNAL_TOKEN"]
     if len(token) < 32:
         raise RuntimeError("INTERNAL_TOKEN must contain at least 32 characters")
@@ -70,12 +77,14 @@ async def lifespan(app: FastAPI):
             workers.append(asyncio.create_task(app.state.knowledge.loop()))
             workers.extend(asyncio.create_task(runtime.callback_loop()) for _ in range(4))
             app.state.workers = workers
+            logger.info("agent.started workers=%d", len(workers))
             try:
                 yield
             finally:
                 for worker in workers:
                     worker.cancel()
                 await asyncio.gather(*workers, return_exceptions=True)
+                logger.info("agent.workers_stopped")
     finally:
         await pool.close()
         if tracing:

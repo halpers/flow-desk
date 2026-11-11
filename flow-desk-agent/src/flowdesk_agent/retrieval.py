@@ -4,6 +4,7 @@ import asyncio
 import base64
 import hashlib
 import json
+import logging
 import math
 import os
 import re
@@ -15,6 +16,8 @@ from flowdesk_agent.knowledge_cleanup import lock_version, tombstone
 from flowdesk_agent.pdf import PDFError, PDFManifest, extract_pdf
 from flowdesk_agent.semantic_index import SemanticIndex
 from flowdesk_agent.tools.go_client import ToolError
+
+logger = logging.getLogger(__name__)
 
 PROFILE = "char-ngram-v1"
 DIMENSION = 256
@@ -261,6 +264,17 @@ class KnowledgeIndex:
                 "WHERE job_id=%s AND attempts=%s AND status='working'",
                 (job["job_id"], job["attempts"]),
             )
+        if error_code:
+            logger.error(
+                "index.failed job_id=%s version_id=%s", job["job_id"], job["version_id"]
+            )
+        else:
+            logger.info(
+                "index.completed job_id=%s version_id=%s chunks=%d",
+                job["job_id"],
+                job["version_id"],
+                chunk_count,
+            )
 
     async def loop(self):
         while True:
@@ -272,8 +286,13 @@ class KnowledgeIndex:
                     continue
             except asyncio.CancelledError:
                 raise
-            except Exception:
-                # No upstream response body, prompt or connection string is logged.
+            except Exception as exc:
+                logger.error(
+                    "index.deferred job_id=%s version_id=%s error_type=%s",
+                    job["job_id"] if job else "-",
+                    job["version_id"] if job else "-",
+                    type(exc).__name__,
+                )
                 if job:
                     async with self.pool.connection() as conn:
                         await conn.execute(

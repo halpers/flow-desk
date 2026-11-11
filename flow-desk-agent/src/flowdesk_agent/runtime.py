@@ -8,6 +8,7 @@ from datetime import UTC, datetime
 import httpx
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from langgraph.types import Command
+from opentelemetry import trace
 from psycopg_pool import AsyncConnectionPool
 
 from flowdesk_agent.api.schemas import ExecutionCommand
@@ -50,6 +51,7 @@ class AgentRuntime:
 
     async def callback_loop(self):
         while True:
+            row = None
             try:
                 row = await self.callbacks.claim()
                 if not row:
@@ -76,13 +78,23 @@ class AgentRuntime:
                     await self.callbacks.acknowledge(row, int(response.json()["data"]["seq"]))
                 else:
                     permanent = response.status_code in (400, 401, 403, 404, 409, 410, 422)
+                    logger.error(
+                        "callback.rejected run_id=%s dispatch_id=%s status=%d",
+                        row["run_id"],
+                        row["dispatch_id"],
+                        response.status_code,
+                    )
                     await self.callbacks.retry(row, "CALLBACK_REJECTED", permanent)
             except asyncio.CancelledError:
                 raise
-            except Exception:
-                # Do not log exceptions containing request headers, credentials or prompts.
-                logger.warning("callback delivery deferred")
-                if "row" in locals() and row:
+            except Exception as exc:
+                logger.error(
+                    "callback.deferred run_id=%s dispatch_id=%s error_type=%s",
+                    row["run_id"] if row else "-",
+                    row["dispatch_id"] if row else "-",
+                    type(exc).__name__,
+                )
+                if row:
                     await self.callbacks.retry(row, "UPSTREAM_UNAVAILABLE")
                 await asyncio.sleep(0.5)
 
@@ -94,6 +106,12 @@ class AgentRuntime:
     async def execute_traced(self, row: dict):
         command = ExecutionCommand.model_validate(row["body"])
         owner = row["lease_owner"]
+        span = trace.get_current_span().get_span_context()
+        trace_id = f"{span.trace_id:032x}" if span.is_valid else "-"
+        execution = (
+            f"run_id={command.run_id} dispatch_id={command.dispatch_id} "
+            f"generation={command.lease_generation} trace_id={trace_id}"
+        )
         heartbeat_task = None
         locked = False
         try:
@@ -122,16 +140,23 @@ class AgentRuntime:
                     if not await self.commands.own(conn, command, owner):
                         raise OwnershipLost
                     heartbeat_task = asyncio.create_task(heartbeat())
+                    logger.info(
+                        "execution.started %s command=%s", execution, command.command
+                    )
                     terminal = await self.callbacks.terminal(command.dispatch_id)
                     if terminal:
                         await self.callbacks.wait(terminal["source_event_id"])
                         status = "completed" if terminal["type"] == "run.succeeded" else "failed"
                         await self.commands.release(command.dispatch_id, owner, status)
+                        logger.info(
+                            "execution.recovered %s status=%s", execution, status
+                        )
                         return
                     suspended = await self.callbacks.suspended(command.dispatch_id)
                     if suspended:
                         await self.callbacks.wait(suspended["source_event_id"])
                         await self.commands.release(command.dispatch_id, owner, "waiting")
+                        logger.info("execution.recovered %s status=waiting", execution)
                         return
                     transport = os.getenv("TOOL_TRANSPORT", "http")
                     if transport not in ("http", "mcp"):
@@ -203,8 +228,10 @@ class AgentRuntime:
                             event = await self.callbacks.emit(command, "run.waiting_" + kind, value)
                             await self.callbacks.wait(event)
                             await self.commands.release(command.dispatch_id, owner, "waiting")
+                            logger.info("execution.waiting %s kind=%s", execution, kind)
                         else:
                             await self.commands.release(command.dispatch_id, owner, "completed")
+                            logger.info("execution.completed %s", execution)
                 finally:
                     if heartbeat_task:
                         heartbeat_task.cancel()
@@ -219,7 +246,7 @@ class AgentRuntime:
             await self.commands.release(command.dispatch_id, owner, "queued")
             raise
         except OwnershipLost:
-            logger.warning("execution ownership lost")
+            logger.warning("execution.ownership_lost %s", execution)
         except Exception as exc:
             code = (
                 exc.code
@@ -228,11 +255,22 @@ class AgentRuntime:
                 if isinstance(exc, TimeoutError)
                 else "EXECUTION_FAILED"
             )
-            logger.warning("execution failed: %s (%s)", code, type(exc).__name__)
+            # Tool codes may be returned by a remote service. Never log them verbatim.
+            log_code = "TOOL_ERROR" if isinstance(exc, ToolError) else code
+            logger.error(
+                "execution.failed %s error_code=%s error_type=%s",
+                execution,
+                log_code,
+                type(exc).__name__,
+            )
             try:
                 await self.finish_failed(command, owner, code)
-            except Exception:
-                logger.warning("terminal recovery deferred")
+            except Exception as exc:
+                logger.error(
+                    "execution.recovery_deferred %s error_type=%s",
+                    execution,
+                    type(exc).__name__,
+                )
 
     async def finish_failed(self, command: ExecutionCommand, owner, code: str):
         # Reacquire the execution lock after an exception. A replaced worker may not
@@ -276,14 +314,18 @@ class AgentRuntime:
                 for task in finished:
                     try:
                         task.result()
-                    except Exception:
-                        logger.warning("execution recovery deferred")
+                    except Exception as exc:
+                        logger.error(
+                            "execution.worker_failed error_type=%s", type(exc).__name__
+                        )
                 running -= finished
                 if len(running) < MAX_EXECUTIONS:
                     try:
                         row = await self.commands.claim()
-                    except Exception:
-                        logger.warning("command claim deferred")
+                    except Exception as exc:
+                        logger.error(
+                            "execution.claim_deferred error_type=%s", type(exc).__name__
+                        )
                         await asyncio.sleep(0.5)
                         continue
                     if row:

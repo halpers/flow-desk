@@ -258,7 +258,7 @@ docker compose logs --tail 100 postgres
 docker compose stop web api agent
 ```
 
-停止后恢复，使用第 6 节相同固定 SHA 的发布命令。排障日志按 request_id/run_id/trace_id 关联，不向外复制原始敏感数据。SSE 代理保持无缓冲；前面另有负载均衡器时，也应关闭 `/api/v1/runs/*/events` 缓冲并允许长连接。
+停止后恢复，使用第 6 节相同固定 SHA 的发布命令。排障时，Go 请求日志按响应头 X-Request-ID 查询，包含路由模板、状态码和耗时（5xx 为 ERROR）；任务派发可按 aggregate_id 查询，Agent 执行按 run_id/dispatch_id 查询，知识索引按 job_id/version_id 查询。启用链路追踪后，Agent 执行日志也可按 trace_id 查询。新增日志只记录元数据，不向外复制原始敏感数据。SSE 代理保持无缓冲；前面另有负载均衡器时，也应关闭 `/api/v1/runs/*/events` 缓冲并允许长连接。
 
 ## 10. 升级与回滚
 
